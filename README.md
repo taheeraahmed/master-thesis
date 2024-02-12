@@ -3,7 +3,7 @@
 </p>
 
 <div align="center">
-  <h2>Cardiopulmonary disease classification and detection using deep learning</h2>
+  <h2>Master thesis</h2>
 </div>
 
-This repository contains the code for the project "Cardiopulmonary disease classification and detection" developed for my master thesis. 
+This repository contains the code for my master thesis. 
