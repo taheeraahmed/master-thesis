@@ -4,6 +4,7 @@ import torch
 from torchvision import transforms
 from torch.utils.data import Dataset
 
+
 class ChestXray14MultiClassDataset(Dataset):
     def __init__(self, dataframe, transform=None):
         """
@@ -17,15 +18,17 @@ class ChestXray14MultiClassDataset(Dataset):
                        'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening',
                        'Pneumonia', 'Pneumothorax']
 
-        underrepresented_diseases = ['Hernia', 'Pneumonia', 'Fibrosis', 'Emphysema', 'Cardiomegaly', 'Pleural_Thickening', 'Consolidation', 'Pneumothorax', 'Mass', 'Nodule']
+        underrepresented_diseases = ['Hernia', 'Pneumonia', 'Fibrosis', 'Emphysema',
+                                     'Cardiomegaly', 'Pleural_Thickening', 'Consolidation', 'Pneumothorax', 'Mass', 'Nodule']
 
         self.data_augmentation = transforms.Compose([
             transforms.RandomRotation(0.1),
-            transforms.RandomResizedCrop((224,224), scale=(0.8, 1.0)),
+            transforms.RandomResizedCrop((224, 224), scale=(0.8, 1.0)),
             transforms.RandomHorizontalFlip(),
         ])
 
-        self.underrepresented_diseases_indices = [self.labels.index(disease) for disease in underrepresented_diseases]
+        self.underrepresented_diseases_indices = [self.labels.index(
+            disease) for disease in underrepresented_diseases]
 
     def _augment_images(self, image, labels):
         ''' 

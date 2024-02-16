@@ -8,9 +8,10 @@ from datasets.chestxray14 import ChestXray14Dataset
 from utils.df import get_df_image_paths_labels
 from utils.handle_class_imbalance import get_class_weights
 
+
 def densenet121(logger, args, idun_datetime_done, data_path):
-    shuffle = True  
-    num_workers = 4  
+    shuffle = True
+    num_workers = 4
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -21,41 +22,43 @@ def densenet121(logger, args, idun_datetime_done, data_path):
     ])
 
     model = xrv.models.get_model(weights="densenet121-res224-nih")
-    model.op_threshs = None 
-    model.classifier = torch.nn.Linear(1024,14) 
+    model.op_threshs = None
+    model.classifier = torch.nn.Linear(1024, 14)
 
     # only training classifier
     optimizer = torch.optim.Adam(model.classifier.parameters())
 
     train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
     if args.test_mode:
-            logger.warning('Using smaller dataset')
-            train_subset_size = 100 
-            val_subset_size = 50
+        logger.warning('Using smaller dataset')
+        train_subset_size = 100
+        val_subset_size = 50
 
-            train_df = train_df.head(train_subset_size)
-            val_df = val_df.head(val_subset_size)
+        train_df = train_df.head(train_subset_size)
+        val_df = val_df.head(val_subset_size)
 
     train_dataset = ChestXray14Dataset(dataframe=train_df, transform=transform)
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
 
     val_dataset = ChestXray14Dataset(dataframe=val_df, transform=transform)
-    validation_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
+    validation_dataloader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
 
     class_weights = get_class_weights(train_df)
 
     trainer = TrainerClass(
-        model = model,
+        model=model,
         class_weights=class_weights,
-        model_output_folder = f'output/{args.output_folder}/model_checkpoints', 
-        logger = logger,
-        log_dir = f'runs/{args.output_folder}',
-        optimizer = optimizer, 
+        model_output_folder=f'output/{args.output_folder}/model_checkpoints',
+        logger=logger,
+        log_dir=f'runs/{args.output_folder}',
+        optimizer=optimizer,
     )
     trainer.train(
-        train_dataloader = train_dataloader,
-        validation_dataloader = validation_dataloader,
-        num_epochs = args.num_epochs,
-        idun_datetime_done = idun_datetime_done,
-        model_arg = args.model
+        train_dataloader=train_dataloader,
+        validation_dataloader=validation_dataloader,
+        num_epochs=args.num_epochs,
+        idun_datetime_done=idun_datetime_done,
+        model_arg=args.model
     )
