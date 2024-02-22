@@ -2,7 +2,6 @@ import torch
 from transformers import Swinv2ForImageClassification
 from trainers.multiclass_trainer import TrainerClass
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from datasets import ChestXray14SwinDataset
 from utils.df import get_df_image_paths_labels
 from utils.handle_class_imbalance import get_class_weights
@@ -11,14 +10,6 @@ from utils.handle_class_imbalance import get_class_weights
 def swin(logger, args, idun_datetime_done, data_path):
     shuffle = True
     num_workers = 4
-
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.CenterCrop(224),
-        transforms.Grayscale(num_output_channels=1),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485], std=[0.229]),
-    ])
 
     model = Swinv2ForImageClassification.from_pretrained(
         "microsoft/swinv2-tiny-patch4-window8-256")

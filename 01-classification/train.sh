@@ -1,7 +1,7 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
-MODELS=("swin")
+MODELS=("densenet" "swin")
 TASKS=("multi-class")
 CLASS_IMBALANCES=("false")
 
@@ -9,7 +9,7 @@ BATCH_SIZE=32
 LEARNING_RATE=0.001
 NUM_EPOCHS=25
 
-IDUN_TIME=90:00:00
+IDUN_TIME=45:00:00
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
 
@@ -41,12 +41,12 @@ for MODEL in "${MODELS[@]}"; do
 
             OUTPUT_FOLDER=${JOB_NAME}
 
-            mkdir -p /cluster/home/$USER/code/master-thesis/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
-            mkdir -p /cluster/home/$USER/code/master-thesis/output/$OUTPUT_FOLDER/images            # Store images
-            mkdir -p /cluster/home/$USER/code/master-thesis/runs/$OUTPUT_FOLDER                     # Stores tensorboard info
+            mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
+            mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/images            # Store images
+            mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/runs/$OUTPUT_FOLDER                     # Stores tensorboard info
 
-            echo "Made directory: /cluster/home/$USER/code/master-thesis/output/$OUTPUT_FOLDER"
-            OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/output/$OUTPUT_FOLDER/idun_out.out"
+            echo "Made directory: /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER"
+            OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/idun_out.out"
             echo "Current OUTPUT_FOLDER is: $OUTPUT_FOLDER"
 
             # Define the destination path for the code
