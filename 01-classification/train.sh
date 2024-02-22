@@ -1,7 +1,7 @@
 #!/bin/bash
 TEST_MODE=true
 
-MODELS=("densenet")
+MODELS=("swin")
 TASKS=("multi-class")
 CLASS_IMBALANCES=("false")
 
@@ -66,7 +66,7 @@ for MODEL in "${MODELS[@]}"; do
               --exclude='utils/__pycache__' \
               --exclude='trainers/__pycache__' \
               --exclude='mlruns/' \
-              /cluster/home/$USER/code/master-thesis/ $CODE_PATH
+              /cluster/home/$USER/code/master-thesis/01-classification/ $CODE_PATH
 
             echo "Current user is: $USER"
             echo "Current path is: $CURRENT_PATH"
