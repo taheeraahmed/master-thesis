@@ -5,7 +5,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 
 
-class ChestXray14MultiClassDataset(Dataset):
+class ChestXray14Dataset(Dataset):
     def __init__(self, dataframe, transform=None):
         """
         Args:

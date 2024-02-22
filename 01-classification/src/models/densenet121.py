@@ -4,7 +4,7 @@ from trainers.multiclass_trainer import TrainerClass
 from torch.utils.data import DataLoader
 from torchvision import transforms, models
 import torchxrayvision as xrv
-from datasets.chestxray14 import ChestXray14Dataset
+from datasets import ChestXray14Dataset
 from utils.df import get_df_image_paths_labels
 from utils.handle_class_imbalance import get_class_weights
 
