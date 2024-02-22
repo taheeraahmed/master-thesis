@@ -1,15 +1,14 @@
-import torch.nn as nn
 import torch
+from transformers import Swinv2ForImageClassification
 from trainers.multiclass_trainer import TrainerClass
 from torch.utils.data import DataLoader
-from torchvision import transforms, models
-import torchxrayvision as xrv
-from datasets import ChestXray14Dataset
+from torchvision import transforms
+from datasets import ChestXray14SwinDataset
 from utils.df import get_df_image_paths_labels
 from utils.handle_class_imbalance import get_class_weights
 
 
-def densenet121(logger, args, idun_datetime_done, data_path):
+def swin(logger, args, idun_datetime_done, data_path):
     shuffle = True
     num_workers = 4
 
@@ -21,12 +20,13 @@ def densenet121(logger, args, idun_datetime_done, data_path):
         transforms.Normalize(mean=[0.485], std=[0.229]),
     ])
 
-    model = xrv.models.get_model(weights="densenet121-res224-nih")
+    model = Swinv2ForImageClassification.from_pretrained(
+        "microsoft/swinv2-tiny-patch4-window8-256")
+    
     model.op_threshs = None
-    model.classifier = torch.nn.Linear(1024, 14)
+    model.classifier = torch.nn.Linear(768, 14)
 
-    # only training classifier
-    optimizer = torch.optim.Adam(model.classifier.parameters())
+    optimizer = torch.optim.Adam(model.parameters())
 
     train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
     if args.test_mode:
@@ -37,11 +37,12 @@ def densenet121(logger, args, idun_datetime_done, data_path):
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
 
-    train_dataset = ChestXray14Dataset(dataframe=train_df, transform=transform)
+    train_dataset = ChestXray14SwinDataset(
+        dataframe=train_df, model_name="microsoft/swinv2-tiny-patch4-window8-256")
     train_dataloader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    val_dataset = ChestXray14Dataset(dataframe=val_df, transform=transform)
+    val_dataset = ChestXray14SwinDataset(dataframe=val_df, model_name="microsoft/swinv2-tiny-patch4-window8-256")
     validation_dataloader = DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
 
@@ -49,7 +50,7 @@ def densenet121(logger, args, idun_datetime_done, data_path):
 
     trainer = TrainerClass(
         model=model,
-        model_name=args.model,
+        model_name = args.model,
         class_weights=class_weights,
         model_output_folder=f'output/{args.output_folder}/model_checkpoints',
         logger=logger,

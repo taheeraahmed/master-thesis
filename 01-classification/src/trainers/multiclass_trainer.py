@@ -13,8 +13,9 @@ torch.backends.cudnn.benchmark = True
 
 
 class TrainerClass:
-    def __init__(self, model, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None):
+    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None):
         self.model = model
+        self.model_name = model_name
         self.model_output_folder = model_output_folder
         self.logger = logger
         self.optimizer = optimizer
@@ -104,6 +105,7 @@ class TrainerClass:
 
             # forward pass
             outputs = self.model(inputs)
+
             logits = outputs if model_arg == 'densenet' else outputs.logits
             # Ensure logits are on the correct device
             logits = logits.to(self.device)

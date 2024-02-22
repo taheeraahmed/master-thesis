@@ -29,8 +29,11 @@ def get_df_image_paths_labels(args, data_path, logger):
             lambda x: 1 if disease in x else 0)
     df = df.drop('Finding Labels', axis=1)
 
-    plot_number_patient_disease(
-        df, diseases, image_output=f'output/{args.output_folder}/images/number_patient_disease.png')
+    try:
+        plot_number_patient_disease(
+            df, diseases, image_output=f'output/{args.output_folder}/images/number_patient_disease.png')
+    except Exception as e:
+        logger.error(f'Error plotting number_patient_disease: {e}')
 
     # used for handling data leak
     patient_ids = df['Patient ID'].unique()
@@ -54,9 +57,12 @@ def get_df_image_paths_labels(args, data_path, logger):
     val_df = val_df.drop('Patient ID', axis=1).reset_index(drop=True)
 
     # calculate the percentages of each disease in the train, validation, and test sets
-    plot_percentage_train_val(train_df=train_df,
-                              val_df=val_df,
-                              diseases=diseases,
-                              image_output=f'output/{args.output_folder}/images/percentage_class_train_val_test.png'
-                              )
+    try:
+        plot_percentage_train_val(train_df=train_df,
+                                val_df=val_df,
+                                diseases=diseases,
+                                image_output=f'output/{args.output_folder}/images/percentage_class_train_val_test.png'
+                                )
+    except Exception as e:
+        logger.error(f'Error plotting percentage_train_val: {e}')
     return train_df, val_df
