@@ -1,9 +1,10 @@
 #!/bin/bash
-TEST_MODE=false
+TEST_MODE=true
 
 MODELS=("densenet" "swin")
 TASKS=("multi-class")
 CLASS_IMBALANCES=("false")
+LOSS=bce # focal-loss or bce
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
@@ -39,7 +40,7 @@ for MODEL in "${MODELS[@]}"; do
                 JOB_NAME="${JOB_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
             fi
 
-            OUTPUT_FOLDER=${JOB_NAME}
+            OUTPUT_FOLDER=${JOB_NAME}-$LOSS
 
             mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
             mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/images            # Store images
@@ -82,7 +83,7 @@ for MODEL in "${MODELS[@]}"; do
               --gres=gpu:1 \
               --job-name=$JOB_NAME \
               --output=$OUTPUT_FILE \
-              --export=TEST_MODE=$TEST_MODE,OUTPUT_FOLDER=$OUTPUT_FOLDER,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,TASK=$TASK,CLASS_IMBALANCE=$CLASS_IMBALANCE \
+              --export=TEST_MODE=$TEST_MODE,OUTPUT_FOLDER=$OUTPUT_FOLDER,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,TASK=$TASK,CLASS_IMBALANCE=$CLASS_IMBALANCE,LOSS=$LOSS \
               $CODE_PATH/train.slurm
 
         done

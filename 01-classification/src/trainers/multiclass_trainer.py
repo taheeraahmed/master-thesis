@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score, roc_auc_score
 import time
-from utils.set_up import calculate_idun_time_left
+from utils import calculate_idun_time_left, WeightedFocalLoss
 import torchvision
 import numpy as np
 from tqdm import tqdm
@@ -13,7 +13,7 @@ torch.backends.cudnn.benchmark = True
 
 
 class TrainerClass:
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None):
+    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss='focal-loss'):
         self.model = model
         self.model_name = model_name
         self.model_output_folder = model_output_folder
@@ -32,13 +32,30 @@ class TrainerClass:
             self.logger.warning('GPU unavailable')
 
         if class_weights is not None:
+            self.logger.info('Using weighted loss')
             assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
             assert len(class_weights) == len(
                 self.classnames), "The length of class_weights must match the number of classes"
             class_weights = class_weights.to(self.device)
-            self.criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights)
+            if loss == 'focal-loss':
+                self.criterion = WeightedFocalLoss(alpha=class_weights.to(
+                    self.device), gamma=2.0, reduction='mean')
+            elif loss == 'bce':
+                self.criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights)
+            else:
+                logger.error("Invalid loss function")
+                raise ValueError("Invalid loss function")
         else:
-            self.criterion = nn.CrossEntropyLoss()
+            self.logger.info('Using unweighted loss')
+            if loss == 'focal-loss':
+                self.criterion = WeightedFocalLoss(
+                    alpha=None, gamma=2.0, reduction='mean')
+            elif loss == 'bce':
+                self.criterion = nn.BCEWithLogitsLoss()
+            else:
+                logger.error("Invalid loss function")
+                raise ValueError("Invalid loss function")
+
         self.scheduler = torch.optim.lr_scheduler.StepLR(
             self.optimizer, step_size=5, gamma=0.1)
 

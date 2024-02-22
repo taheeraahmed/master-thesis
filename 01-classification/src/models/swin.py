@@ -42,6 +42,7 @@ def swin(logger, args, idun_datetime_done, data_path):
     trainer = TrainerClass(
         model=model,
         model_name = args.model,
+        loss = args.loss,
         class_weights=class_weights,
         model_output_folder=f'output/{args.output_folder}/model_checkpoints',
         logger=logger,

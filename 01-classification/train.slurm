@@ -16,7 +16,7 @@ module load Python/3.10.8-GCCcore-12.2.0
 echo "installing requirements"
 pip install -q -r requirements.txt
 
-echo "running python-scrip"
+echo "running python-script"
 python $CODE_PATH/src/train.py \
   --test_mode $TEST_MODE \
   --output_folder $OUTPUT_FOLDER \
@@ -26,5 +26,6 @@ python $CODE_PATH/src/train.py \
   --learning_rate $LEARNING_RATE \
   --num_epochs $NUM_EPOCHS \
   --class_imbalance $CLASS_IMBALANCE \
+  --loss $LOSS \
 
 echo "done running train.py"
