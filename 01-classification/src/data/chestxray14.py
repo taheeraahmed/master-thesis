@@ -36,7 +36,7 @@ class ChestXray14SwinDataset(Dataset):
         labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
         labels = torch.tensor(labels)
 
-        return {"img": processed_image, "lab": labels}
+        return {"pixel_values": processed_image, "labels": labels}
 
 
 class ChestXray14Dataset(Dataset):
