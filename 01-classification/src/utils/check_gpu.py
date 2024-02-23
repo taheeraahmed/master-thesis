@@ -1,5 +1,5 @@
 from pynvml import *
-
+import sys
 
 def check_gpu(logger):
     try:
@@ -13,4 +13,5 @@ def check_gpu(logger):
             # gpu_device = GPUDevice(handle=handle, gpu_index=i)
             devices.append(nvmlDeviceGetTotalEnergyConsumption(handle))
     except:
-        logger.info('Not supported')
+        logger.error('Not supported')
+        sys.exit(1)
