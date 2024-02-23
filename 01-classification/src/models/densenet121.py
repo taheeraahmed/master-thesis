@@ -4,7 +4,7 @@ from trainers.multiclass_trainer import TrainerClass
 from torch.utils.data import DataLoader
 from torchvision import transforms, models
 import torchxrayvision as xrv
-from datasets import ChestXray14Dataset
+from data.chestxray14 import ChestXray14Dataset
 from utils.df import get_df_image_paths_labels
 from utils.handle_class_imbalance import get_class_weights
 
@@ -23,7 +23,12 @@ def densenet121(logger, args, idun_datetime_done, data_path):
 
     model = xrv.models.get_model(weights="densenet121-res224-nih")
     model.op_threshs = None
-    model.classifier = torch.nn.Linear(1024, 14)
+
+    # Change the last layer to output 14 classes and use sigmoid activation for mulitlabel classification
+    model.classifier = nn.Sequential(
+        nn.Linear(model.classifier.in_features, 14),
+        nn.Sigmoid()
+    )
 
     # only training classifier
     optimizer = torch.optim.Adam(model.classifier.parameters())
