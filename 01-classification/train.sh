@@ -3,6 +3,7 @@ TEST_MODE=true
 
 MODELS=("densenet" "swin")
 TASKS=("multi-class")
+# TODO: Remove class imbalance
 CLASS_IMBALANCES=("false")
 LOSS=bce # focal-loss or bce
 
