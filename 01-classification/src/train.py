@@ -36,7 +36,6 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin']
-    task_choices = ['multi-class']
     # TODO: Rename bce to wbce and focal-loss to wfl
     loss_choices = ['bce', 'focal-loss']
 
