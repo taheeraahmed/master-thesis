@@ -1,3 +1,5 @@
+from transformers import Trainer
+import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -12,7 +14,41 @@ import os
 torch.backends.cudnn.benchmark = True
 
 
+class TrainerHF(Trainer):
+    """
+    Class to handle custom loss function from Hugging Face Trainer
+    It works with Swin Transformer from Hugging Face
+    """
+
+    def __init__(self, *args, class_weights=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Convert class weights to a tensor if not already one
+        if class_weights is not None and not isinstance(class_weights, torch.Tensor):
+            class_weights = torch.tensor(
+                class_weights, dtype=torch.float).to(self.model.device)
+        self.class_weights = class_weights
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        # Ensure labels are on the correct device
+        labels = inputs.get("labels").to(self.model.device)
+        outputs = model(**inputs)
+        logits = outputs.logits
+        if self.class_weights is not None:
+            # Move class weights to the same device as model and inputs
+            class_weights = self.class_weights.to(self.model.device)
+            loss_fct = torch.nn.BCEWithLogitsLoss(weight=class_weights)
+            loss = loss_fct(logits, labels)
+        else:
+            loss = F.binary_cross_entropy_with_logits(logits, labels.float())
+        return (loss, outputs) if return_outputs else loss
+
+
 class TrainerClass:
+    """
+    Class to handle training and validation of a multi-class classification model.
+    It works with DenseNet from xrayvision library
+    """
+
     def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss='focal-loss'):
         self.model = model
         self.model_name = model_name

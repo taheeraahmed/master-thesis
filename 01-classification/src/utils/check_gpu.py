@@ -13,5 +13,4 @@ def check_gpu(logger):
             # gpu_device = GPUDevice(handle=handle, gpu_index=i)
             devices.append(nvmlDeviceGetTotalEnergyConsumption(handle))
     except:
-        logger.error('Not supported')
-        sys.exit(1)
+        logger.error('NVML drivrer version not accessible')
