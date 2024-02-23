@@ -49,7 +49,7 @@ class TrainerClass:
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss='focal-loss'):
+    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss='wfl'):
         self.model = model
         self.model_name = model_name
         self.model_output_folder = model_output_folder
@@ -73,17 +73,17 @@ class TrainerClass:
             assert len(class_weights) == len(
                 self.classnames), "The length of class_weights must match the number of classes"
             class_weights = class_weights.to(self.device)
-            if loss == 'focal-loss':
+            if loss == 'wfl':
                 self.criterion = WeightedFocalLoss(alpha=class_weights.to(
                     self.device), gamma=2.0, reduction='mean')
-            elif loss == 'bce':
+            elif loss == 'wbce':
                 self.criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights)
             else:
                 logger.error("Invalid loss function")
                 raise ValueError("Invalid loss function")
         else:
             self.logger.info('Using unweighted loss')
-            if loss == 'focal-loss':
+            if loss == 'fl':
                 self.criterion = WeightedFocalLoss(
                     alpha=None, gamma=2.0, reduction='mean')
             elif loss == 'bce':

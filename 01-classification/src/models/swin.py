@@ -58,7 +58,7 @@ def swin(logger, args, idun_datetime_done, data_path):
         nn.Sigmoid()
     )
 
-    if args.loss == 'bce':
+    if args.loss == 'wbce':
         training_args = TrainingArguments(
             output_dir=f'output/{args.output_folder}',
             num_train_epochs=args.num_epochs,  # number of training epochs
@@ -86,7 +86,7 @@ def swin(logger, args, idun_datetime_done, data_path):
         )
         trainer.train()
         trainer.evaluate()
-    elif args.loss_function == 'focal-loss':
+    elif args.loss == 'wfl':
         raise NotImplementedError
     else:
         logger.error('Invalid loss function argument')

@@ -37,7 +37,7 @@ def train(args):
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin']
     # TODO: Rename bce to wbce and focal-loss to wfl
-    loss_choices = ['bce', 'focal-loss']
+    loss_choices = ['wbce', 'wfl']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("-lr", "--learning_rate",
                         help="Learning rate", type=float, default=0.01)
     parser.add_argument("-l", "--loss", choices=loss_choices,
-                        help="Type of loss function used", default="bce")
+                        help="Type of loss function used", default="wbce")
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)

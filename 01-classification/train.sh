@@ -2,7 +2,7 @@
 TEST_MODE=true
 
 MODELS=("densenet" "swin")
-LOSS=bce # focal-loss or bce
+LOSS=wfl # wfl or wbce
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
@@ -18,7 +18,8 @@ CURRENT_PATH=$(pwd)
 
 for MODEL in "${MODELS[@]}"; do
     PARTITION="GPUQ"
-    JOB_NAME=${DATE}-${MODEL}-${TASK}
+    JOB_NAME=${DATE}-${MODEL}-$LOSS
+
     if [ "$TEST_MODE" = true ]; then
         JOB_NAME="TEST-${JOB_NAME}"
         IDUN_TIME=00:09:00
@@ -27,12 +28,11 @@ for MODEL in "${MODELS[@]}"; do
         NUM_EPOCHS=2
         PARTITION="short"
     fi
-
     if [ "$TEST_MODE" = false ]; then
         JOB_NAME="${JOB_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
     fi
 
-    OUTPUT_FOLDER=${JOB_NAME}-$LOSS
+    OUTPUT_FOLDER=${JOB_NAME}
 
     mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
     mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/images            # Store images
