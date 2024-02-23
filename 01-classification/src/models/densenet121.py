@@ -54,7 +54,7 @@ def densenet121(logger, args, idun_datetime_done, data_path):
         class_weights=class_weights,
         model_output_folder=f'output/{args.output_folder}/model_checkpoints',
         logger=logger,
-        log_dir=f'runs/{args.output_folder}',
+        log_dir=f'output/{args.output_folder}',
         optimizer=optimizer,
     )
     trainer.train(

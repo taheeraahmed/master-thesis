@@ -17,7 +17,7 @@ def swin(logger, args, idun_datetime_done, data_path):
     model.op_threshs = None
     model.classifier = torch.nn.Linear(768, 14)
 
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.classifier.parameters())
 
     train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
     if args.test_mode:
@@ -46,7 +46,7 @@ def swin(logger, args, idun_datetime_done, data_path):
         class_weights=class_weights,
         model_output_folder=f'output/{args.output_folder}/model_checkpoints',
         logger=logger,
-        log_dir=f'runs/{args.output_folder}',
+        log_dir=f'output/{args.output_folder}',
         optimizer=optimizer,
     )
     trainer.train(
