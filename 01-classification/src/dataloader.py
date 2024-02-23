@@ -2,7 +2,6 @@ import torch
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset
-from transformers import AutoImageProcessor
 
 
 class ChestXray14SwinDataset(Dataset):
@@ -14,7 +13,12 @@ class ChestXray14SwinDataset(Dataset):
         """
         self.dataframe = dataframe
         self.model_name = model_name
-        self.processor = AutoImageProcessor.from_pretrained(model_name)
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                                 0.229, 0.224, 0.225]),
+        ])
         self.labels = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema',
                        'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening',
                        'Pneumonia', 'Pneumothorax']
@@ -30,9 +34,8 @@ class ChestXray14SwinDataset(Dataset):
         image = Image.open(img_path).convert('RGB')
 
         # Process image
-        processed_image = self.processor(
-            images=image, return_tensors="pt").pixel_values[0]
-
+        processed_image = self.transform(image)
+        
         labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
         labels = torch.tensor(labels)
 
