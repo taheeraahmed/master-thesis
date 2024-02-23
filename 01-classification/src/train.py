@@ -50,8 +50,6 @@ if __name__ == "__main__":
                         required=False, default=True)
     parser.add_argument("-m", "--model", choices=model_choices,
                         help="Model to run", required=True)
-    parser.add_argument("-im", "--class_imbalance",
-                        help="Handle class imbalance", required=False, default=False)
     parser.add_argument("-e", "--num_epochs",
                         help="Number of epochs", type=int, default=15)
     parser.add_argument("-bs", "--batch_size",
@@ -63,5 +61,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
-    args.class_imbalance = str_to_bool(args.class_imbalance)
     train(args)

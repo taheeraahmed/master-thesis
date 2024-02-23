@@ -25,7 +25,6 @@ python $CODE_PATH/src/train.py \
   --batch_size $BATCH_SIZE \
   --learning_rate $LEARNING_RATE \
   --num_epochs $NUM_EPOCHS \
-  --class_imbalance $CLASS_IMBALANCE \
   --loss $LOSS \
 
 echo "done running train.py"
