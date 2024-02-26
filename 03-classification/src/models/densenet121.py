@@ -24,10 +24,8 @@ def densenet121(logger, args, idun_datetime_done, data_path):
     model = xrv.models.get_model(weights="densenet121-res224-nih")
     model.op_threshs = None
 
-    # Change the last layer to output 14 classes and use sigmoid activation for mulitlabel classification
     model.classifier = nn.Sequential(
         nn.Linear(model.classifier.in_features, 14),
-        nn.Sigmoid()
     )
 
     # only training classifier
