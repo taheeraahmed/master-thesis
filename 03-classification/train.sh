@@ -36,7 +36,6 @@ for MODEL in "${MODELS[@]}"; do
 
     mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
     mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/images            # Store images
-    mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/runs/$OUTPUT_FOLDER                     # Stores tensorboard info
 
     echo "Made directory: /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER"
     OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/idun_out.out"
