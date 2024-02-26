@@ -1,7 +1,6 @@
 import torch
-from transformers import Swinv2ForImageClassification
+from transformers import Swinv2ForImageClassification, Trainer
 from torch import nn
-from trainers.multiclass_trainer import TrainerHF
 import sys
 
 from data.chestxray14 import ChestXray14SwinDataset
@@ -33,6 +32,8 @@ def compute_metrics(pred):
 def swin(logger, args, idun_datetime_done, data_path):
     logger.info('Using Swin Transformer model from HF and also using HF Trainer')
     train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
+
+
     num_classes = 14
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
@@ -62,7 +63,7 @@ def swin(logger, args, idun_datetime_done, data_path):
         nn.Sigmoid()
     )
 
-    if args.loss == 'wbce':
+    if args.loss == 'wce':
         training_args = TrainingArguments(
             output_dir=f'output/{args.output_folder}',
             num_train_epochs=args.num_epochs,  # number of training epochs
@@ -80,7 +81,7 @@ def swin(logger, args, idun_datetime_done, data_path):
             metric_for_best_model="f1",  # use accuracy to evaluate the best model
             report_to="tensorboard",         # enable logging to TensorBoard
         )
-        trainer = TrainerHF(
+        trainer = Trainer(
             model=model,
             args=training_args,                  # training arguments, defined above
             train_dataset=train_dataset,         # training dataset
