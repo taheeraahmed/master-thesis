@@ -4,7 +4,7 @@ from torch import nn
 import sys
 
 from data.chestxray14 import ChestXray14SwinDataset
-from utils.df import get_df_image_paths_labels
+from utils.df import get_df
 from utils.handle_class_imbalance import get_class_weights
 from transformers import TrainingArguments
 from sklearn.metrics import precision_score, recall_score, f1_score
@@ -31,7 +31,7 @@ def compute_metrics(pred):
 
 def swin(logger, args, idun_datetime_done, data_path):
     logger.info('Using Swin Transformer model from HF and also using HF Trainer')
-    train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
+    train_df, val_df = get_df(args, data_path, logger)
 
 
     num_classes = 14

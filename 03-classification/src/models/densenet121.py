@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms, models
 import torchxrayvision as xrv
 from data.chestxray14 import ChestXray14Dataset
-from utils.df import get_df_image_paths_labels
+from utils.df import get_df
 from utils.handle_class_imbalance import get_class_weights
 
 
@@ -31,7 +31,7 @@ def densenet121(logger, args, idun_datetime_done, data_path):
     # only training classifier
     optimizer = torch.optim.Adam(model.classifier.parameters())
 
-    train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
+    train_df, val_df = get_df(args, data_path, logger)
     if args.test_mode:
         logger.warning('Using smaller dataset')
         train_subset_size = 100
