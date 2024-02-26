@@ -1,8 +1,8 @@
 #!/bin/bash
 TEST_MODE=true
 
-MODELS=("densenet" "swin")
-LOSS=wfl # wfl or wbce
+MODELS=("densenet")
+LOSS=wce # wfl or wce
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
@@ -34,12 +34,12 @@ for MODEL in "${MODELS[@]}"; do
 
     OUTPUT_FOLDER=${JOB_NAME}
 
-    mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
-    mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/images            # Store images
-    mkdir -p /cluster/home/$USER/code/master-thesis/01-classification/runs/$OUTPUT_FOLDER                     # Stores tensorboard info
+    mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
+    mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/images            # Store images
+    mkdir -p /cluster/home/$USER/code/master-thesis/03-classification/runs/$OUTPUT_FOLDER                     # Stores tensorboard info
 
-    echo "Made directory: /cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER"
-    OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/01-classification/output/$OUTPUT_FOLDER/idun_out.out"
+    echo "Made directory: /cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER"
+    OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/03-classification/output/$OUTPUT_FOLDER/idun_out.out"
     echo "Current OUTPUT_FOLDER is: $OUTPUT_FOLDER"
 
     # Define the destination path for the code
@@ -59,7 +59,7 @@ for MODEL in "${MODELS[@]}"; do
         --exclude='utils/__pycache__' \
         --exclude='trainers/__pycache__' \
         --exclude='mlruns/' \
-        /cluster/home/$USER/code/master-thesis/01-classification/ $CODE_PATH
+        /cluster/home/$USER/code/master-thesis/03-classification/ $CODE_PATH
 
     echo "Current user is: $USER"
     echo "Current path is: $CURRENT_PATH"

@@ -1,5 +1,3 @@
-from transformers import Trainer
-import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
@@ -14,42 +12,13 @@ import os
 torch.backends.cudnn.benchmark = True
 
 
-class TrainerHF(Trainer):
-    """
-    Class to handle custom loss function from Hugging Face Trainer
-    It works with Swin Transformer from Hugging Face
-    """
-
-    def __init__(self, *args, class_weights=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Convert class weights to a tensor if not already one
-        if class_weights is not None and not isinstance(class_weights, torch.Tensor):
-            class_weights = torch.tensor(
-                class_weights, dtype=torch.float).to(self.model.device)
-        self.class_weights = class_weights
-
-    def compute_loss(self, model, inputs, return_outputs=False):
-        # Ensure labels are on the correct device
-        labels = inputs.get("labels").to(self.model.device)
-        outputs = model(**inputs)
-        logits = outputs.logits
-        if self.class_weights is not None:
-            # Move class weights to the same device as model and inputs
-            class_weights = self.class_weights.to(self.model.device)
-            loss_fct = torch.nn.BCEWithLogitsLoss(weight=class_weights)
-            loss = loss_fct(logits, labels)
-        else:
-            loss = F.binary_cross_entropy_with_logits(logits, labels.float())
-        return (loss, outputs) if return_outputs else loss
-
-
 class TrainerClass:
     """
     Class to handle training and validation of a multi-class classification model.
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss_arg='wfl'):
+    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss_arg='wce'):
         self.model = model
         self.model_name = model_name
         self.model_output_folder = model_output_folder
@@ -64,6 +33,8 @@ class TrainerClass:
         self.criterion = self._get_loss()                   # loss function
         self.scheduler = torch.optim.lr_scheduler.StepLR(   # scheduler
             self.optimizer, step_size=5, gamma=0.1)
+        self.class_weights = class_weights.to(self.device)  # class weights
+
         # best validation F1 score, for checkpointing
         self.best_val_f1 = 0.0
         # tensorboard writer
@@ -82,15 +53,14 @@ class TrainerClass:
 
         if self.class_weights is not None:
             self.logger.info('Using weighted loss')
-            assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
-            assert len(class_weights) == len(
+            assert self.class_weights.ndim == 1, "class_weights must be a 1D tensor"
+            assert len(self.class_weights) == len(
                 self.classnames), "The length of class_weights must match the number of classes"
-            class_weights = class_weights.to(self.device)
             if loss_arg == 'wfl':
-                return WeightedFocalLoss(alpha=class_weights.to(
+                return WeightedFocalLoss(alpha=self.class_weights.to(
                     self.device), gamma=2.0, reduction='mean')
-            elif loss_arg == 'wbce':
-                return nn.BCEWithLogitsLoss(pos_weight=class_weights)
+            elif loss_arg == 'wce':
+                return nn.CrossEntropyLoss(pos_weight=self.class_weights)
             else:
                 self.logger.error("Invalid loss function")
                 raise ValueError("Invalid loss function")
@@ -100,7 +70,7 @@ class TrainerClass:
                 return WeightedFocalLoss(
                     alpha=None, gamma=2.0, reduction='mean')
             elif loss_arg == 'bce':
-                return nn.BCEWithLogitsLoss()
+                return nn.CrossEntropyLoss()
             else:
                 self.logger.error("Invalid loss function")
                 raise ValueError("Invalid loss function")
@@ -152,6 +122,7 @@ class TrainerClass:
         train_class_auc = {cls_name: [] for cls_name in self.classnames}
 
         train_loop = tqdm(train_dataloader, leave=True)
+
         for i, batch in enumerate(train_loop):
             inputs, labels = batch["img"].to(
                 self.device), batch["lab"].to(self.device)
@@ -176,18 +147,19 @@ class TrainerClass:
             # accumulate training loss
             train_loss += loss.item()
 
-            # convert outputs (logits) and targets to binary format for each class
-            outputs_binary = (torch.sigmoid(logits) > 0.5).cpu().numpy()
-            targets_binary = targets.cpu().numpy()
+            # Get the predicted class indices with the highest probability
+            _, predicted_classes = torch.max(logits, 1)
+            # Convert to numpy arrays for comparison
+            predicted_classes = predicted_classes.cpu().numpy()
+            targets = targets.cpu().numpy()
 
-            # appending for roc-auc
-            train_outputs.append(outputs_binary)
-            train_targets.append(targets_binary)
+            # appending for potential metrics calculation outside the loop
+            train_outputs.append(predicted_classes)
+            train_targets.append(targets)
 
-            # calculate and accumulate accuracy
-            train_correct_predictions += np.sum(
-                outputs_binary == targets_binary)
-            train_total_predictions += targets_binary.size
+            # Calculate and accumulate accuracy
+            train_correct_predictions += np.sum(predicted_classes == targets)
+            train_total_predictions += targets.size
 
             if i % 2 == 0:
                 img_grid = torchvision.utils.make_grid(inputs)
@@ -279,25 +251,29 @@ class TrainerClass:
                 # Ensure targets are on the correct device
                 targets = labels.to(self.device)
 
-                # criterion
+                # compute loss
                 loss = self.criterion(logits, targets)
 
                 # accumulate validation loss
                 val_loss += loss.item()
 
-                outputs_binary = (torch.sigmoid(logits) > 0.5).cpu().numpy()
-                targets_binary = targets.cpu().numpy()
+                # Get the predicted class indices with the highest probability
+                _, predicted_classes = torch.max(logits, 1)
+                # Convert to numpy arrays for comparison
+                predicted_classes = predicted_classes.cpu().numpy()
+                targets = targets.cpu().numpy()
 
-                # calculate and accumulate accuracy, auc and F1 score
-                val_correct_predictions += np.sum(
-                    outputs_binary == targets_binary)
-                val_total_predictions += targets_binary.size
-                val_outputs.append(outputs_binary)
-                val_targets.append(targets_binary)
+                # calculate and accumulate accuracy
+                val_correct_predictions += np.sum(predicted_classes == targets)
+                val_total_predictions += targets.size
 
-        # concatenate all outputs and targets
-        val_outputs = np.vstack(val_outputs)
-        val_targets = np.vstack(val_targets)
+                # For metrics calculation (e.g., F1 score, precision, recall), append predictions and targets
+                val_outputs.append(predicted_classes)
+                val_targets.append(targets)
+
+        # Assuming you want to compute metrics outside the loop
+        val_outputs = np.concatenate(val_outputs)
+        val_targets = np.concatenate(val_targets)
 
         # class-wise f1 and auc
         for cls_idx, cls_name in enumerate(self.classnames):

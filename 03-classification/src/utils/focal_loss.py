@@ -1,13 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-
 
 class WeightedFocalLoss(nn.Module):
     """
     Implmenetation of the weighted focal loss function taken from with minor modifications:
     https://github.com/clcarwin/focal_loss_pytorch/blob/master/focalloss.py
+
+    :param alpha: A tensor of shape [num_classes] containing weights for each class.
+    :param gamma: Focusing parameter to adjust the rate at which easy examples are down-weighted.
+    :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'
     """
 
     def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
@@ -22,36 +24,26 @@ class WeightedFocalLoss(nn.Module):
 
         self.reduction = reduction
 
-    def forward(self, input, target):
+    def forward(self, inputs, targets):
         """
-        Apply the focal loss between input and target
+        Forward pass of the Focal Loss.
+        :param inputs: Predictions from the model (logits, before softmax).
+        :param targets: True labels.
+        :return: Weighted Focal Loss value.
+        """
+        BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        pt = torch.exp(-BCE_loss) 
+        F_loss = (1 - pt) ** self.gamma * BCE_loss
 
-        Args:
-            input: Tensor of shape (N, C) where N is the batch size and C is the number of classes.
-            target: Tensor of shape (N,) where each value is 0 ≤ targets[i] ≤ C−1.
-        """
-        if input.dim() > 2:
-            # N,C,H,W => N,C,H*W
-            input = input.view(input.size(0), input.size(1), -1)
-            input = input.transpose(1, 2)    # N,C,H*W => N,H*W,C
-            input = input.contiguous().view(-1, input.size(2))   # N,H*W,C => N*H*W,C
-        target = target.long()  # Ensures target is torch.int64
-        #target = target.view(-1, 1) TODO: For some reason this line is causing an error
-        logpt = F.log_softmax(input)
-        logpt = logpt.gather(1, target)
-        logpt = logpt.view(-1)
-        pt = Variable(logpt.data.exp())
         if self.alpha is not None:
-            if self.alpha.type() != input.data.type():
-                self.alpha = self.alpha.type_as(input.data)
-            at = self.alpha.gather(0, target.data.view(-1))
-            logpt = logpt * Variable(at)
-
-        loss = -1 * (1-pt)**self.gamma * logpt
+            if self.alpha.type() != inputs.data.type():
+                self.alpha = self.alpha.type_as(inputs.data)
+            at = self.alpha.gather(0, targets.data.view(-1))
+            F_loss = at * F_loss
 
         if self.reduction == 'mean':
-            return loss.mean()
+            return F_loss.mean()
         elif self.reduction == 'sum':
-            return loss.sum()
-        else:  # 'none'
-            return loss
+            return F_loss.sum()
+        else:
+            return F_loss
