@@ -55,7 +55,7 @@ def swin(logger, args, idun_datetime_done, data_path):
     assert class_weights.size(0) == 14, 'Class weights should be of size 14'
 
     model = Swinv2ForImageClassification.from_pretrained(
-        "microsoft/swinv2-tiny-patch4-window8-256")
+        model_name=model_name)
 
     model.classifier = nn.Sequential(
         nn.Linear(model.classifier.in_features, num_classes),
