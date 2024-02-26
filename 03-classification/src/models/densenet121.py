@@ -31,7 +31,7 @@ def densenet121(logger, args, idun_datetime_done, data_path):
     # only training classifier
     optimizer = torch.optim.Adam(model.classifier.parameters())
 
-    train_df, val_df = get_df(args, data_path, logger)
+    train_df, val_df, labels = get_df(args, data_path, logger)
     if args.test_mode:
         logger.warning('Using smaller dataset')
         train_subset_size = 100

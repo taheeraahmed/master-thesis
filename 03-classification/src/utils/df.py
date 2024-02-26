@@ -49,7 +49,7 @@ def one_hot_encode(df, diseases):
     return df
 
 
-def split_train_val(df, logger):
+def split_train_val(df, val_size, logger):
     """
     Split the data into train and validation sets
 
@@ -58,7 +58,7 @@ def split_train_val(df, logger):
     """
     patient_ids = df['Patient ID'].unique()
     train_ids, val_ids = train_test_split(
-        patient_ids, test_size=0.2, random_state=0)
+        patient_ids, test_size=val_size, random_state=0)
 
     train_df = df[df['Patient ID'].isin(train_ids)]
     val_df = df[df['Patient ID'].isin(val_ids)]
@@ -79,7 +79,7 @@ def get_labels(df):
     Get the labels from the DataFrame from the column 'Finding Labels' in DataEntry2017.csv
     :param df: DataFrame with the image paths and labels
     """
-    labels = df.dataframe['Finding Labels'].str.split(
+    labels = df['Finding Labels'].str.split(
         '|').explode().unique()
     labels.sort()
     return labels
@@ -95,12 +95,16 @@ def get_df(args, data_path, logger):
 
     df = pd.read_csv(f'{data_path}/Data_Entry_2017.csv')
     df = get_df_image_paths_labels(df=df, data_path=data_path)
-    df = df[['Image Path', 'Finding Labels', 'Patient ID']] # select the columns we need
-    labels = get_labels(df)                                 # get the labels from the DataFrame
-    df = one_hot_encode(df, labels)                         # one-hot encode the diseases
-    df = get_one_image_per_class(df)                        # remove images with more than one disease
+    # select the columns we need
+    df = df[['Image Path', 'Finding Labels', 'Patient ID']]
+    # get the labels from the DataFrame
+    labels = get_labels(df)
+    # one-hot encode the diseases
+    df = one_hot_encode(df, labels=labels)
+    # remove images with more than one disease
+    df = get_one_image_per_class(df)
     train_df, val_df = split_train_val(
-        df, train_size=0.8, val_size=0.2, logger=logger)    # split the data into train and validation sets
+        df=df, val_size=0.2, logger=logger)    # split the data into train and validation sets
 
     # plot the number of patients with each disease
     try:
@@ -119,4 +123,4 @@ def get_df(args, data_path, logger):
     except Exception as e:
         logger.error(f'Error plotting percentage_train_val: {e}')
 
-    return train_df, val_df
+    return train_df, val_df, labels

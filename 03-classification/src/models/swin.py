@@ -31,7 +31,7 @@ def compute_metrics(pred):
 
 def swin(logger, args, idun_datetime_done, data_path):
     logger.info('Using Swin Transformer model from HF and also using HF Trainer')
-    train_df, val_df = get_df(args, data_path, logger)
+    train_df, val_df, labels = get_df(args, data_path, logger)
 
 
     num_classes = 14
