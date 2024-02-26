@@ -1,9 +1,9 @@
-import os
 from PIL import Image
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset
 from transformers import AutoImageProcessor
+
 
 class ChestXray14SwinDataset(Dataset):
     def __init__(self, dataframe, model_name):
@@ -15,9 +15,13 @@ class ChestXray14SwinDataset(Dataset):
         self.dataframe = dataframe
         self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(model_name)
-        self.labels = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema',
-                       'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening',
-                       'Pneumonia', 'Pneumothorax']
+        self.labels = self._get_labels()
+
+    def _get_labels(self):
+        labels = self.dataframe['Finding Labels'].str.split(
+            '|').explode().unique()
+        labels.sort()
+        return labels
 
     def __len__(self):
         return len(self.dataframe)
@@ -48,12 +52,12 @@ class ChestXray14Dataset(Dataset):
         """
         self.dataframe = dataframe
         self.transform = transform
-        self.labels = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema',
-                       'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening',
-                       'Pneumonia', 'Pneumothorax']
+        self.labels = self._get_labels()
 
         self.underrepresented_diseases = ['Hernia', 'Pneumonia', 'Fibrosis', 'Emphysema',
                                           'Cardiomegaly', 'Pleural_Thickening', 'Consolidation', 'Pneumothorax', 'Mass', 'Nodule']
+        self.underrepresented_diseases_indices = [self.labels.index(
+            disease) for disease in self.underrepresented_diseases]
 
         self.data_augmentation = transforms.Compose([
             transforms.RandomRotation(0.1),
@@ -61,8 +65,11 @@ class ChestXray14Dataset(Dataset):
             transforms.RandomHorizontalFlip(),
         ])
 
-        self.underrepresented_diseases_indices = [self.labels.index(
-            disease) for disease in self.underrepresented_diseases]
+    def _get_labels(self):
+        labels = self.dataframe['Finding Labels'].str.split(
+            '|').explode().unique()
+        labels.sort()
+        return labels
 
     def _augment_images(self, image, labels):
         ''' 
