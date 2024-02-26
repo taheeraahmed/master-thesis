@@ -33,6 +33,9 @@ def compute_metrics(pred):
 def swin(logger, args, idun_datetime_done, data_path):
     logger.info('Using Swin Transformer model from HF and also using HF Trainer')
     train_df, val_df = get_df_image_paths_labels(args, data_path, logger)
+    num_classes = 14
+    model_name = "microsoft/swinv2-tiny-patch4-window8-256"
+
     if args.test_mode:
         logger.warning('Using smaller dataset')
         train_subset_size = 100
@@ -42,10 +45,10 @@ def swin(logger, args, idun_datetime_done, data_path):
         val_df = val_df.head(val_subset_size)
 
     train_dataset = ChestXray14SwinDataset(
-        dataframe=train_df, model_name="microsoft/swinv2-tiny-patch4-window8-256")
+        model_name=model_name, dataframe=train_df)
 
     val_dataset = ChestXray14SwinDataset(
-        dataframe=val_df, model_name="microsoft/swinv2-tiny-patch4-window8-256")
+        model_name=model_name, dataframe=val_df)
 
     # Making sure the class weights have the correct shape
     class_weights = get_class_weights(train_df)
@@ -53,8 +56,9 @@ def swin(logger, args, idun_datetime_done, data_path):
 
     model = Swinv2ForImageClassification.from_pretrained(
         "microsoft/swinv2-tiny-patch4-window8-256")
+
     model.classifier = nn.Sequential(
-        nn.Linear(model.classifier.in_features, 14),
+        nn.Linear(model.classifier.in_features, num_classes),
         nn.Sigmoid()
     )
 
