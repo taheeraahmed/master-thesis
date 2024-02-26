@@ -12,9 +12,9 @@ def get_one_image_per_class(df):
     If there are more than two classes in an image it will be removed from the dataframe.
     :param df: DataFrame with the validation set
     """
-    df['Finding_Sum'] = df.iloc[:, 3:].sum(axis=1)
-    df = df[df['Finding_Sum'] == 1 & df['Finding_Sum'] == 0]
-    df = df.drop('Finding_Sum', axis=1)
+    df['Finding Sum'] = df.iloc[:, 3:].sum(axis=1)
+    df = df[df['Finding Sum'].isin([0, 1])]
+    df = df.drop('Finding Sum', axis=1)
     return df
 
 
@@ -52,7 +52,7 @@ def one_hot_encode(df, diseases):
 def split_train_val(df, logger):
     """
     Split the data into train and validation sets
-    
+
     :param df: DataFrame with the image paths and labels
     :param logger: The  logger object
     """
@@ -74,6 +74,17 @@ def split_train_val(df, logger):
     return train_df, val_df
 
 
+def get_labels(df):
+    """
+    Get the labels from the DataFrame from the column 'Finding Labels' in DataEntry2017.csv
+    :param df: DataFrame with the image paths and labels
+    """
+    labels = df.dataframe['Finding Labels'].str.split(
+        '|').explode().unique()
+    labels.sort()
+    return labels
+
+
 def get_df(args, data_path, logger):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
@@ -81,27 +92,20 @@ def get_df(args, data_path, logger):
     :param data_path: The path to the data
     :param logger: The logger object
     """
-    diseases = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema',
-                'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening',
-                'Pneumonia', 'Pneumothorax']
+
     df = pd.read_csv(f'{data_path}/Data_Entry_2017.csv')
     df = get_df_image_paths_labels(df=df, data_path=data_path)
-    df = df[['Image Path', 'Finding Labels', 'Patient ID']]
-
-    # one-hot encoding disease and dropping finding labels
-    df = one_hot_encode(df, diseases)
-
-    # remove images with more than one disease
-    df = get_one_image_per_class(df)
-
-    # split the data into train and validation sets
+    df = df[['Image Path', 'Finding Labels', 'Patient ID']] # select the columns we need
+    labels = get_labels(df)                                 # get the labels from the DataFrame
+    df = one_hot_encode(df, labels)                         # one-hot encode the diseases
+    df = get_one_image_per_class(df)                        # remove images with more than one disease
     train_df, val_df = split_train_val(
-        df, train_size=0.8, val_size=0.2, logger=logger)
+        df, train_size=0.8, val_size=0.2, logger=logger)    # split the data into train and validation sets
 
     # plot the number of patients with each disease
     try:
         plot_number_patient_disease(
-            df, diseases, image_output=f'output/{args.output_folder}/images/number_patient_disease.png')
+            df, labels, image_output=f'output/{args.output_folder}/images/number_patient_disease.png')
     except Exception as e:
         logger.error(f'Error plotting number_patient_disease: {e}')
 
@@ -109,7 +113,7 @@ def get_df(args, data_path, logger):
     try:
         plot_percentage_train_val(train_df=train_df,
                                   val_df=val_df,
-                                  diseases=diseases,
+                                  diseases=labels,
                                   image_output=f'output/{args.output_folder}/images/percentage_class_train_val_test.png'
                                   )
     except Exception as e:
