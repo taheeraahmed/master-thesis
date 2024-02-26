@@ -1,1 +1,1 @@
-from .multiclass_trainer import TrainerClass
+from .class_trainer import TrainerClass

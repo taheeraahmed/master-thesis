@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from trainers.multiclass_trainer import TrainerClass
+from trainers.class_trainer import TrainerClass
 from torch.utils.data import DataLoader
 from torchvision import transforms, models
 import torchxrayvision as xrv
