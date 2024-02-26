@@ -49,7 +49,7 @@ class TrainerClass:
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss='wfl'):
+    def __init__(self, model, model_name, model_output_folder, logger, optimizer, log_dir='runs', class_weights=None, loss_arg='wfl'):
         self.model = model
         self.model_name = model_name
         self.model_output_folder = model_output_folder
@@ -58,51 +58,52 @@ class TrainerClass:
         self.classnames = ['Atelectasis', 'Consolidation', 'Infiltration', 'Pneumothorax',
                            'Edema', 'Emphysema', 'Fibrosis', 'Effusion', 'Pneumonia',
                            'Pleural_Thickening', 'Cardiomegaly', 'Nodule', 'Mass', 'Hernia']
+        self.loss_arg = loss_arg
 
-        # moving model to device if cuda available
+        self.device = self._get_device()                    # device
+        self.criterion = self._get_loss()                   # loss function
+        self.scheduler = torch.optim.lr_scheduler.StepLR(   # scheduler
+            self.optimizer, step_size=5, gamma=0.1)
+        # best validation F1 score, for checkpointing
+        self.best_val_f1 = 0.0
+        # tensorboard writer
+        self.writer = SummaryWriter(log_dir)
+
+    def _get_device(self):
         if torch.cuda.is_available():
-            self.device = torch.device("cuda")
             self.model.to(self.device)
+            return torch.device("cuda")
         else:
-            self.device = torch.device("cpu")
             self.logger.warning('GPU unavailable')
+            return torch.device("cpu")
 
-        if class_weights is not None:
+    def _get_loss(self):
+        loss_arg = self.loss_arg
+
+        if self.class_weights is not None:
             self.logger.info('Using weighted loss')
             assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
             assert len(class_weights) == len(
                 self.classnames), "The length of class_weights must match the number of classes"
             class_weights = class_weights.to(self.device)
-            if loss == 'wfl':
-                self.criterion = WeightedFocalLoss(alpha=class_weights.to(
+            if loss_arg == 'wfl':
+                return WeightedFocalLoss(alpha=class_weights.to(
                     self.device), gamma=2.0, reduction='mean')
-            elif loss == 'wbce':
-                self.criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights)
+            elif loss_arg == 'wbce':
+                return nn.BCEWithLogitsLoss(pos_weight=class_weights)
             else:
-                logger.error("Invalid loss function")
+                self.logger.error("Invalid loss function")
                 raise ValueError("Invalid loss function")
         else:
             self.logger.info('Using unweighted loss')
-            if loss == 'fl':
-                self.criterion = WeightedFocalLoss(
+            if loss_arg == 'fl':
+                return WeightedFocalLoss(
                     alpha=None, gamma=2.0, reduction='mean')
-            elif loss == 'bce':
-                self.criterion = nn.BCEWithLogitsLoss()
+            elif loss_arg == 'bce':
+                return nn.BCEWithLogitsLoss()
             else:
-                logger.error("Invalid loss function")
+                self.logger.error("Invalid loss function")
                 raise ValueError("Invalid loss function")
-
-        self.scheduler = torch.optim.lr_scheduler.StepLR(
-            self.optimizer, step_size=5, gamma=0.1)
-
-        self.scheduler = torch.optim.lr_scheduler.StepLR(
-            self.optimizer, step_size=5, gamma=0.1)
-
-        # for checkpointing
-        self.best_val_f1 = 0.0
-
-        # tensorboard writer
-        self.writer = SummaryWriter(log_dir)
 
     def train(self, train_dataloader, validation_dataloader, num_epochs, idun_datetime_done, model_arg):
         for epoch in range(num_epochs):
