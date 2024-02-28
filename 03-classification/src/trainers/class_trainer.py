@@ -39,15 +39,14 @@ class TrainerClass:
         self.best_val_f1 = 0.0
         # tensorboard writer
         self.writer = SummaryWriter(log_dir)
-    
+
     def _get_class_weights(self):
         class_weights = compute_class_weight(
             'balanced', classes=np.unique(self.classnames), y=self.classnames)
         class_weights = torch.tensor(class_weights, dtype=torch.float)
-        print(class_weights.size())
-        print(len(self.classnames))
         assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
-        assert len(class_weights) == len(self.classnames), "The length of class_weights must match the number of classes"
+        assert len(class_weights) == len(
+            self.classnames), "The length of class_weights must match the number of classes"
         return class_weights.to(self.device)
 
     def _get_device(self):
@@ -105,10 +104,6 @@ class TrainerClass:
         train_outputs = []
         train_targets = []
 
-        # storage for class-wise metrics
-        train_class_f1 = {cls_name: [] for cls_name in self.classnames}
-        train_class_auc = {cls_name: [] for cls_name in self.classnames}
-
         train_loop = tqdm(train_dataloader, leave=True)
 
         for i, batch in enumerate(train_loop):
@@ -134,7 +129,8 @@ class TrainerClass:
             train_targets.append(targets)
             targets_indices = torch.argmax(torch.from_numpy(targets), dim=1)
             # calculate and accumulate accuracy
-            train_correct_predictions += np.sum(predicted_classes == targets_indices.numpy())
+            train_correct_predictions += np.sum(
+                predicted_classes == targets_indices.numpy())
             train_total_predictions += len(targets)
 
             if i % 2 == 0:
@@ -142,32 +138,43 @@ class TrainerClass:
                 self.writer.add_image(
                     f'Epoch {epoch}/four_xray_images', img_grid)
 
-        # Concatenate all outputs and targets for overall metrics calculation
+        # concatenate all outputs and targets for overall metrics calculation
         train_outputs = np.concatenate(train_outputs)
         train_targets = np.concatenate(train_targets)
 
-        # Calculate overall metrics for training
+        # calculate overall metrics for training
         avg_train_loss = train_loss / len(train_dataloader)
-        # If train_targets is a tensor and one-hot encoded
+        
+        # convert train_targets to a PyTorch tensor before using torch.argmax()
         if train_targets.ndim > 1:
-            train_targets = torch.from_numpy(train_targets)
-            train_targets_indices = torch.argmax(train_targets, dim=1)
-            train_targets = train_targets_indices.cpu().numpy()  # Convert to NumPy array if not already
+            train_targets_tensor = torch.tensor(train_targets)  # convert numpy.ndarray to PyTorch tensor
+            train_targets_indices = torch.argmax(train_targets_tensor, dim=1)
+        else:
+            # train_targets already a tensor of class indices, ensure it's in the correct format
+            train_targets_indices = torch.tensor(train_targets).long()  
+
+        if not isinstance(train_targets_indices, np.ndarray):
+            train_targets_indices = train_targets_indices.cpu().numpy()
 
         train_accuracy = np.mean(train_outputs == train_targets_indices)
-        train_f1 = f1_score(train_targets, train_outputs, average='macro')
 
-        # Log training metrics
+        train_f1 = f1_score(train_targets_indices,
+                            train_outputs, average='macro')
+
+        # log training metrics
         self.writer.add_scalar('Loss/Train', avg_train_loss, epoch)
         self.writer.add_scalar('F1/Train', train_f1, epoch)
         self.writer.add_scalar('Accuracy/Train', train_accuracy, epoch)
 
-        # Optional: Log class-wise F1 scores for detailed analysis
+        # class-wise F1 scores for detailed analysis
         for cls_idx, cls_name in enumerate(self.classnames):
-            cls_f1 = f1_score(train_targets, train_outputs, labels=[cls_idx], average='macro')
-            self.writer.add_scalar(f'F1_classes/Train/{cls_name}', cls_f1, epoch)
+            cls_f1 = f1_score(train_targets_indices, train_outputs,
+                              labels=[cls_idx], average='macro')
 
-        # Get the current learning rate from the scheduler
+            self.writer.add_scalar(
+                f'F1_classes/Val/{cls_name}', cls_f1, epoch)
+
+        # current learning rate from the scheduler
         current_lr = self.scheduler.get_last_lr()[0]
         # Log the learning rate
         self.writer.add_scalar('Learning rate', current_lr, epoch)
@@ -188,7 +195,6 @@ class TrainerClass:
         val_targets = []
 
         # storage for class-wise metrics
-        val_class_f1 = {cls_name: [] for cls_name in self.classnames}
         val_class_auc = {cls_name: [] for cls_name in self.classnames}
 
         with torch.no_grad():
@@ -200,9 +206,8 @@ class TrainerClass:
                 # forward pass
                 outputs = self.model(inputs)
                 logits = outputs if model_arg == 'densenet' else outputs.logits
-                # Ensure logits are on the correct device
+                # ensure logits and targets are on the correct device
                 logits = logits.to(self.device)
-                # Ensure targets are on the correct device
                 targets = labels.to(self.device)
 
                 # compute loss
@@ -211,9 +216,9 @@ class TrainerClass:
                 # accumulate validation loss
                 val_loss += loss.item()
 
-                # Get the predicted class indices with the highest probability
+                # get the predicted class indices with the highest probability
                 _, predicted_classes = torch.max(logits, 1)
-                # Convert to numpy arrays for comparison
+                # convert to numpy arrays for comparison
                 predicted_classes = predicted_classes.cpu().numpy()
                 targets = targets.cpu().numpy()
 
@@ -223,37 +228,41 @@ class TrainerClass:
                 val_correct_predictions += np.sum(
                     predicted_classes == targets_indices.numpy())
                 val_total_predictions += targets.size
-                # For metrics calculation (e.g., F1 score, precision, recall), append predictions and targets
                 val_outputs.append(predicted_classes)
                 val_targets.append(targets)
 
-        # Assuming you want to compute metrics outside the loop
+        # assuming you want to compute metrics outside the loop
         val_outputs = np.concatenate(val_outputs)
         val_targets = np.concatenate(val_targets)
 
         # calculate average metrics for validation
         avg_val_loss = val_loss / len(validation_dataloader)
 
-        # If train_targets is a tensor and one-hot encoded
+        # one-hot encoding of labels
         if val_targets.ndim > 1:
-            val_targets = torch.from_numpy(val_targets)
-            val_targets_indices = torch.argmax(val_targets, dim=1)
-            # Convert to NumPy array if not already
-            val_targets = val_targets_indices.cpu().numpy()
+            # convert numpy.ndarray to PyTorch tensor
+            val_targets_tensor = torch.tensor(val_targets)
+            val_targets_indices = torch.argmax(val_targets_tensor, dim=1)
+        else:
+            val_targets_indices = torch.tensor(val_targets).long()
+
+        if not isinstance(val_targets_indices, np.ndarray):
+            val_targets_indices = val_targets_indices.cpu().numpy()
 
         val_accuracy = np.mean(val_outputs == val_targets_indices)
-        val_f1 = f1_score(val_targets, val_outputs, average='macro')
+        val_f1 = f1_score(val_targets_indices, val_outputs, average='macro')
 
-        # Log training metrics
-        self.writer.add_scalar('Loss/Train', avg_val_loss, epoch)
-        self.writer.add_scalar('F1/Train', val_f1, epoch)
-        self.writer.add_scalar('Accuracy/Train', val_accuracy, epoch)
+        self.writer.add_scalar('Loss/Val', avg_val_loss, epoch)
+        self.writer.add_scalar('F1/Val', val_f1, epoch)
+        self.writer.add_scalar('Accuracy/Val', val_accuracy, epoch)
 
+        # class-wise F1 score for validation
         for cls_idx, cls_name in enumerate(self.classnames):
-            cls_f1 = f1_score(val_targets, val_outputs,
+            cls_f1 = f1_score(val_targets_indices, val_outputs,
                               labels=[cls_idx], average='macro')
+
             self.writer.add_scalar(
-                f'F1_classes/Train/{cls_name}', cls_f1, epoch)
+                f'F1_classes/Val/{cls_name}', cls_f1, epoch)
 
         # Get the current learning rate from the scheduler
         current_lr = self.scheduler.get_last_lr()[0]
