@@ -114,7 +114,6 @@ class TrainerClass:
         try:
             mean_auc = roc_auc_score(
                 targets_binarized, outputs_probs, average='macro', multi_class='ovr')
-            self.logger.info(f"Mean AUC: {mean_auc}")
         except ValueError as e:
             self.logger.error(f"Error calculating mean AUC: {e}")
 
