@@ -6,18 +6,6 @@ import torch
 from utils.plot_stuff import plot_percentage_train_val, plot_number_patient_disease
 
 
-def get_one_image_per_class(df):
-    """
-    This function will make sure that there is at least one class or zero classes for each image in the DataFrame.
-    If there are more than two classes in an image it will be removed from the dataframe.
-    :param df: DataFrame with the validation set
-    """
-    df['Finding Sum'] = df.iloc[:, 3:].sum(axis=1)
-    df = df[df['Finding Sum'].isin([0, 1])]
-    df = df.drop('Finding Sum', axis=1)
-    return df
-
-
 def get_df_image_paths_labels(df, data_path):
     """
     This function will add the image paths to the DataFrame
@@ -46,6 +34,24 @@ def one_hot_encode(df, labels):
         df[disease] = df['Finding Labels'].apply(
             lambda x: 1 if disease in x else 0)
     df = df.drop('Finding Labels', axis=1)
+    return df
+
+def label_encode(df, labels):
+    """
+    Label encode the diseases in the DataFrame.
+    :param df: DataFrame with the image paths and labels.
+    :param labels: List with the diseases.
+    """
+    # Create a mapping from disease to integer
+    label_to_int = {disease: i for i, disease in enumerate(labels)}
+    # Apply the mapping to the 'Finding Labels' column
+
+    df['Encoded Labels'] = df['Finding Labels'].apply(
+        lambda x: label_to_int[x])
+
+    # Drop the original 'Finding Labels' column
+    df = df.drop('Finding Labels', axis=1)
+
     return df
 
 
@@ -110,12 +116,14 @@ def get_df(args, data_path, logger):
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
     labels = get_labels(df)
-    # one-hot encode the diseases
-    df = one_hot_encode(df, labels=labels)
-    # remove images with more than one disease
-    df = get_one_image_per_class(df)
+    # removing all columns with more than one class
+    df = df[~df['Finding Labels'].str.contains(r'\|')]
+    # one-hot or label encode the diseases
+    df = label_encode(df, labels=labels)
+    # df = one_hot_encode(df, labels=labels)
+
     train_df, val_df = split_train_val(
-        df=df, val_size=0.2, logger=logger)    # split the data into train and validation sets
+        df=df, val_size=0.2, logger=logger)
 
     # plot the number of patients with each disease
     try:
