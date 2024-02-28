@@ -36,13 +36,13 @@ def get_df_image_paths_labels(df, data_path):
     return df
 
 
-def one_hot_encode(df, diseases):
+def one_hot_encode(df, labels):
     """
     One-hot encode the diseases in the DataFrame
     :param df: DataFrame with the image paths and labels
     :param diseases: List with the diseases
     """
-    for disease in diseases:
+    for disease in labels:
         df[disease] = df['Finding Labels'].apply(
             lambda x: 1 if disease in x else 0)
     df = df.drop('Finding Labels', axis=1)
@@ -76,13 +76,24 @@ def split_train_val(df, val_size, logger):
 
 def get_labels(df):
     """
-    Get the labels from the DataFrame from the column 'Finding Labels' in DataEntry2017.csv
+    Get the labels from the DataFrame from the column 'Finding Labels' in DataEntry2017.csv,
+    excluding 'No Findings'.
     :param df: DataFrame with the image paths and labels
     """
-    labels = df['Finding Labels'].str.split(
-        '|').explode().unique()
-    labels.sort()
-    return labels
+    # Explode the 'Finding Labels' into individual labels and get unique values
+    labels = df['Finding Labels'].str.split('|').explode().unique()
+    
+    # Convert to list for easier manipulation
+    labels_list = list(labels)
+    
+    # Remove 'No Findings' from the list, if it exists
+    if 'No Findings' in labels_list:
+        labels_list.remove('No Findings')
+    
+    # Sort the list of labels
+    labels_list.sort()
+    
+    return labels_list
 
 
 def get_df(args, data_path, logger):

@@ -44,7 +44,7 @@ class ChestXray14SwinDataset(Dataset):
 
 
 class ChestXray14Dataset(Dataset):
-    def __init__(self, dataframe, transform=None):
+    def __init__(self, dataframe, transform=None, labels=None):
         """
         ChestXray14 Dataset using DenseNet121 from torchxrayvision pre-trained on the ChestXray14 dataset.
 
@@ -54,15 +54,10 @@ class ChestXray14Dataset(Dataset):
         """
         self.dataframe = dataframe
         self.transform = transform
-        self.labels = self._get_labels()
+        self.labels = labels
 
-        # TODO find underrepresented diseases
-
-    def _get_labels(self):
-        labels = self.dataframe['Finding Labels'].str.split(
-            '|').explode().unique()
-        labels.sort()
-        return labels
+    def __len__(self):
+        return len(self.dataframe)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
