@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.preprocessing import label_binarize
 from sklearn.utils.class_weight import compute_class_weight
 import time
-from utils import calculate_idun_time_left, WeightedFocalLoss
+from utils import calculate_idun_time_left
 import torchvision
 import numpy as np
 from tqdm import tqdm
@@ -94,6 +95,42 @@ class TrainerClass:
         self.logger.info(
             f'Checkpoint saved for epoch {epoch+1} with f1 score: {current_val_accuracy}')
 
+
+    def _calc_auc(self, targets, target_indices, outputs, epoch, mode):
+        # convert and reshape if necessary
+        outputs_tensor = torch.tensor(outputs, dtype=torch.float).view(-1, 1)
+        outputs_probs = torch.nn.functional.softmax(outputs_tensor, dim=1).numpy()
+
+        if targets.ndim == 1:
+            # binarize labels in a one-vs-all fashion
+            n_classes = np.unique(target_indices).size
+            targets_binarized = label_binarize(
+                target_indices, classes=range(n_classes))
+        else:
+            targets_binarized = targets  # assuming train_targets is already one-hot encoded
+
+        # calculate mean AUC
+        mean_auc = 0
+        try:
+            mean_auc = roc_auc_score(
+                targets_binarized, outputs_probs, average='macro', multi_class='ovr')
+            self.logger.info(f"Mean AUC: {mean_auc}")
+        except ValueError as e:
+            self.logger.error(f"Error calculating mean AUC: {e}")
+
+        # calculate class-wise AUC
+        for cls_idx, cls_name in enumerate(self.classnames):
+            try:
+                # adjusted to use outputs_probs
+                class_auc = roc_auc_score(
+                    targets_binarized[:, cls_idx], outputs_probs[:, 0])
+                self.writer.add_scalar(f'AUC/{mode}/{cls_name}', class_auc, epoch)
+            except ValueError as e:
+                self.logger.error(f"Error calculating AUC for {cls_name}: {e}")
+
+        return mean_auc
+
+
     def _train_epoch(self, train_dataloader, epoch, model_arg):
         self.model.train()
 
@@ -144,14 +181,19 @@ class TrainerClass:
 
         # calculate overall metrics for training
         avg_train_loss = train_loss / len(train_dataloader)
-        
+
         # convert train_targets to a PyTorch tensor before using torch.argmax()
         if train_targets.ndim > 1:
-            train_targets_tensor = torch.tensor(train_targets)  # convert numpy.ndarray to PyTorch tensor
+            # convert numpy.ndarray to PyTorch tensor
+            train_targets_tensor = torch.tensor(train_targets)
             train_targets_indices = torch.argmax(train_targets_tensor, dim=1)
         else:
             # train_targets already a tensor of class indices, ensure it's in the correct format
-            train_targets_indices = torch.tensor(train_targets).long()  
+            train_targets_indices = torch.tensor(train_targets).long()
+
+        # calculate AUC
+        train_mean_auc = self._calc_auc(train_targets, train_targets_indices,
+                                        train_outputs, epoch, mode='Train')
 
         if not isinstance(train_targets_indices, np.ndarray):
             train_targets_indices = train_targets_indices.cpu().numpy()
@@ -172,17 +214,17 @@ class TrainerClass:
                               labels=[cls_idx], average='macro')
 
             self.writer.add_scalar(
-                f'F1_classes/Val/{cls_name}', cls_f1, epoch)
+                f'F1_classes/Train/{cls_name}', cls_f1, epoch)
 
         # current learning rate from the scheduler
         current_lr = self.scheduler.get_last_lr()[0]
-        # Log the learning rate
+        # log the learning rate
         self.writer.add_scalar('Learning rate', current_lr, epoch)
-        # Step the scheduler
+        # step the scheduler
         self.scheduler.step()
 
         self.logger.info(
-            f'[Train] Epoch {epoch+1} - Loss: {avg_train_loss:.4f}, F1: {train_f1:.4f}, Accuracy: {train_accuracy:.4f}')
+            f'[Train] Epoch {epoch+1} - Loss: {avg_train_loss:.4f}, F1: {train_f1:.4f}, Accuracy: {train_accuracy:.4f}, mAUC: {train_mean_auc:.4f}')
 
     def _validate_epoch(self, validation_dataloader, epoch, model_arg):
         self.model.eval()
@@ -249,6 +291,9 @@ class TrainerClass:
         if not isinstance(val_targets_indices, np.ndarray):
             val_targets_indices = val_targets_indices.cpu().numpy()
 
+        val_mean_auc = self._calc_auc(
+            val_targets, val_targets_indices, val_outputs, epoch, mode='Val')
+
         val_accuracy = np.mean(val_outputs == val_targets_indices)
         val_f1 = f1_score(val_targets_indices, val_outputs, average='macro')
 
@@ -272,4 +317,4 @@ class TrainerClass:
         self.scheduler.step()
 
         self.logger.info(
-            f'[Validation] Epoch {epoch+1} - Loss: {avg_val_loss:.4f}, F1: {val_f1:.4f}, Accuracy: {val_accuracy:.4f}')
+            f'[Validation] Epoch {epoch+1} - Loss: {avg_val_loss:.4f}, F1: {val_f1:.4f}, Accuracy: {val_accuracy:.4f}, mAUC: {val_mean_auc:.4f}')
