@@ -1,22 +1,12 @@
 import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 import torch
 
-
-def get_class_weights(train_df, labels):
+def calculate_class_weights(integer_labels):
     """
-    Calculate class weights for imbalanced dataset
-
-    :param train_df: dataframe with training data
-    :param labels: list of labels
-    
-    TODO: This won't work if you have a multi-label dataset, must calculate negative weights as well
+    Calculate class weights given a series of integer labels.
     """
-    pos_weights = []
-    for disease in labels:
-        n_positive = np.sum(train_df[disease])
-        weight_for_positive = (1 / n_positive) * (len(train_df) / 2.0)
-        pos_weights.append(weight_for_positive)
-    pos_weights_tensor = torch.tensor(pos_weights, dtype=torch.float)
-
-    assert len(pos_weights) == len(labels)
-    return pos_weights_tensor
+    unique_classes = np.unique(integer_labels)
+    class_weights = compute_class_weight(
+        'balanced', classes=unique_classes, y=integer_labels)
+    return torch.tensor(class_weights, dtype=torch.float)

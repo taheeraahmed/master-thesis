@@ -21,7 +21,7 @@ class TrainerClass:
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model_config, file_manager, optimizer, model, classnames):
+    def __init__(self, model_config, file_manager, optimizer, model, classnames, class_weights=None):
         self.model = model
         self.model_name = model_config.model
         self.model_output_folder = file_manager.model_ckpts_folder
@@ -34,22 +34,13 @@ class TrainerClass:
         self.device = self._get_device()                    # device
         self.scheduler = torch.optim.lr_scheduler.StepLR(   # scheduler
             self.optimizer, step_size=5, gamma=0.1)
-        self.class_weights = self._get_class_weights()      # class weights
+        self.class_weights = class_weights.to(self.device)     # class weights
         self.criterion = self._get_loss()                   # loss function
 
         # best validation F1 score, for checkpointing
         self.best_val_f1 = 0.0
         # tensorboard writer
-        self.writer = SummaryWriter(f'output/{file_manager.output_folder}')
-
-    def _get_class_weights(self):
-        class_weights = compute_class_weight(
-            'balanced', classes=np.unique(self.classnames), y=self.classnames)
-        class_weights = torch.tensor(class_weights, dtype=torch.float)
-        assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
-        assert len(class_weights) == len(
-            self.classnames), "The length of class_weights must match the number of classes"
-        return class_weights.to(self.device)
+        self.writer = SummaryWriter(file_manager.output_folder)
 
     def _get_device(self):
         if torch.cuda.is_available():
@@ -62,10 +53,12 @@ class TrainerClass:
         return device
 
     def _get_loss(self):
-        if self.loss_arg == 'ce':
-            return nn.CrossEntropyLoss()
-        elif self.loss_arg == 'wfl':
+        if self.loss_arg == 'wfl':
             return FocalLoss(alpha=self.class_weights)
+        elif self.loss_arg == 'wce':
+            return nn.CrossEntropyLoss(weight=self.class_weights)
+        elif self.loss_arg == 'ce':
+            return nn.CrossEntropyLoss()
         else:
             raise ValueError('Invalid loss function')
 
@@ -74,8 +67,8 @@ class TrainerClass:
             epoch_start_time = time.time()
             self.logger.info(f'Started epoch {epoch+1}')
 
-            self._train_epoch(train_dataloader, epoch, model_config.model)
-            self._validate_epoch(validation_dataloader, epoch, model_config.model)
+            self._train_epoch(train_dataloader, epoch)
+            self._validate_epoch(validation_dataloader, epoch)
 
             epoch_end_time = time.time()
             epoch_duration = epoch_end_time - epoch_start_time
@@ -136,7 +129,7 @@ class TrainerClass:
 
         return mean_auc
 
-    def _train_epoch(self, train_dataloader, epoch, model_arg):
+    def _train_epoch(self, train_dataloader, epoch):
         self.model.train()
 
         # vars to store metrics for training
@@ -234,7 +227,7 @@ class TrainerClass:
         self.logger.info(
             f'[Train] Epoch {epoch+1} - Loss: {avg_train_loss:.4f}, F1: {train_f1:.4f}, Accuracy: {train_accuracy:.4f}, mAUC: {train_mean_auc:.4f}')
 
-    def _validate_epoch(self, validation_dataloader, epoch, model_arg):
+    def _validate_epoch(self, validation_dataloader, epoch):
         self.model.eval()
 
         # vars to store metrics

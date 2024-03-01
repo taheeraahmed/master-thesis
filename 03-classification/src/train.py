@@ -29,6 +29,11 @@ def train(args):
         if model_config.loss == 'wfl':
             file_manager.logger.error('Weighted focal loss not implemented for swin')
             raise NotImplementedError
+        elif model_config.loss == 'wce':
+            file_manager.logger.error(
+                'Weighted wce not implemented for swin')
+            raise NotImplementedError
+
         else:
             swin(
                 model_config=model_config,
@@ -43,7 +48,7 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin']
-    loss_choices = ['ce', 'wfl']
+    loss_choices = ['ce', 'wfl', 'wce']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")

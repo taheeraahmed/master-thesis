@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 import glob
 import torch
 from utils.plot_stuff import plot_percentage_train_val, plot_number_patient_disease
+from utils.handle_class_imbalance import calculate_class_weights
 
 
 def get_df_image_paths_labels(df, data_path):
@@ -22,6 +23,15 @@ def get_df_image_paths_labels(df, data_path):
         image_paths) == 112120, f"Expected 112120 images, but found {len(image_paths)}"
     df['Image Path'] = image_paths
     return df
+
+
+def convert_one_hot_to_integers(df, labels):
+    """
+    Convert one-hot encoded DataFrame columns for labels into a single column of integer labels.
+    """
+    labels_df = df[labels]  # Assuming labels are the column names for the one-hot encoded labels
+    integer_labels = labels_df.idxmax(axis=1).apply(labels.index)
+    return integer_labels
 
 
 def one_hot_encode(df, labels):
@@ -122,8 +132,15 @@ def get_df(file_manager):
     # df = label_encode(df, labels=labels)
     df = one_hot_encode(df, labels=labels)
 
+
+    # Calculate class weights
+
     train_df, val_df = split_train_val(
         df=df, val_size=0.2, logger=file_manager.logger)
+
+    # Convert one-hot encoded labels back to integers
+    integer_labels = convert_one_hot_to_integers(train_df, labels)
+    class_weights = calculate_class_weights(integer_labels)
 
     # plot the number of patients with each disease
     try:
@@ -144,4 +161,4 @@ def get_df(file_manager):
 
     file_manager.logger.info(f"\n{train_df.head()}")
 
-    return train_df, val_df, labels
+    return train_df, val_df, labels, class_weights

@@ -20,7 +20,7 @@ def densenet121(model_config, file_manager):
         transforms.Normalize(mean=[0.485], std=[0.229]),
     ])
     
-    train_df, val_df, labels = get_df(file_manager)
+    train_df, val_df, labels, class_weights = get_df(file_manager)
 
     model = xrv.models.get_model(weights="densenet121-res224-nih")
     model.op_threshs = None
@@ -52,6 +52,7 @@ def densenet121(model_config, file_manager):
         model_config = model_config,
         file_manager = file_manager,
         model=model,
+        class_weights=class_weights,
         classnames=labels,
         optimizer=optimizer,
     )

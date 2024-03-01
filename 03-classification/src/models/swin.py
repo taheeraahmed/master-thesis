@@ -5,7 +5,6 @@ import sys
 
 from data.chestxray14 import ChestXray14SwinDataset
 from utils.df import get_df
-from utils.handle_class_imbalance import get_class_weights
 from transformers import TrainingArguments
 from sklearn.metrics import precision_score, recall_score, f1_score
 
@@ -50,10 +49,6 @@ def swin(logger, args, idun_datetime_done, data_path):
 
     val_dataset = ChestXray14SwinDataset(
         model_name=model_name, dataframe=val_df)
-
-    # Making sure the class weights have the correct shape
-    class_weights = get_class_weights(train_df)
-    assert class_weights.size(0) == 14, 'Class weights should be of size 14'
 
     model = Swinv2ForImageClassification.from_pretrained(
         model_name=model_name)
