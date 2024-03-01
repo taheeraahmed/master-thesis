@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.preprocessing import label_binarize
 from sklearn.utils.class_weight import compute_class_weight
 import time
-from utils import calculate_idun_time_left
+from utils import calculate_idun_time_left, FocalLoss
 import torchvision
 import numpy as np
 from tqdm import tqdm
@@ -64,7 +64,7 @@ class TrainerClass:
         if self.loss_arg == 'ce':
             return nn.CrossEntropyLoss()
         elif self.loss_arg == 'wfl':
-            raise NotImplementedError
+            return FocalLoss(class_weights=self.class_weights)
         else:
             raise ValueError('Invalid loss function')
 

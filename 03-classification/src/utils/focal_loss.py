@@ -2,48 +2,45 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class WeightedFocalLoss(nn.Module):
-    """
-    Implmenetation of the weighted focal loss function taken from with minor modifications:
-    https://github.com/clcarwin/focal_loss_pytorch/blob/master/focalloss.py
 
-    :param alpha: A tensor of shape [num_classes] containing weights for each class.
-    :param gamma: Focusing parameter to adjust the rate at which easy examples are down-weighted.
-    :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'
-    """
-
-    def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
-        super(WeightedFocalLoss, self).__init__()
-        self.alpha = alpha
+class FocalLoss(nn.Module):
+    def __init__(self, class_weights=None, gamma=2.0, reduction='mean'):
+        """
+        Focal loss for imbalanced datasets.
+        :param class_weights: (alpha) Weights for each class. If None, it will be calculated.
+        :param gamma: Focusing parameter.
+        :param reduction: Reduction method.
+        """
+        super(FocalLoss, self).__init__()
+        self.class_weights = class_weights  # Class weights
         self.gamma = gamma
-
-        if isinstance(alpha, (float, int)):
-            self.alpha = torch.Tensor([alpha, 1-alpha])
-        if isinstance(alpha, list):
-            self.alpha = torch.Tensor(alpha)
-
         self.reduction = reduction
 
     def forward(self, inputs, targets):
         """
-        Forward pass of the Focal Loss.
-        :param inputs: Predictions from the model (logits, before softmax).
-        :param targets: True labels.
-        :return: Weighted Focal Loss value.
+        Apply focal loss.
+        :param inputs: Predictions from the model (logits before softmax).
+        :param targets: True class labels.
+        :return: Computed focal loss.
         """
-        BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        pt = torch.exp(-BCE_loss) 
-        F_loss = (1 - pt) ** self.gamma * BCE_loss
-
-        if self.alpha is not None:
-            if self.alpha.type() != inputs.data.type():
-                self.alpha = self.alpha.type_as(inputs.data)
-            at = self.alpha.gather(0, targets.data.view(-1))
-            F_loss = at * F_loss
+        # Convert inputs to probabilities
+        probs = torch.softmax(inputs, dim=1)
+        # Gather the probabilities of the true classes for each sample
+        target_probs = probs.gather(dim=1, index=targets.view(-1, 1)).view(-1)
+        # Compute the focal loss
+        focal_loss = -self.class_weights[targets] * \
+            ((1 - target_probs) ** self.gamma) * target_probs.log()
 
         if self.reduction == 'mean':
-            return F_loss.mean()
+            return focal_loss.mean()
         elif self.reduction == 'sum':
-            return F_loss.sum()
+            return focal_loss.sum()
         else:
-            return F_loss
+            return focal_loss
+
+# Example usage
+# Initialize FocalLoss with class weights
+# focal_loss = FocalLoss(weight=pos_weights_tensor, gamma=2.0)
+
+# Compute loss
+# loss = focal_loss(predictions, targets)
