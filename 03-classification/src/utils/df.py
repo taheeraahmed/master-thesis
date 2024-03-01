@@ -128,7 +128,7 @@ def get_df(file_manager):
     # plot the number of patients with each disease
     try:
         plot_number_patient_disease(
-            df, labels, image_output=f'output/{file_manager.output_folder}/images/number_patient_disease.png')
+            df, labels, image_output=f'{file_manager.image_folder}/number_patient_disease.png')
     except Exception as e:
         file_manager.logger.error(f'Error plotting number_patient_disease: {e}')
 
@@ -137,7 +137,7 @@ def get_df(file_manager):
         plot_percentage_train_val(train_df=train_df,
                                   val_df=val_df,
                                   diseases=labels,
-                                  image_output=f'output/{file_manager.output_folder}/images/percentage_class_train_val_test.png'
+                                  image_output=f'{file_manager.image_folder}/percentage_class_train_val_test.png'
                                   )
     except Exception as e:
         file_manager.logger.error(f'Error plotting percentage_train_val: {e}')
