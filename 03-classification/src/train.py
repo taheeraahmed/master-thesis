@@ -1,4 +1,4 @@
-from utils.set_up import set_up, str_to_bool
+from utils import set_up, str_to_bool, ModelConfig
 from models import densenet121, swin
 import argparse
 import sys
@@ -10,21 +10,28 @@ def train(args):
     logger.info(f'Output folder: {output_folder}')
     data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
 
+    model_config = ModelConfig(
+        model=args.model,
+        loss=args.loss,
+        num_epochs=args.num_epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate
+    )
+
     logger.info(
         f'batch_size: {args.batch_size}, num_epochs: {args.num_epochs}, lr: {args.learning_rate}')
 
-    if args.model == 'densenet':
+    if model_config.model == 'densenet':
         densenet121(
             logger=logger,
             args=args,
             idun_datetime_done=idun_datetime_done,
             data_path=data_path
         )
-    elif args.model == 'swin':
-        if args.loss == 'wfl':
+    elif model_config.model == 'swin':
+        if model_config.loss == 'wfl':
             logger.error('Weighted focal loss not implemented for swin')
             raise NotImplementedError
-            sys.exit(1)
         else:
             swin(
                 logger=logger,

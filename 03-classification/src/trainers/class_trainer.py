@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.preprocessing import label_binarize
@@ -64,7 +65,7 @@ class TrainerClass:
         if self.loss_arg == 'ce':
             return nn.CrossEntropyLoss()
         elif self.loss_arg == 'wfl':
-            return FocalLoss(class_weights=self.class_weights)
+            return FocalLoss(alpha=self.class_weights)
         else:
             raise ValueError('Invalid loss function')
 
@@ -127,7 +128,7 @@ class TrainerClass:
             try:
                 # adjusted to use outputs_probs
                 class_auc = roc_auc_score(
-                    targets_binarized[:, cls_idx], outputs_probs[:, 0])
+                    targets_binarized[:, cls_idx], outputs_probs[:, 0], multi_class='ovr')
                 self.writer.add_scalar(
                     f'AUC/{mode}/{cls_name}', class_auc, epoch)
             except ValueError as e:
@@ -148,21 +149,25 @@ class TrainerClass:
         train_loop = tqdm(train_dataloader, leave=True)
 
         for i, batch in enumerate(train_loop):
-            inputs, labels = batch["img"].to(
+            inputs, targets = batch["img"].to(
                 self.device), batch["lab"].to(self.device)
+    
             self.optimizer.zero_grad()
             # forward pass
             outputs = self.model(inputs)
-            logits = outputs if model_arg == 'densenet' else outputs.logits
-            logits = logits.to(self.device)
-            targets = labels.to(self.device)
-            # compute loss
-            loss = self.criterion(logits, targets)
+            logits = outputs
+
+            # calculate loss
+            probabilities = F.softmax(logits, dim=1)  # Apply softmax to logits
+            # Now pass probabilities to your loss function
+            loss = self.criterion(probabilities, targets)
             # backward pass and optimization
             loss.backward()
             self.optimizer.step()
             # accumulate training loss
             train_loss += loss.item()
+
+            # get the predicted class indices with the highest probability
             _, predicted_classes = torch.max(logits, 1)
             predicted_classes = predicted_classes.cpu().numpy()
             targets = targets.cpu().numpy()
@@ -246,18 +251,16 @@ class TrainerClass:
         with torch.no_grad():
             val_loop = tqdm(validation_dataloader, leave=True)
             for i, batch in enumerate(val_loop):
-                inputs, labels = batch["img"].to(
+                inputs, targets = batch["img"].to(
                     self.device), batch["lab"].to(self.device)
 
                 # forward pass
                 outputs = self.model(inputs)
                 logits = outputs if model_arg == 'densenet' else outputs.logits
-                # ensure logits and targets are on the correct device
-                logits = logits.to(self.device)
-                targets = labels.to(self.device)
 
-                # compute loss
-                loss = self.criterion(logits, targets)
+                # calculate loss
+                probabilities = F.softmax(logits, dim=1)  
+                loss = self.criterion(probabilities, targets)
 
                 # accumulate validation loss
                 val_loss += loss.item()

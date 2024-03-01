@@ -119,8 +119,8 @@ def get_df(args, data_path, logger):
     # removing all columns with more than one class
     df = df[~df['Finding Labels'].str.contains(r'\|')]
     # one-hot or label encode the diseases
-    df = label_encode(df, labels=labels)
-    # df = one_hot_encode(df, labels=labels)
+    # df = label_encode(df, labels=labels)
+    df = one_hot_encode(df, labels=labels)
 
     train_df, val_df = split_train_val(
         df=df, val_size=0.2, logger=logger)
@@ -141,5 +141,7 @@ def get_df(args, data_path, logger):
                                   )
     except Exception as e:
         logger.error(f'Error plotting percentage_train_val: {e}')
+
+    logger.info(f"\n{train_df.head()}")
 
     return train_df, val_df, labels

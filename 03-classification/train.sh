@@ -18,7 +18,7 @@ CURRENT_PATH=$(pwd)
 
 for MODEL in "${MODELS[@]}"; do
     PARTITION="GPUQ"
-    JOB_NAME=${DATE}-${MODEL}-$LOSS-classification
+    JOB_NAME=${DATE}-${MODEL}-$LOSS-multiclass
 
     if [ "$TEST_MODE" = true ]; then
         JOB_NAME="TEST-${JOB_NAME}"

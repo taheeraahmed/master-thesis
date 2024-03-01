@@ -7,6 +7,22 @@ from utils.check_gpu import check_gpu
 from datetime import datetime, timedelta
 import time
 
+class ModelConfig():
+    def __init__(self, model, loss, num_epochs, batch_size, learning_rate):
+        self.model = model
+        self.loss = loss
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+
+    def __str__(self):
+        return f'model: {self.model}, loss: {self.loss}, num_epochs: {self.num_epochs}, batch_size: {self.batch_size}, learning_rate: {self.learning_rate}'
+
+    def __repr__(self):
+        return f'model: {self.model}, loss: {self.loss}, num_epochs: {self.num_epochs}, batch_size: {self.batch_size}, learning_rate: {self.learning_rate}'
+
+    def __eq__(self, other):
+        return self.model == other.model and self.loss == other.loss and self.num_epochs == other.num_epochs and self.batch_size == other.batch_size and self.learning_rate == other.learning_rate
 
 def set_up(args):
     start_time = time.time()
