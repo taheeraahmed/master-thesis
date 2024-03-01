@@ -7,7 +7,6 @@ from utils.check_gpu import check_gpu
 from datetime import datetime, timedelta
 import time
 
-
 class ModelConfig():
     def __init__(self, model, loss, num_epochs, batch_size, learning_rate, test_mode):
         self.model = model
@@ -18,6 +17,7 @@ class ModelConfig():
         self.test_mode = test_mode
 
     def __str__(self):
+        
         table_str = (
             f"🚀 Model Configuration 🚀\n"
             f"-------------------------------------------------\n"
@@ -41,13 +41,16 @@ class ModelConfig():
 
 
 class FileManager():
-    def __init__(self, output_folder, logger, idun_datetime_done):
+    def __init__(self, output_folder, idun_datetime_done):
         self.output_folder = output_folder
-        self.logger = logger
+        self.logger = self._set_up_logger()
         self.idun_datetime_done = idun_datetime_done
         self.model_ckpts_folder = f'{output_folder}/model_checkpoints'
+        create_directory_if_not_exists(self.model_ckpts_folder)
         self.image_folder = f'{output_folder}/images'
         self.data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
+        self.project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".."))
 
     def __str__(self):
         table_str = (
@@ -66,6 +69,18 @@ class FileManager():
     def __eq__(self, other):
         return self.output_folder == other.output_folder
 
+    def _set_up_logger(self):
+        LOG_DIR = self.output_folder
+        create_directory_if_not_exists(LOG_DIR)
+        LOG_FILE = f"{LOG_DIR}/log_file.txt"
+
+        logging.basicConfig(level=logging.INFO,
+                            format='[%(levelname)s] %(asctime)s - %(message)s',
+                            handlers=[
+                                logging.FileHandler(LOG_FILE),
+                                logging.StreamHandler()
+                            ])
+        return logging.getLogger()
 
 
 def set_up(args):
@@ -74,41 +89,18 @@ def set_up(args):
     idun_time = args.idun_time
     output_folder = 'output/'+args.output_folder
 
-    result = pyfiglet.figlet_format("Master-thesis B)", font="slant")
+    result = pyfiglet.figlet_format("master-thesis", font="slant")
     print(result)
-    project_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), ".."))
-
-    LOG_DIR = output_folder
-
-    create_directory_if_not_exists(LOG_DIR)
-    create_directory_if_not_exists(f'{output_folder}/model_checkpoints')
-
-    LOG_FILE = f"{LOG_DIR}/log_file.txt"
-
-    logging.basicConfig(level=logging.INFO,
-                        format='[%(levelname)s] %(asctime)s - %(message)s',
-                        handlers=[
-                            logging.FileHandler(LOG_FILE),
-                            logging.StreamHandler()
-                        ])
-    logger = logging.getLogger()
-    logger.info(f'Running: {args.model}')
-    logger.info(f'Root directory of project: {project_root}')
-    check_gpu(logger)
-    logger.info('Set-up completed')
-
+    
     # Calculate at what time IDUN job is done
-    try:
-        hours, minutes, seconds = map(int, idun_time.split(":"))
-        now = datetime.fromtimestamp(start_time)
-        idun_datetime_done = now + \
-            timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    except:
-        logger.info('Didnt get IDUN time')
+    hours, minutes, seconds = map(int, idun_time.split(":"))
+    now = datetime.fromtimestamp(start_time)
+    idun_datetime_done = now + \
+        timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
     file_manager = FileManager(
-        output_folder=output_folder, logger=logger, idun_datetime_done=idun_datetime_done)
+        output_folder=output_folder, idun_datetime_done=idun_datetime_done)
+    
     return file_manager
 
 
