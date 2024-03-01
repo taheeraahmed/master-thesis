@@ -102,7 +102,7 @@ def get_labels(df):
     return labels_list
 
 
-def get_df(args, data_path, logger):
+def get_df(file_manager):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
     :param args: The arguments
@@ -110,8 +110,8 @@ def get_df(args, data_path, logger):
     :param logger: The logger object
     """
 
-    df = pd.read_csv(f'{data_path}/Data_Entry_2017.csv')
-    df = get_df_image_paths_labels(df=df, data_path=data_path)
+    df = pd.read_csv(f'{file_manager.data_path}/Data_Entry_2017.csv')
+    df = get_df_image_paths_labels(df=df, data_path=file_manager.data_path)
     # select the columns we need
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
@@ -123,25 +123,25 @@ def get_df(args, data_path, logger):
     df = one_hot_encode(df, labels=labels)
 
     train_df, val_df = split_train_val(
-        df=df, val_size=0.2, logger=logger)
+        df=df, val_size=0.2, logger=file_manager.logger)
 
     # plot the number of patients with each disease
     try:
         plot_number_patient_disease(
-            df, labels, image_output=f'output/{args.output_folder}/images/number_patient_disease.png')
+            df, labels, image_output=f'output/{file_manager.output_folder}/images/number_patient_disease.png')
     except Exception as e:
-        logger.error(f'Error plotting number_patient_disease: {e}')
+        file_manager.logger.error(f'Error plotting number_patient_disease: {e}')
 
     # calculate the percentages of each disease in the train, validation, and test sets
     try:
         plot_percentage_train_val(train_df=train_df,
                                   val_df=val_df,
                                   diseases=labels,
-                                  image_output=f'output/{args.output_folder}/images/percentage_class_train_val_test.png'
+                                  image_output=f'output/{file_manager.output_folder}/images/percentage_class_train_val_test.png'
                                   )
     except Exception as e:
-        logger.error(f'Error plotting percentage_train_val: {e}')
+        file_manager.logger.error(f'Error plotting percentage_train_val: {e}')
 
-    logger.info(f"\n{train_df.head()}")
+    file_manager.logger.info(f"\n{train_df.head()}")
 
     return train_df, val_df, labels

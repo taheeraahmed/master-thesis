@@ -21,14 +21,14 @@ class TrainerClass:
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, classnames, log_dir='runs', loss_arg='wce'):
+    def __init__(self, model_config, file_manager, optimizer, model, classnames):
         self.model = model
-        self.model_name = model_name
-        self.model_output_folder = model_output_folder
-        self.logger = logger
+        self.model_name = model_config.model
+        self.model_output_folder = file_manager.model_ckpts_folder
+        self.logger = file_manager.logger
         self.optimizer = optimizer
         self.classnames = classnames
-        self.loss_arg = loss_arg
+        self.loss_arg = model_config.loss
         self.device = None
 
         self.device = self._get_device()                    # device
@@ -40,7 +40,7 @@ class TrainerClass:
         # best validation F1 score, for checkpointing
         self.best_val_f1 = 0.0
         # tensorboard writer
-        self.writer = SummaryWriter(log_dir)
+        self.writer = SummaryWriter(f'output/{file_manager.output_folder}')
 
     def _get_class_weights(self):
         class_weights = compute_class_weight(
@@ -69,18 +69,18 @@ class TrainerClass:
         else:
             raise ValueError('Invalid loss function')
 
-    def train(self, train_dataloader, validation_dataloader, num_epochs, idun_datetime_done, model_arg):
-        for epoch in range(num_epochs):
+    def train(self, model_config, file_manager, train_dataloader, validation_dataloader):
+        for epoch in range(model_config.num_epochs):
             epoch_start_time = time.time()
             self.logger.info(f'Started epoch {epoch+1}')
 
-            self._train_epoch(train_dataloader, epoch, model_arg)
-            self._validate_epoch(validation_dataloader, epoch, model_arg)
+            self._train_epoch(train_dataloader, epoch, model_config.model)
+            self._validate_epoch(validation_dataloader, epoch, model_config.model)
 
             epoch_end_time = time.time()
             epoch_duration = epoch_end_time - epoch_start_time
             calculate_idun_time_left(
-                epoch, num_epochs, epoch_duration, idun_datetime_done, self.logger)
+                epoch, model_config.num_epochs, epoch_duration, file_manager.idun_datetime_done, self.logger)
 
         self.writer.close()
 
