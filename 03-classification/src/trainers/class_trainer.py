@@ -61,7 +61,12 @@ class TrainerClass:
         return device
 
     def _get_loss(self):
-        return nn.CrossEntropyLoss()
+        if self.loss_arg == 'ce':
+            return nn.CrossEntropyLoss()
+        elif self.loss_arg == 'wfl':
+            raise NotImplementedError
+        else:
+            raise ValueError('Invalid loss function')
 
     def train(self, train_dataloader, validation_dataloader, num_epochs, idun_datetime_done, model_arg):
         for epoch in range(num_epochs):
@@ -95,11 +100,11 @@ class TrainerClass:
         self.logger.info(
             f'Checkpoint saved for epoch {epoch+1} with f1 score: {current_val_accuracy}')
 
-
     def _calc_auc(self, targets, target_indices, outputs, epoch, mode):
         # convert and reshape if necessary
         outputs_tensor = torch.tensor(outputs, dtype=torch.float).view(-1, 1)
-        outputs_probs = torch.nn.functional.softmax(outputs_tensor, dim=1).numpy()
+        outputs_probs = torch.nn.functional.softmax(
+            outputs_tensor, dim=1).numpy()
 
         if targets.ndim == 1:
             # binarize labels in a one-vs-all fashion
@@ -123,12 +128,12 @@ class TrainerClass:
                 # adjusted to use outputs_probs
                 class_auc = roc_auc_score(
                     targets_binarized[:, cls_idx], outputs_probs[:, 0])
-                self.writer.add_scalar(f'AUC/{mode}/{cls_name}', class_auc, epoch)
+                self.writer.add_scalar(
+                    f'AUC/{mode}/{cls_name}', class_auc, epoch)
             except ValueError as e:
                 self.logger.error(f"Error calculating AUC for {cls_name}: {e}")
 
         return mean_auc
-
 
     def _train_epoch(self, train_dataloader, epoch, model_arg):
         self.model.train()

@@ -21,12 +21,17 @@ def train(args):
             data_path=data_path
         )
     elif args.model == 'swin':
-        swin(
-            logger=logger,
-            args=args,
-            idun_datetime_done=idun_datetime_done,
-            data_path=data_path
-        )
+        if args.loss == 'wfl':
+            logger.error('Weighted focal loss not implemented for swin')
+            raise NotImplementedError
+            sys.exit(1)
+        else:
+            swin(
+                logger=logger,
+                args=args,
+                idun_datetime_done=idun_datetime_done,
+                data_path=data_path
+            )
     else:
         logger.error('Invalid model argument')
         sys.exit(1)
@@ -36,7 +41,7 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin']
-    loss_choices = ['ce']
+    loss_choices = ['ce', 'wfl']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")

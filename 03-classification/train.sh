@@ -2,7 +2,7 @@
 TEST_MODE=true
 
 MODELS=("densenet")
-LOSS=ce # ce, fl
+LOSS=wfl # ce, fl
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
