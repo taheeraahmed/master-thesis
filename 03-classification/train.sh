@@ -1,8 +1,8 @@
 #!/bin/bash
 TEST_MODE=true
 
-MODELS=("densenet")
-LOSS=ce # ce, fl
+MODELS=("swin")
+LOSS=ce 
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001

@@ -1,33 +1,44 @@
 import torch
-from transformers import Swinv2ForImageClassification, Trainer
+from transformers import Swinv2ForImageClassification, Trainer, SwinConfig
 from torch import nn
+from torchvision.transforms import Compose, Resize, Normalize, ToTensor
 import sys
 
 from data.chestxray14 import ChestXray14SwinDataset
 from utils.df import get_df
 from utils.handle_class_imbalance import get_class_weights
 from transformers import TrainingArguments
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+import numpy as np
 
-
-def compute_metrics(pred):
-    labels = pred.label_ids
-    preds = pred.predictions
-    # Apply threshold to predictions (e.g., 0.5) to convert to binary format if necessary
-    threshold = 0.5
-    preds_binary = (preds > threshold).astype(int)
-
-    # Ensure you're using metrics that support multilabel-indicator format
-    precision = precision_score(labels, preds_binary, average='micro')
-    recall = recall_score(labels, preds_binary, average='micro')
-    f1 = f1_score(labels, preds_binary, average='micro')
-
+def compute_metrics(p):
+    # Convert logits to predicted class indices
+    preds = np.argmax(p.predictions, axis=1)
+    
+    # Calculate metrics
+    accuracy = accuracy_score(p.label_ids, preds)
+    f1 = f1_score(p.label_ids, preds, average='weighted')
+    precision = precision_score(p.label_ids, preds, average='weighted')
+    recall = recall_score(p.label_ids, preds, average='weighted')
+    
+    # For AUC, we need probability scores. The following assumes binary classification
+    # and uses the probability of the positive class (class index 1)
+    # For multi-class classification, you'll need a different approach
+    if p.predictions.shape[1] == 2:
+        # Use probabilities of the positive class for AUC calculation
+        probs = p.predictions[:, 1]
+        auc = roc_auc_score(p.label_ids, probs)
+    else:
+        # Dummy value in case of multi-class classification; adjust as needed
+        auc = float('nan')
+    
     return {
+        'accuracy': accuracy,
+        'f1': f1,
         'precision': precision,
         'recall': recall,
-        'f1': f1,
+        'auc': auc,
     }
-
 
 def swin(logger, args, idun_datetime_done, data_path):
     logger.info('Using Swin Transformer model from HF and also using HF Trainer')
@@ -45,24 +56,27 @@ def swin(logger, args, idun_datetime_done, data_path):
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
 
+    transforms = Compose([
+        Resize((224, 224)),
+        ToTensor(),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
     train_dataset = ChestXray14SwinDataset(
-        model_name=model_name, dataframe=train_df)
+        model_name=model_name, dataframe=train_df, transforms=transforms)
 
     val_dataset = ChestXray14SwinDataset(
-        model_name=model_name, dataframe=val_df)
+        model_name=model_name, dataframe=val_df, transforms=transforms)
 
     # Making sure the class weights have the correct shape
     class_weights = get_class_weights(train_df)
     assert class_weights.size(0) == 14, 'Class weights should be of size 14'
-
+    
+    config = SwinConfig.from_pretrained(model_name, num_labels=14)
     model = Swinv2ForImageClassification.from_pretrained(
-        model_name=model_name)
-
-    model.classifier = nn.Sequential(
-        nn.Linear(model.classifier.in_features, num_classes),
-        nn.Sigmoid()
-    )
-
+        model_name, config=config)
+    
+    model.classifier = nn.Linear(model.classifier.in_features, num_classes)
+    # TODO: Noe rart med shapes??? skjønner ikke hva som skjer :)) ææ
     if args.loss == 'wce':
         training_args = TrainingArguments(
             output_dir=f'output/{args.output_folder}',

@@ -3,10 +3,11 @@ import torch
 from torchvision import transforms
 from torch.utils.data import Dataset
 from transformers import AutoImageProcessor
+from transformers import AutoFeatureExtractor
 
 
 class ChestXray14SwinDataset(Dataset):
-    def __init__(self, dataframe, model_name):
+    def __init__(self, dataframe, model_name, transforms=None):
         """
         Args:
             dataframe (pd.DataFrame): DataFrame containing image paths and labels.
@@ -14,14 +15,8 @@ class ChestXray14SwinDataset(Dataset):
         """
         self.dataframe = dataframe
         self.model_name = model_name
-        self.processor = AutoImageProcessor.from_pretrained(model_name)
-        self.labels = self._get_labels()
-
-    def _get_labels(self):
-        labels = self.dataframe['Finding Labels'].str.split(
-            '|').explode().unique()
-        labels.sort()
-        return labels
+        self.processor = AutoFeatureExtractor.from_pretrained(model_name) # TODO: do i need this?? what does this do?
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.dataframe)
@@ -33,13 +28,16 @@ class ChestXray14SwinDataset(Dataset):
         img_path = self.dataframe.iloc[idx, 0]
         image = Image.open(img_path).convert('RGB')
 
-        # Process image
-        processed_image = self.processor(
-            images=image, return_tensors="pt").pixel_values[0]
+        # process image
+        if self.transform:
+            image = self.transform(image)
 
-        labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
-        labels = torch.tensor(labels)
-        return {"pixel_values": processed_image, "labels": labels}
+        # find the index of the column with a value of 1, which represents the class label
+        # exclude the image path column
+        label_row = self.dataframe.iloc[idx, 1:]
+        label = torch.tensor(label_row.values.argmax(), dtype=torch.long)
+
+        return {"pixel_values": image, "labels": label}
 
 
 class ChestXray14Dataset(Dataset):
@@ -69,10 +67,10 @@ class ChestXray14Dataset(Dataset):
             print(f"Error opening image file: {img_path}")
             return None
 
+        # one-hot encode labels
         labels = self.dataframe.iloc[idx, 1:].to_numpy()
         labels = torch.from_numpy(labels.astype('float32'))
 
         if self.transform:
             image = self.transform(image)
-
         return {"img": image, "lab": labels}

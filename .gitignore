@@ -1,4 +1,5 @@
 .venv/
+env/
 .ipynb_checkpoints/
 runs/
 __pycache__/
