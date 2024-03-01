@@ -2,11 +2,10 @@ import torch.nn as nn
 import torch
 from trainers.class_trainer import TrainerClass
 from torch.utils.data import DataLoader
-from torchvision import transforms, models
+from torchvision import transforms
 import torchxrayvision as xrv
 from data.chestxray14 import ChestXray14Dataset
 from utils.df import get_df
-from utils.handle_class_imbalance import get_class_weights
 
 
 def densenet121(logger, args, idun_datetime_done, data_path):
