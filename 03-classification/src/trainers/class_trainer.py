@@ -155,10 +155,9 @@ class TrainerClass:
             self.optimizer.zero_grad()
             # forward pass
             outputs = self.model(inputs)
-            logits = outputs
 
             # calculate loss
-            probabilities = F.softmax(logits, dim=1)  # Apply softmax to logits
+            probabilities = F.softmax(outputs, dim=1)  # Apply softmax to outputs
             # Now pass probabilities to your loss function
             loss = self.criterion(probabilities, targets)
             # backward pass and optimization
@@ -168,7 +167,7 @@ class TrainerClass:
             train_loss += loss.item()
 
             # get the predicted class indices with the highest probability
-            _, predicted_classes = torch.max(logits, 1)
+            _, predicted_classes = torch.max(outputs, 1)
             predicted_classes = predicted_classes.cpu().numpy()
             targets = targets.cpu().numpy()
             train_outputs.append(predicted_classes)
@@ -256,17 +255,16 @@ class TrainerClass:
 
                 # forward pass
                 outputs = self.model(inputs)
-                logits = outputs if model_arg == 'densenet' else outputs.logits
 
                 # calculate loss
-                probabilities = F.softmax(logits, dim=1)  
+                probabilities = F.softmax(outputs, dim=1)  
                 loss = self.criterion(probabilities, targets)
 
                 # accumulate validation loss
                 val_loss += loss.item()
 
                 # get the predicted class indices with the highest probability
-                _, predicted_classes = torch.max(logits, 1)
+                _, predicted_classes = torch.max(outputs, 1)
                 # convert to numpy arrays for comparison
                 predicted_classes = predicted_classes.cpu().numpy()
                 targets = targets.cpu().numpy()
