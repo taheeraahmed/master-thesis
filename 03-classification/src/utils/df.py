@@ -103,8 +103,8 @@ def get_labels(df):
     labels_list = list(labels)
     
     # Remove 'No Findings' from the list, if it exists
-    if 'No Findings' in labels_list:
-        labels_list.remove('No Findings')
+    if 'No Finding' in labels_list:
+        labels_list.remove('No Finding')
     
     # Sort the list of labels
     labels_list.sort()
@@ -137,9 +137,6 @@ def get_df(file_manager):
     # one-hot or label encode the diseases
     # df = label_encode(df, labels=labels)
     df = one_hot_encode(df, labels=labels)
-
-
-    # Calculate class weights
 
     train_df, val_df = split_train_val(
         df=df, val_size=0.2, logger=file_manager.logger)
