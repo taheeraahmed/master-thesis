@@ -7,7 +7,6 @@ import sys
 def train(args):
     file_manager = set_up(args)
 
-
     model_config = ModelConfig(
         model=args.model,
         loss=args.loss,
@@ -26,19 +25,10 @@ def train(args):
             file_manager=file_manager,
         )
     elif model_config.model == 'swin':
-        if model_config.loss == 'wfl':
-            file_manager.logger.error('Weighted focal loss not implemented for swin')
-            raise NotImplementedError
-        elif model_config.loss == 'wce':
-            file_manager.logger.error(
-                'Weighted wce not implemented for swin')
-            raise NotImplementedError
-
-        else:
-            swin(
-                model_config=model_config,
-                file_manager=file_manager,
-            )
+        swin(
+            model_config=model_config,
+            file_manager=file_manager,
+        )
     else:
         file_manager.logger.error('Invalid model argument')
         sys.exit(1)

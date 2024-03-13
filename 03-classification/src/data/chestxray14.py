@@ -15,13 +15,6 @@ class ChestXray14SwinDataset(Dataset):
         self.dataframe = dataframe
         self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(model_name)
-        self.labels = self._get_labels()
-
-    def _get_labels(self):
-        labels = self.dataframe['Finding Labels'].str.split(
-            '|').explode().unique()
-        labels.sort()
-        return labels
 
     def __len__(self):
         return len(self.dataframe)
@@ -35,7 +28,7 @@ class ChestXray14SwinDataset(Dataset):
 
         # Process image
         processed_image = self.processor(
-            images=image, return_tensors="pt").pixel_values[0]
+            images=image, return_tensors="pt")
 
         labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
         labels = torch.tensor(labels)
