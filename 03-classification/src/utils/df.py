@@ -118,6 +118,12 @@ def get_df(file_manager):
     :param args: The arguments
     :param data_path: The path to the data
     :param logger: The logger object
+
+    Returns:
+    train_df: The training DataFrame, does not consist of the "No finding" label
+    val_df: The validation DataFrame
+    labels: The labels for the diseases, and it consists of the "No finding" label
+    class_weights: The class weights
     """
 
     df = pd.read_csv(f'{file_manager.data_path}/Data_Entry_2017.csv')
