@@ -6,15 +6,15 @@ from transformers import AutoImageProcessor
 
 
 class ChestXray14SwinDataset(Dataset):
-    def __init__(self, dataframe, model_name):
+    def __init__(self, dataframe, model_name, transform=None):
         """
         Args:
             dataframe (pd.DataFrame): DataFrame containing image paths and labels.
             model_name (str): The name of the Swin Transformer model you're using.
         """
         self.dataframe = dataframe
-        self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(model_name)
+        self.transform = transform
 
     def __len__(self):
         return len(self.dataframe)
@@ -27,12 +27,16 @@ class ChestXray14SwinDataset(Dataset):
         image = Image.open(img_path).convert('RGB')
 
         # Process image
-        processed_image = self.processor(
-            images=image, return_tensors="pt")
+        # image = self.processor(
+        #     images=image, return_tensors="pt")
 
         labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
         labels = torch.tensor(labels)
-        return {"pixel_values": processed_image, "labels": labels}
+
+        if self.transform:
+            image = self.transform(image)
+
+        return {"pixel_values": image, "labels": labels}
 
 
 class ChestXray14Dataset(Dataset):

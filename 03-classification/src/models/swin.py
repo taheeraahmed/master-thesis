@@ -1,13 +1,28 @@
+from data.chestxray14 import ChestXray14SwinDataset
+from sklearn.metrics import precision_score, recall_score, f1_score
+from transformers import TrainingArguments
+from utils.df import get_df
 import torch
 from transformers import Swinv2ForImageClassification, Trainer, Swinv2Config
+from transformers import ViTForImageClassification
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from torchvision.transforms import (CenterCrop,
+                                    Compose,
+                                    Normalize,
+                                    RandomHorizontalFlip,
+                                    Resize,
+                                    ToTensor)
 import sys
+from torch.utils.data import DataLoader
+import torch
 
-from data.chestxray14 import ChestXray14SwinDataset
-from utils.df import get_df
-from transformers import TrainingArguments
-from sklearn.metrics import precision_score, recall_score, f1_score
+
+def collate_fn(examples):
+    pixel_values = torch.stack([example["pixel_values"]
+                               for example in examples])
+    labels = torch.tensor([example["label"] for example in examples])
+    return {"pixel_values": pixel_values, "labels": labels}
 
 
 class CustomTrainer(Trainer):
@@ -23,6 +38,7 @@ class CustomTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         # Extract labels
         labels = inputs.pop("labels")
+        labels = labels.argmax(dim=-1)
         # Forward pass
         outputs = model(**inputs)
         logits = outputs.logits
@@ -57,7 +73,7 @@ def compute_metrics(pred):
 
 
 def swin(model_config, file_manager):
-    train_df, val_df, _, class_weights = get_df(file_manager)
+    train_df, val_df, labels, class_weights = get_df(file_manager)
 
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
@@ -69,33 +85,56 @@ def swin(model_config, file_manager):
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
 
-    train_dataset = ChestXray14SwinDataset(
-        model_name=model_name, dataframe=train_df)
+    train_transforms = Compose([
+        Resize(256),
+        CenterCrop(224),
+        RandomHorizontalFlip(),
+        ToTensor(),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
 
-    val_dataset = ChestXray14SwinDataset(
-        model_name=model_name, dataframe=val_df)
-    
-    configuration = Swinv2Config()
+    val_transforms = Compose([
+        Resize(256),
+        CenterCrop(224),
+        ToTensor(),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
 
-    model = Swinv2ForImageClassification(configuration)
+    train_ds = ChestXray14SwinDataset(
+        model_name=model_name, dataframe=train_df, transform=train_transforms)
 
-    model.num_labels = model_config.num_classes
+    val_ds = ChestXray14SwinDataset(
+        model_name=model_name, dataframe=val_df, transform=val_transforms)
+
+    id2label = {id: label for id, label in enumerate(labels)}
+    label2id = {label: id for id, label in id2label.items()}
+
+    model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224-in21k',
+                                                            num_labels=14,
+                                                            id2label=id2label,
+                                                            label2id=label2id)
+
+    total_steps = (train_ds.__len__() / model_config.batch_size) * \
+        model_config.num_epochs
+
+    file_manager.logger.info(f'Total steps: {total_steps}')
 
     training_args = TrainingArguments(
-        output_dir=f'output/{file_manager.output_folder}',
+        output_dir=f'{file_manager.output_folder}',
         num_train_epochs=model_config.num_epochs,  # number of training epochs
+        max_steps=total_steps,                     # max number of training steps
         # batch size per device during training
         per_device_train_batch_size=model_config.batch_size,
         per_device_eval_batch_size=model_config.batch_size,   # batch size for evaluation
         warmup_steps=500,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         # directory for storing logs
-        logging_dir=f'output/{file_manager.output_folder}',
+        logging_dir=f'{file_manager.output_folder}',
         logging_steps=10,                # log & save weights each logging_steps
         evaluation_strategy="epoch",     # evaluate each `epoch`
         save_strategy="epoch",           # save checkpoint every epoch
         load_best_model_at_end=True,     # load the best model when finished training
-        metric_for_best_model="f1",  # use accuracy to evaluate the best model
+        metric_for_best_model="f1",      # use accuracy to evaluate the best model
         report_to="tensorboard",         # enable logging to TensorBoard
     )
 
@@ -103,8 +142,8 @@ def swin(model_config, file_manager):
         trainer = CustomTrainer(
             model=model,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
+            train_dataset=train_ds,
+            eval_dataset=val_ds,
             compute_metrics=compute_metrics,
             class_weights=class_weights,  # Now you can pass class_weights
         )
@@ -112,8 +151,8 @@ def swin(model_config, file_manager):
         trainer = CustomTrainer(
             model=model,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
+            train_dataset=train_ds,
+            eval_dataset=val_ds,
             compute_metrics=compute_metrics,
         )
     elif model_config.loss == 'wfl':
@@ -121,6 +160,6 @@ def swin(model_config, file_manager):
     else:
         file_manager.logger.error('Invalid loss function argument')
         sys.exit(1)
-    
+
     trainer.train()
     trainer.evaluate()
