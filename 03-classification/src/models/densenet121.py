@@ -2,14 +2,13 @@ import torch.nn as nn
 import torch
 from trainers.class_trainer import TrainerClass
 from torch.utils.data import DataLoader
-from torchvision import transforms, models
+from torchvision import transforms
 import torchxrayvision as xrv
 from data.chestxray14 import ChestXray14Dataset
 from utils.df import get_df
-from utils.handle_class_imbalance import get_class_weights
 
 
-def densenet121(logger, args, idun_datetime_done, data_path):
+def densenet121(model_config, file_manager):
     shuffle = True
     num_workers = 4
 
@@ -21,7 +20,7 @@ def densenet121(logger, args, idun_datetime_done, data_path):
         transforms.Normalize(mean=[0.485], std=[0.229]),
     ])
     
-    train_df, val_df, labels = get_df(args, data_path, logger)
+    train_df, val_df, labels, class_weights = get_df(file_manager)
 
     model = xrv.models.get_model(weights="densenet121-res224-nih")
     model.op_threshs = None
@@ -33,8 +32,8 @@ def densenet121(logger, args, idun_datetime_done, data_path):
     # only training classifier
     optimizer = torch.optim.Adam(model.classifier.parameters())
 
-    if args.test_mode:
-        logger.warning('Using smaller dataset')
+    if model_config.test_mode:
+        file_manager.logger.warning('Using smaller dataset')
         train_subset_size = 100
         val_subset_size = 50
 
@@ -43,26 +42,23 @@ def densenet121(logger, args, idun_datetime_done, data_path):
 
     train_dataset = ChestXray14Dataset(dataframe=train_df, transform=transform, labels=labels)
     train_dataloader = DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
+        train_dataset, batch_size=model_config.batch_size, shuffle=shuffle, num_workers=num_workers)
 
     val_dataset = ChestXray14Dataset(dataframe=val_df, transform=transform, labels=labels)
     validation_dataloader = DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=shuffle, num_workers=num_workers)
+        val_dataset, batch_size=model_config.batch_size, shuffle=shuffle, num_workers=num_workers)
 
     trainer = TrainerClass(
+        model_config = model_config,
+        file_manager = file_manager,
         model=model,
+        class_weights=class_weights,
         classnames=labels,
-        model_name=args.model,
-        loss_arg=args.loss,
-        model_output_folder=f'output/{args.output_folder}/model_checkpoints',
-        logger=logger,
-        log_dir=f'output/{args.output_folder}',
         optimizer=optimizer,
     )
     trainer.train(
+        model_config=model_config,
+        file_manager=file_manager,
         train_dataloader=train_dataloader,
         validation_dataloader=validation_dataloader,
-        num_epochs=args.num_epochs,
-        idun_datetime_done=idun_datetime_done,
-        model_arg=args.model
     )

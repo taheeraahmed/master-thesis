@@ -7,6 +7,81 @@ from utils.check_gpu import check_gpu
 from datetime import datetime, timedelta
 import time
 
+class ModelConfig():
+    def __init__(self, model, loss, num_epochs, batch_size, learning_rate, test_mode):
+        self.model = model
+        self.loss = loss
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.test_mode = test_mode
+
+    def __str__(self):
+        
+        table_str = (
+            f"🚀 Model Configuration 🚀\n"
+            f"-------------------------------------------------\n"
+            f"| Attribute         | Value                     |\n"
+            f"-------------------------------------------------\n"
+            f"| 📦 Model          | {self.model:<25} |\n"
+            f"| 💥 Loss Function  | {self.loss:<25} |\n"
+            f"| 🔄 Epochs         | {self.num_epochs:<25} |\n"
+            f"| 📏 Batch Size     | {self.batch_size:<25} |\n"
+            f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
+            f"| 🔬 Test Mode      | {'Enabled' if self.test_mode else 'Disabled':<25} |\n"
+            f"-------------------------------------------------"
+        )
+        return table_str
+
+    def __repr__(self):
+        return f'model: {self.model}, loss: {self.loss}, num_epochs: {self.num_epochs}, batch_size: {self.batch_size}, learning_rate: {self.learning_rate}'
+
+    def __eq__(self, other):
+        return self.model == other.model and self.loss == other.loss and self.num_epochs == other.num_epochs and self.batch_size == other.batch_size and self.learning_rate == other.learning_rate
+
+
+class FileManager():
+    def __init__(self, output_folder, idun_datetime_done):
+        self.output_folder = output_folder
+        self.logger = self._set_up_logger()
+        self.idun_datetime_done = idun_datetime_done
+        self.model_ckpts_folder = f'{output_folder}/model_checkpoints'
+        create_directory_if_not_exists(self.model_ckpts_folder)
+        self.image_folder = f'{output_folder}/images'
+        self.data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
+        self.project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".."))
+
+    def __str__(self):
+        table_str = (
+            f"🗃️ File Manager Configuration 🗃️\n"
+            f"📁 Output Folder: {self.output_folder:<25}\n"
+            f"🗂️ Model Checkpoints: {self.model_ckpts_folder:<25}\n"
+            f"🖼️ Image Folder: {self.image_folder:<25}\n"
+            f"💾 Data Path: {self.data_path:<25}\n"
+            f"🕒 IDUN Done Time: {self.idun_datetime_done:<25}\n"
+        )
+        return table_str
+
+    def __repr__(self):
+        return f"FileManager(output_folder={self.output_folder}, logger={self.logger}, idun_datetime_done={self.idun_datetime_done}, model_ckpts_folder={self.model_ckpts_folder}, image_folder={self.image_folder}, data_path={self.data_path})"
+
+    def __eq__(self, other):
+        return self.output_folder == other.output_folder
+
+    def _set_up_logger(self):
+        LOG_DIR = self.output_folder
+        create_directory_if_not_exists(LOG_DIR)
+        LOG_FILE = f"{LOG_DIR}/log_file.txt"
+
+        logging.basicConfig(level=logging.INFO,
+                            format='[%(levelname)s] %(asctime)s - %(message)s',
+                            handlers=[
+                                logging.FileHandler(LOG_FILE),
+                                logging.StreamHandler()
+                            ])
+        return logging.getLogger()
+
 
 def set_up(args):
     start_time = time.time()
@@ -14,40 +89,19 @@ def set_up(args):
     idun_time = args.idun_time
     output_folder = 'output/'+args.output_folder
 
-    result = pyfiglet.figlet_format("Master-thesis B)", font="slant")
+    result = pyfiglet.figlet_format("master-thesis", font="slant")
     print(result)
-    project_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), ".."))
-
-    LOG_DIR = output_folder
-
-    create_directory_if_not_exists(LOG_DIR)
-    create_directory_if_not_exists(f'{output_folder}/model_checkpoints')
-
-    LOG_FILE = f"{LOG_DIR}/log_file.txt"
-
-    logging.basicConfig(level=logging.INFO,
-                        format='[%(levelname)s] %(asctime)s - %(message)s',
-                        handlers=[
-                            logging.FileHandler(LOG_FILE),
-                            logging.StreamHandler()
-                        ])
-    logger = logging.getLogger()
-    logger.info(f'Running: {args.model}')
-    logger.info(f'Root directory of project: {project_root}')
-    check_gpu(logger)
-    logger.info('Set-up completed')
-
+    
     # Calculate at what time IDUN job is done
-    try:
-        hours, minutes, seconds = map(int, idun_time.split(":"))
-        now = datetime.fromtimestamp(start_time)
-        idun_datetime_done = now + \
-            timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    except:
-        logger.info('Didnt get IDUN time')
+    hours, minutes, seconds = map(int, idun_time.split(":"))
+    now = datetime.fromtimestamp(start_time)
+    idun_datetime_done = now + \
+        timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
-    return logger, idun_datetime_done, output_folder
+    file_manager = FileManager(
+        output_folder=output_folder, idun_datetime_done=idun_datetime_done)
+    
+    return file_manager
 
 
 def calculate_idun_time_left(epoch, num_epochs, epoch_duration, idun_datetime_done, logger):

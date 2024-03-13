@@ -1,42 +1,54 @@
-from utils.set_up import set_up, str_to_bool
+from utils import set_up, str_to_bool, ModelConfig
 from models import densenet121, swin
 import argparse
 import sys
 
 
 def train(args):
-    setup_info = set_up(args)
-    logger, idun_datetime_done, output_folder = setup_info
-    logger.info(f'Output folder: {output_folder}')
-    data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
+    file_manager = set_up(args)
 
-    logger.info(
-        f'batch_size: {args.batch_size}, num_epochs: {args.num_epochs}, lr: {args.learning_rate}')
 
-    if args.model == 'densenet':
+    model_config = ModelConfig(
+        model=args.model,
+        loss=args.loss,
+        num_epochs=args.num_epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+        test_mode=args.test_mode
+    )
+
+    file_manager.logger.info(f'{model_config.__str__()}')
+    file_manager.logger.info(f'{file_manager.__str__()}')
+
+    if model_config.model == 'densenet':
         densenet121(
-            logger=logger,
-            args=args,
-            idun_datetime_done=idun_datetime_done,
-            data_path=data_path
+            model_config=model_config,
+            file_manager=file_manager,
         )
-    elif args.model == 'swin':
-        swin(
-            logger=logger,
-            args=args,
-            idun_datetime_done=idun_datetime_done,
-            data_path=data_path
-        )
+    elif model_config.model == 'swin':
+        if model_config.loss == 'wfl':
+            file_manager.logger.error('Weighted focal loss not implemented for swin')
+            raise NotImplementedError
+        elif model_config.loss == 'wce':
+            file_manager.logger.error(
+                'Weighted wce not implemented for swin')
+            raise NotImplementedError
+
+        else:
+            swin(
+                model_config=model_config,
+                file_manager=file_manager,
+            )
     else:
-        logger.error('Invalid model argument')
+        file_manager.logger.error('Invalid model argument')
         sys.exit(1)
 
-    logger.info('Training is done')
+    file_manager.logger.info('Training is done')
 
 
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin']
-    loss_choices = ['ce']
+    loss_choices = ['ce', 'wfl', 'wce']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")

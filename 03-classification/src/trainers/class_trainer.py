@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.preprocessing import label_binarize
 from sklearn.utils.class_weight import compute_class_weight
 import time
-from utils import calculate_idun_time_left
+from utils import calculate_idun_time_left, FocalLoss
 import torchvision
 import numpy as np
 from tqdm import tqdm
@@ -20,35 +21,26 @@ class TrainerClass:
     It works with DenseNet from xrayvision library
     """
 
-    def __init__(self, model, model_name, model_output_folder, logger, optimizer, classnames, log_dir='runs', loss_arg='wce'):
+    def __init__(self, model_config, file_manager, optimizer, model, classnames, class_weights=None):
         self.model = model
-        self.model_name = model_name
-        self.model_output_folder = model_output_folder
-        self.logger = logger
+        self.model_name = model_config.model
+        self.model_output_folder = file_manager.model_ckpts_folder
+        self.logger = file_manager.logger
         self.optimizer = optimizer
         self.classnames = classnames
-        self.loss_arg = loss_arg
+        self.loss_arg = model_config.loss
         self.device = None
 
         self.device = self._get_device()                    # device
         self.scheduler = torch.optim.lr_scheduler.StepLR(   # scheduler
             self.optimizer, step_size=5, gamma=0.1)
-        self.class_weights = self._get_class_weights()      # class weights
+        self.class_weights = class_weights.to(self.device)     # class weights
         self.criterion = self._get_loss()                   # loss function
 
         # best validation F1 score, for checkpointing
         self.best_val_f1 = 0.0
         # tensorboard writer
-        self.writer = SummaryWriter(log_dir)
-
-    def _get_class_weights(self):
-        class_weights = compute_class_weight(
-            'balanced', classes=np.unique(self.classnames), y=self.classnames)
-        class_weights = torch.tensor(class_weights, dtype=torch.float)
-        assert class_weights.ndim == 1, "class_weights must be a 1D tensor"
-        assert len(class_weights) == len(
-            self.classnames), "The length of class_weights must match the number of classes"
-        return class_weights.to(self.device)
+        self.writer = SummaryWriter(file_manager.output_folder)
 
     def _get_device(self):
         if torch.cuda.is_available():
@@ -61,20 +53,27 @@ class TrainerClass:
         return device
 
     def _get_loss(self):
-        return nn.CrossEntropyLoss()
+        if self.loss_arg == 'wfl':
+            return FocalLoss(alpha=self.class_weights)
+        elif self.loss_arg == 'wce':
+            return nn.CrossEntropyLoss(weight=self.class_weights)
+        elif self.loss_arg == 'ce':
+            return nn.CrossEntropyLoss()
+        else:
+            raise ValueError('Invalid loss function')
 
-    def train(self, train_dataloader, validation_dataloader, num_epochs, idun_datetime_done, model_arg):
-        for epoch in range(num_epochs):
+    def train(self, model_config, file_manager, train_dataloader, validation_dataloader):
+        for epoch in range(model_config.num_epochs):
             epoch_start_time = time.time()
             self.logger.info(f'Started epoch {epoch+1}')
 
-            self._train_epoch(train_dataloader, epoch, model_arg)
-            self._validate_epoch(validation_dataloader, epoch, model_arg)
+            self._train_epoch(train_dataloader, epoch)
+            self._validate_epoch(validation_dataloader, epoch)
 
             epoch_end_time = time.time()
             epoch_duration = epoch_end_time - epoch_start_time
             calculate_idun_time_left(
-                epoch, num_epochs, epoch_duration, idun_datetime_done, self.logger)
+                epoch, model_config.num_epochs, epoch_duration, file_manager.idun_datetime_done, self.logger)
 
         self.writer.close()
 
@@ -95,11 +94,11 @@ class TrainerClass:
         self.logger.info(
             f'Checkpoint saved for epoch {epoch+1} with f1 score: {current_val_accuracy}')
 
-
     def _calc_auc(self, targets, target_indices, outputs, epoch, mode):
         # convert and reshape if necessary
         outputs_tensor = torch.tensor(outputs, dtype=torch.float).view(-1, 1)
-        outputs_probs = torch.nn.functional.softmax(outputs_tensor, dim=1).numpy()
+        outputs_probs = torch.nn.functional.softmax(
+            outputs_tensor, dim=1).numpy()
 
         if targets.ndim == 1:
             # binarize labels in a one-vs-all fashion
@@ -122,15 +121,15 @@ class TrainerClass:
             try:
                 # adjusted to use outputs_probs
                 class_auc = roc_auc_score(
-                    targets_binarized[:, cls_idx], outputs_probs[:, 0])
-                self.writer.add_scalar(f'AUC/{mode}/{cls_name}', class_auc, epoch)
+                    targets_binarized[:, cls_idx], outputs_probs[:, 0], multi_class='ovr')
+                self.writer.add_scalar(
+                    f'AUC/{mode}/{cls_name}', class_auc, epoch)
             except ValueError as e:
                 self.logger.error(f"Error calculating AUC for {cls_name}: {e}")
 
         return mean_auc
 
-
-    def _train_epoch(self, train_dataloader, epoch, model_arg):
+    def _train_epoch(self, train_dataloader, epoch):
         self.model.train()
 
         # vars to store metrics for training
@@ -143,22 +142,25 @@ class TrainerClass:
         train_loop = tqdm(train_dataloader, leave=True)
 
         for i, batch in enumerate(train_loop):
-            inputs, labels = batch["img"].to(
+            inputs, targets = batch["img"].to(
                 self.device), batch["lab"].to(self.device)
+    
             self.optimizer.zero_grad()
             # forward pass
             outputs = self.model(inputs)
-            logits = outputs if model_arg == 'densenet' else outputs.logits
-            logits = logits.to(self.device)
-            targets = labels.to(self.device)
-            # compute loss
-            loss = self.criterion(logits, targets)
+
+            # calculate loss
+            probabilities = F.softmax(outputs, dim=1)  # Apply softmax to outputs
+            # Now pass probabilities to your loss function
+            loss = self.criterion(probabilities, targets)
             # backward pass and optimization
             loss.backward()
             self.optimizer.step()
             # accumulate training loss
             train_loss += loss.item()
-            _, predicted_classes = torch.max(logits, 1)
+
+            # get the predicted class indices with the highest probability
+            _, predicted_classes = torch.max(outputs, 1)
             predicted_classes = predicted_classes.cpu().numpy()
             targets = targets.cpu().numpy()
             train_outputs.append(predicted_classes)
@@ -225,7 +227,7 @@ class TrainerClass:
         self.logger.info(
             f'[Train] Epoch {epoch+1} - Loss: {avg_train_loss:.4f}, F1: {train_f1:.4f}, Accuracy: {train_accuracy:.4f}, mAUC: {train_mean_auc:.4f}')
 
-    def _validate_epoch(self, validation_dataloader, epoch, model_arg):
+    def _validate_epoch(self, validation_dataloader, epoch):
         self.model.eval()
 
         # vars to store metrics
@@ -241,24 +243,21 @@ class TrainerClass:
         with torch.no_grad():
             val_loop = tqdm(validation_dataloader, leave=True)
             for i, batch in enumerate(val_loop):
-                inputs, labels = batch["img"].to(
+                inputs, targets = batch["img"].to(
                     self.device), batch["lab"].to(self.device)
 
                 # forward pass
                 outputs = self.model(inputs)
-                logits = outputs if model_arg == 'densenet' else outputs.logits
-                # ensure logits and targets are on the correct device
-                logits = logits.to(self.device)
-                targets = labels.to(self.device)
 
-                # compute loss
-                loss = self.criterion(logits, targets)
+                # calculate loss
+                probabilities = F.softmax(outputs, dim=1)  
+                loss = self.criterion(probabilities, targets)
 
                 # accumulate validation loss
                 val_loss += loss.item()
 
                 # get the predicted class indices with the highest probability
-                _, predicted_classes = torch.max(logits, 1)
+                _, predicted_classes = torch.max(outputs, 1)
                 # convert to numpy arrays for comparison
                 predicted_classes = predicted_classes.cpu().numpy()
                 targets = targets.cpu().numpy()

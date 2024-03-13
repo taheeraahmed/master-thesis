@@ -2,48 +2,63 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class WeightedFocalLoss(nn.Module):
-    """
-    Implmenetation of the weighted focal loss function taken from with minor modifications:
-    https://github.com/clcarwin/focal_loss_pytorch/blob/master/focalloss.py
 
-    :param alpha: A tensor of shape [num_classes] containing weights for each class.
-    :param gamma: Focusing parameter to adjust the rate at which easy examples are down-weighted.
-    :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'
-    """
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1.0, gamma=2.0, reduction='mean'):
+        """
+        Initializes the Focal Loss.
 
-    def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
-        super(WeightedFocalLoss, self).__init__()
+        Args:
+            alpha (float, optional): Weighting factor for the class imbalance. Defaults to 1.0.
+            gamma (float, optional): Focusing parameter to adjust the rate at which easy examples are down-weighted.
+                                      Defaults to 2.0.
+            reduction (str, optional): Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'.
+                                       'none': no reduction will be applied,
+                                       'mean': the sum of the output will be divided by the number of elements in the output,
+                                       'sum': the output will be summed. Defaults to 'mean'.
+        """
+        super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
-
-        if isinstance(alpha, (float, int)):
-            self.alpha = torch.Tensor([alpha, 1-alpha])
-        if isinstance(alpha, list):
-            self.alpha = torch.Tensor(alpha)
-
         self.reduction = reduction
 
     def forward(self, inputs, targets):
         """
-        Forward pass of the Focal Loss.
-        :param inputs: Predictions from the model (logits, before softmax).
-        :param targets: True labels.
-        :return: Weighted Focal Loss value.
+        Forward pass of the focal loss.
+
+        Args:
+            inputs (torch.Tensor): Probabilities for each class, obtained after applying softmax or sigmoid to the logits.
+                                   Shape [batch_size, num_classes] for multi-class classification or [batch_size, 1] for binary.
+            targets (torch.Tensor): Ground truth labels, one-hot encoded. Shape [batch_size, num_classes] for multi-class.
+
+        Returns:
+            torch.Tensor: Computed Focal Loss.
         """
-        BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        pt = torch.exp(-BCE_loss) 
-        F_loss = (1 - pt) ** self.gamma * BCE_loss
+        # Ensure inputs are probabilities and targets are one-hot encoded
+        if not (inputs.size() == targets.size()):
+            raise ValueError("Size mismatch between inputs and targets")
 
-        if self.alpha is not None:
-            if self.alpha.type() != inputs.data.type():
-                self.alpha = self.alpha.type_as(inputs.data)
-            at = self.alpha.gather(0, targets.data.view(-1))
-            F_loss = at * F_loss
+        # Calculate the cross entropy loss for each class
+        # Adding epsilon to avoid log(0)
+        ce_loss = -targets * torch.log(inputs + 1e-8)
 
+        # Calculate the focal loss adjustment factor
+        focal_loss_adjustment = self.alpha * (1 - inputs) ** self.gamma
+
+        # Apply adjustment factor to the cross entropy loss
+        focal_loss = focal_loss_adjustment * ce_loss
+
+        # Reduce the loss based on the reduction parameter
         if self.reduction == 'mean':
-            return F_loss.mean()
+            return focal_loss.mean()
         elif self.reduction == 'sum':
-            return F_loss.sum()
-        else:
-            return F_loss
+            return focal_loss.sum()
+        else:  # 'none'
+            return focal_loss
+
+# Example usage
+# Assuming `logits` is your model's output and `labels` is your ground truth labels, one-hot encoded
+# model_output = model(inputs)  # shape [batch_size, num_classes]
+# probabilities = F.softmax(model_output, dim=1)  # Convert logits to probabilities
+# focal_loss_fn = FocalLoss(alpha=0.25, gamma=2.0, reduction='mean')
+# loss = focal_loss_fn(probabilities, labels)
