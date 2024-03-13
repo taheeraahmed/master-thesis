@@ -3,6 +3,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 from transformers import TrainingArguments
 from utils.df import get_df
 import torch
+from math import ceil
 from transformers import Swinv2ForImageClassification, Trainer, Swinv2Config
 from transformers import ViTForImageClassification
 from torch import nn
@@ -114,13 +115,13 @@ def swin(model_config, file_manager):
                                                             id2label=id2label,
                                                             label2id=label2id)
 
-    total_steps = (train_ds.__len__() / model_config.batch_size) * \
-        model_config.num_epochs
+    total_steps = int(ceil((train_ds.__len__() / model_config.batch_size) * \
+        model_config.num_epochs))
 
     file_manager.logger.info(f'Total steps: {total_steps}')
 
     training_args = TrainingArguments(
-        output_dir=f'{file_manager.output_folder}',
+        output_dir=f'{file_manager.model_ckpts_folder}',
         num_train_epochs=model_config.num_epochs,  # number of training epochs
         max_steps=total_steps,                     # max number of training steps
         # batch size per device during training
