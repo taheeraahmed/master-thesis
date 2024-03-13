@@ -15,6 +15,8 @@ class ModelConfig():
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.test_mode = test_mode
+        self.num_classes = 14
+
 
     def __str__(self):
         
@@ -87,6 +89,7 @@ def set_up(args):
     start_time = time.time()
 
     idun_time = args.idun_time
+    # TODO: FIx this
     output_folder = 'output/'+args.output_folder
 
     result = pyfiglet.figlet_format("master-thesis", font="slant")
