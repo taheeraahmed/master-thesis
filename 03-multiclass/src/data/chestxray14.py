@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from transformers import AutoImageProcessor
 
 
-class ChestXray14SwinDataset(Dataset):
+class ChestXray14HFDataset(Dataset):
     def __init__(self, dataframe, model_name, transform=None):
         """
         Args:

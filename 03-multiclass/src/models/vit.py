@@ -1,4 +1,4 @@
-from data.chestxray14 import ChestXray14SwinDataset
+from data.chestxray14 import ChestXray14HFDataset
 from sklearn.metrics import precision_score, recall_score, f1_score
 from transformers import TrainingArguments
 from utils.df import get_df
@@ -100,10 +100,10 @@ def vit(model_config, file_manager):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    train_ds = ChestXray14SwinDataset(
+    train_ds = ChestXray14HFDataset(
         model_name=model_name, dataframe=train_df, transform=train_transforms)
 
-    val_ds = ChestXray14SwinDataset(
+    val_ds = ChestXray14HFDataset(
         model_name=model_name, dataframe=val_df, transform=val_transforms)
 
     id2label = {id: label for id, label in enumerate(labels)}

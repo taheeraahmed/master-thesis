@@ -3,7 +3,7 @@ from transformers import Swinv2ForImageClassification, Trainer, Swinv2Config
 from torch.nn import CrossEntropyLoss
 import sys
 
-from data.chestxray14 import ChestXray14SwinDataset
+from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
 from transformers import TrainingArguments
 from sklearn.metrics import precision_score, recall_score, f1_score
@@ -68,10 +68,10 @@ def swin(model_config, file_manager):
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
 
-    train_dataset = ChestXray14SwinDataset(
+    train_dataset = ChestXray14HFDataset(
         model_name=model_name, dataframe=train_df)
 
-    val_dataset = ChestXray14SwinDataset(
+    val_dataset = ChestXray14HFDataset(
         model_name=model_name, dataframe=val_df)
 
     configuration = Swinv2Config()
