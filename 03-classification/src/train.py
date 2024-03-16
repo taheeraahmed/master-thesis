@@ -1,5 +1,5 @@
 from utils import set_up, str_to_bool, ModelConfig
-from models import densenet121, swin
+from models import densenet121, swin, vit
 import argparse
 import sys
 
@@ -26,6 +26,11 @@ def train(args):
         )
     elif model_config.model == 'swin':
         swin(
+            model_config=model_config,
+            file_manager=file_manager,
+        )
+    elif model_config.model == 'vit':
+        vit(
             model_config=model_config,
             file_manager=file_manager,
         )

@@ -1,10 +1,10 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
-MODELS=("densenet")
-LOSSES=("ce" "wfl" "wce")
+MODELS=("swin")
+LOSSES=("wce")
 
-BATCH_SIZE=32
+BATCH_SIZE=28
 LEARNING_RATE=0.001
 NUM_EPOCHS=25
 
@@ -24,7 +24,7 @@ for MODEL in "${MODELS[@]}"; do
         if [ "$TEST_MODE" = true ]; then
             JOB_NAME="TEST-${JOB_NAME}"
             IDUN_TIME=00:09:00
-            BATCH_SIZE=2
+            BATCH_SIZE=28
             LEARNING_RATE=0.001
             NUM_EPOCHS=2
             PARTITION="short"
