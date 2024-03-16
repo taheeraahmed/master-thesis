@@ -4,9 +4,8 @@ from transformers import TrainingArguments
 from utils.df import get_df
 import torch
 from math import ceil
-from transformers import Swinv2ForImageClassification, Trainer, Swinv2Config
+from transformers import Trainer
 from transformers import ViTForImageClassification
-from torch import nn
 from torch.nn import CrossEntropyLoss
 from torchvision.transforms import (CenterCrop,
                                     Compose,
@@ -73,7 +72,7 @@ def compute_metrics(pred):
     }
 
 
-def swin(model_config, file_manager):
+def vit(model_config, file_manager):
     train_df, val_df, labels, class_weights = get_df(file_manager)
 
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
