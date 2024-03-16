@@ -42,7 +42,7 @@ def train(args):
 
 
 if __name__ == "__main__":
-    model_choices = ['densenet', 'swin']
+    model_choices = ['densenet', 'swin', 'vit']
     loss_choices = ['ce', 'wfl', 'wce']
 
     parser = argparse.ArgumentParser(

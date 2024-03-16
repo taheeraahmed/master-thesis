@@ -164,4 +164,6 @@ def get_df(file_manager):
 
     file_manager.logger.info(f"\n{train_df.head()}")
 
+    assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
+
     return train_df, val_df, labels, class_weights

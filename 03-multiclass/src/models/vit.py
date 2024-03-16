@@ -1,5 +1,5 @@
 from data.chestxray14 import ChestXray14HFDataset
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 from transformers import TrainingArguments
 from utils.df import get_df
 import torch
@@ -14,8 +14,8 @@ from torchvision.transforms import (CenterCrop,
                                     Resize,
                                     ToTensor)
 import sys
-from torch.utils.data import DataLoader
 import torch
+from utils import FileManager, ModelConfig
 
 
 def collate_fn(examples):
@@ -56,23 +56,26 @@ class CustomTrainer(Trainer):
 def compute_metrics(pred):
     labels = pred.label_ids
     preds = pred.predictions
-    # Apply threshold to predictions (e.g., 0.5) to convert to binary format if necessary
     threshold = 0.5
     preds_binary = (preds > threshold).astype(int)
 
-    # Ensure you're using metrics that support multilabel-indicator format
     precision = precision_score(labels, preds_binary, average='micro')
     recall = recall_score(labels, preds_binary, average='micro')
     f1 = f1_score(labels, preds_binary, average='micro')
+
+    auc_scores = roc_auc_score(labels, preds, average=None)
+    mean_auc = auc_scores.mean()
 
     return {
         'precision': precision,
         'recall': recall,
         'f1': f1,
+        'mean_auc': mean_auc,
+        'auc_scores': auc_scores.tolist(),
     }
 
 
-def vit(model_config, file_manager):
+def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
     train_df, val_df, labels, class_weights = get_df(file_manager)
 
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"

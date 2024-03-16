@@ -1,8 +1,8 @@
 #!/bin/bash
-TEST_MODE=false
+TEST_MODE=true
 
 MODELS=("swin")
-LOSSES=("wce")
+LOSSES=("wfl")
 
 BATCH_SIZE=28
 LEARNING_RATE=0.001
