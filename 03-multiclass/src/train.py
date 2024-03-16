@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
-    parser.add_argument("-of", "--output_folder",
+    parser.add_argument('-en', '--experiment_name',
                         help="Name of folder output files will be added", required=False, default='./output/')
     parser.add_argument(
         "-it", "--idun_time", help="The duration of job set on IDUN", default=None, required=False)

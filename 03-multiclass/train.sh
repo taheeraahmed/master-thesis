@@ -19,10 +19,10 @@ CURRENT_PATH=$(pwd)
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
-        JOB_NAME=${DATE}-${MODEL}-$LOSS-multiclass
+        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-multiclass-pl
 
         if [ "$TEST_MODE" = true ]; then
-            JOB_NAME="TEST-${JOB_NAME}"
+            EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
             IDUN_TIME=00:09:00
             BATCH_SIZE=28
             LEARNING_RATE=0.001
@@ -30,20 +30,18 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            JOB_NAME="${JOB_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
         fi
 
-        OUTPUT_FOLDER=${JOB_NAME}
+        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
+        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/images            # Store images
 
-        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$OUTPUT_FOLDER/model_checkpoints # Stores logs and checkpoints
-        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$OUTPUT_FOLDER/images            # Store images
-
-        echo "Made directory: /cluster/home/$USER/code/master-thesis/03-multiclass/output/$OUTPUT_FOLDER"
-        OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/03-multiclass/output/$OUTPUT_FOLDER/idun_out.out"
-        echo "Current OUTPUT_FOLDER is: $OUTPUT_FOLDER"
+        echo "Made directory: /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME"
+        OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/idun_out.out"
+        echo "Current OUTPUT_FOLDER is: $EXPERIMENT_NAME"
 
         # Define the destination path for the code
-        CODE_PATH="/cluster/home/$USER/runs/code/${OUTPUT_FOLDER}"
+        CODE_PATH="/cluster/home/$USER/runs/code/${EXPERIMENT_NAME}"
 
         echo "Copying code to $CODE_PATH"
         mkdir -p $CODE_PATH
@@ -63,7 +61,7 @@ for MODEL in "${MODELS[@]}"; do
 
         echo "Current user is: $USER"
         echo "Current path is: $CURRENT_PATH"
-        echo "Current job name is: $JOB_NAME"
+        echo "Current job name is: $EXPERIMENT_NAME"
         echo "Running slurm job from $CODE_PATH"
 
         sbatch --partition=$PARTITION \
@@ -73,9 +71,9 @@ for MODEL in "${MODELS[@]}"; do
             --ntasks-per-node=1 \
             --mem=50G \
             --gres=gpu:1 \
-            --job-name=$JOB_NAME \
+            --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,OUTPUT_FOLDER=$OUTPUT_FOLDER,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS \
+            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS \
             $CODE_PATH/train.slurm
     done
 done
