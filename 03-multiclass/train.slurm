@@ -19,7 +19,7 @@ pip install -q -r requirements.txt
 echo "running python-script"
 python $CODE_PATH/src/train.py \
   --test_mode $TEST_MODE \
-  --output_folder $OUTPUT_FOLDER \
+  --experiment_name $EXPERIMENT_NAME\
   --idun_time $IDUN_TIME \
   --model $MODEL \
   --batch_size $BATCH_SIZE \

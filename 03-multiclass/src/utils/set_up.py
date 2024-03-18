@@ -7,6 +7,7 @@ from utils.check_gpu import check_gpu
 from datetime import datetime, timedelta
 import time
 
+
 class ModelConfig():
     def __init__(self, model, loss, num_epochs, batch_size, learning_rate, test_mode):
         self.model = model
@@ -15,11 +16,9 @@ class ModelConfig():
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.test_mode = test_mode
-        self.num_classes = 14
-
 
     def __str__(self):
-        
+
         table_str = (
             f"🚀 Model Configuration 🚀\n"
             f"-------------------------------------------------\n"
@@ -89,12 +88,11 @@ def set_up(args):
     start_time = time.time()
 
     idun_time = args.idun_time
-    # TODO: FIx this
-    output_folder = 'output/'+args.output_folder
+    output_folder = 'output/' + args.experiment_name
 
     result = pyfiglet.figlet_format("master-thesis", font="slant")
     print(result)
-    
+
     # Calculate at what time IDUN job is done
     hours, minutes, seconds = map(int, idun_time.split(":"))
     now = datetime.fromtimestamp(start_time)
@@ -103,7 +101,7 @@ def set_up(args):
 
     file_manager = FileManager(
         output_folder=output_folder, idun_datetime_done=idun_datetime_done)
-    
+
     return file_manager
 
 
