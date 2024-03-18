@@ -6,5 +6,4 @@ images/
 mlruns/
 output/
 *.out
-*.txt
 .vscode

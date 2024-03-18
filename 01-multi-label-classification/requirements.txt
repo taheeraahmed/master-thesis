@@ -1,0 +1,17 @@
+pydicom
+opencv-python
+torch
+matplotlib
+numpy
+tqdm
+pandas
+torchxrayvision
+monai
+scikit-image
+scikit-learn
+pyfiglet
+ipykernel
+monai
+torch-tb-profiler
+transformers
+seaborn
