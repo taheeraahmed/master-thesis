@@ -1,47 +1,53 @@
-from utils.set_up import set_up, str_to_bool
-from models import densenet121, swin
+from utils import set_up, str_to_bool, ModelConfig
+from models import densenet121, swin, vit
 import argparse
 import sys
 
 
 def train(args):
-    setup_info = set_up(args)
-    logger, idun_datetime_done, output_folder = setup_info
-    logger.info(f'Output folder: {output_folder}')
-    data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
+    file_manager = set_up(args)
 
-    logger.info(
-        f'batch_size: {args.batch_size}, num_epochs: {args.num_epochs}, lr: {args.learning_rate}')
+    model_config = ModelConfig(
+        model=args.model,
+        loss=args.loss,
+        num_epochs=args.num_epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+        test_mode=args.test_mode
+    )
 
-    if args.model == 'densenet':
+    file_manager.logger.info(f'{model_config.__str__()}')
+    file_manager.logger.info(f'{file_manager.__str__()}')
+
+    if model_config.model == 'densenet':
         densenet121(
-            logger=logger,
-            args=args,
-            idun_datetime_done=idun_datetime_done,
-            data_path=data_path
+            model_config=model_config,
+            file_manager=file_manager,
         )
-    elif args.model == 'swin':
+    elif model_config.model == 'swin':
         swin(
-            logger=logger,
-            args=args,
-            idun_datetime_done=idun_datetime_done,
-            data_path=data_path
+            model_config=model_config,
+            file_manager=file_manager,
+        )
+    elif model_config.model == 'vit':
+        vit(
+            model_config=model_config,
+            file_manager=file_manager,
         )
     else:
-        logger.error('Invalid model argument')
+        file_manager.logger.error('Invalid model argument')
         sys.exit(1)
 
-    logger.info('Training is done')
+    file_manager.logger.info('Training is done')
 
 
 if __name__ == "__main__":
-    model_choices = ['densenet', 'swin']
-    # TODO: Rename bce to wbce and focal-loss to wfl
-    loss_choices = ['wbce', 'wfl']
+    model_choices = ['densenet', 'swin', 'vit']
+    loss_choices = ['ce', 'wfl', 'wce']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
-    parser.add_argument("-of", "--output_folder",
+    parser.add_argument('-en', '--experiment_name',
                         help="Name of folder output files will be added", required=False, default='./output/')
     parser.add_argument(
         "-it", "--idun_time", help="The duration of job set on IDUN", default=None, required=False)
@@ -56,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("-lr", "--learning_rate",
                         help="Learning rate", type=float, default=0.01)
     parser.add_argument("-l", "--loss", choices=loss_choices,
-                        help="Type of loss function used", default="wbce")
+                        help="Type of loss function used", default="wce")
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
