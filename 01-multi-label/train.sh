@@ -16,11 +16,14 @@ IDUN_TIME=45:00:00
 DATE=$(date "+%Y-%m-%d-%H:%M:%S")
 USER=$(whoami)
 CURRENT_PATH=$(pwd)
+ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
+
 
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
         EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK-pl
+        echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
         if [ "$TEST_MODE" = true ]; then
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
@@ -34,16 +37,13 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
         fi
 
-        ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/images            # Store images
 
         echo "Made directory: $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME"
-        
         OUTPUT_FILE="$ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/idun_out.out"
-        echo "Current OUTPUT_FOLDER is: $EXPERIMENT_NAME"
 
-        # Define the destination path for the code
+
         CODE_PATH="/cluster/home/$USER/runs/code/${EXPERIMENT_NAME}"
 
         echo "Copying code to $CODE_PATH"

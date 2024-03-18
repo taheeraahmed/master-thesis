@@ -75,8 +75,6 @@ def label_encode(df, labels):
 
     return final_df
 
-
-
 def split_train_val(df, val_size):
     """
     Split the data into train and validation sets
@@ -166,8 +164,9 @@ def get_df(file_manager, one_hot=True):
     if one_hot: 
         if 'No Finding' in labels:
             labels.remove('No Finding')
-        train_df = one_hot_encode(train_df, labels=labels)
-        val_df = one_hot_encode(val_df, labels=labels)
+        train_df = train_df.drop('No Finding', axis=1)
+        val_df = val_df.drop('No Finding', axis=1)
+
         assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
     else:
         train_df = label_encode(train_df, labels=labels)

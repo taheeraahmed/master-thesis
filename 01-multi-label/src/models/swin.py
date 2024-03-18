@@ -11,14 +11,14 @@ import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
 from utils import FileManager, ModelConfig
-from trainers import MulticlassModelTrainer
+from trainers import MultiLabelModelTrainer
 from transformers import AutoModelForImageClassification
 
 
 def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
-    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
+    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=True)
 
     if model_config.test_mode:
         file_manager.logger.warning('Using smaller dataset')
@@ -81,7 +81,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
             ignore_mismatched_sizes=True
         )
 
-    training_module = MulticlassModelTrainer(
+    training_module = MultiLabelModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,
