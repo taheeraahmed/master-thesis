@@ -19,7 +19,7 @@ CURRENT_PATH=$(pwd)
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
-        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-multiclass-pl
+        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-multilabel-pl
 
         if [ "$TEST_MODE" = true ]; then
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
@@ -33,7 +33,7 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
         fi
 
-        ROOT_OUTPUT=/cluster/home/$USER/code/master-thesis/03-multiclass/output
+        ROOT_OUTPUT=/cluster/home/$USER/code/master-thesis/01-multi-label/output
 
         mkdir -p $ROOT_OUTPUT/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
         mkdir -p $ROOT_OUTPUT/$EXPERIMENT_NAME/images            # Store images
@@ -59,7 +59,7 @@ for MODEL in "${MODELS[@]}"; do
             --exclude='utils/__pycache__' \
             --exclude='trainers/__pycache__' \
             --exclude='mlruns/' \
-            /cluster/home/$USER/code/master-thesis/03-multiclass/ $CODE_PATH
+            /cluster/home/$USER/code/master-thesis/01-multi-label/ $CODE_PATH
 
         echo "Current user is: $USER"
         echo "Current path is: $CURRENT_PATH"
