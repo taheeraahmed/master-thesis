@@ -26,7 +26,7 @@ for MODEL in "${MODELS[@]}"; do
             IDUN_TIME=00:09:00
             BATCH_SIZE=28
             LEARNING_RATE=0.001
-            NUM_EPOCHS=2
+            NUM_EPOCHS=3
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then

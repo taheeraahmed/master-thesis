@@ -42,13 +42,17 @@ class ModelConfig():
 
 
 class FileManager():
-    def __init__(self, output_folder, idun_datetime_done):
-        self.output_folder = output_folder
+    def __init__(self, experiment_name, idun_datetime_done):
+        self.root = '/cluster/home/taheeraa/master-thesis/03-multiclass/output'
+        self.experiment_name = experiment_name
+
+        self.output_folder = f'{self.root}/{experiment_name}/output'
+        self.model_ckpts_folder = f'{self.output_folder}/model_checkpoints'
+        self.image_folder = f'{self.output_folder}/images'
+
         self.logger = self._set_up_logger()
         self.idun_datetime_done = idun_datetime_done
-        self.model_ckpts_folder = f'{output_folder}/model_checkpoints'
         create_directory_if_not_exists(self.model_ckpts_folder)
-        self.image_folder = f'{output_folder}/images'
         self.data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
         self.project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), ".."))
@@ -88,7 +92,7 @@ def set_up(args):
     start_time = time.time()
 
     idun_time = args.idun_time
-    output_folder = 'output/' + args.experiment_name
+    experiment_name = args.experiment_name
 
     result = pyfiglet.figlet_format("master-thesis", font="slant")
     print(result)
@@ -100,7 +104,7 @@ def set_up(args):
         timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
     file_manager = FileManager(
-        output_folder=output_folder, idun_datetime_done=idun_datetime_done)
+        experiment_name=experiment_name, idun_datetime_done=idun_datetime_done)
 
     return file_manager
 

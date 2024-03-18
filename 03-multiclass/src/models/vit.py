@@ -132,7 +132,7 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         warmup_steps=500,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         # directory for storing logs
-        logging_dir=f'{file_manager.output_folder}',
+        logging_dir=f'{file_manager.model_ckpts_folder}',
         logging_steps=10,                # log & save weights each logging_steps
         evaluation_strategy="epoch",     # evaluate each `epoch`
         save_strategy="epoch",           # save checkpoint every epoch

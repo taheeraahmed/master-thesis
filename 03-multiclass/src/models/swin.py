@@ -11,7 +11,8 @@ import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
 from utils import FileManager, ModelConfig
-from trainers import TrainerPL
+from trainers import MulticlassModelTrainer
+from transformers import AutoModelForImageClassification
 
 
 def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
@@ -53,7 +54,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         val_dataset, batch_size=model_config.batch_size, shuffle=False)
 
     logger = TensorBoardLogger(
-        save_dir=file_manager.model_ckpts_folder, name=file_manager.output_folder)
+        save_dir=file_manager.output_folder, name=file_manager.output_folder)
     
     if model_config.loss == 'ce':
         criterion = torch.nn.CrossEntropyLoss()
@@ -69,23 +70,35 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
             force_reload=False
         )
 
-    model = TrainerPL(
+    id2label = {id: label for id, label in enumerate(labels)}
+    label2id = {label: id for id, label in id2label.items()}
+
+    model = AutoModelForImageClassification.from_pretrained(
+            model_name,
+            num_labels=len(labels),
+            id2label=id2label,
+            label2id=label2id,
+            ignore_mismatched_sizes=True
+        )
+
+    training_module = MulticlassModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,
         labels=labels,
-        model_name=model_name,
+        model=model,
         learning_rate=model_config.learning_rate,
     )
 
-    trainer = Trainer(
+    pl_trainer = Trainer(
         max_epochs=model_config.num_epochs,
         logger=logger,
         gpus=1,
-        fast_dev_run=model_config.test_mode
+        fast_dev_run=model_config.test_mode,
+        max_steps=10 if model_config.test_mode else None
     )
 
-    trainer.fit(model,
+    pl_trainer.fit(training_module,
                 train_dataloaders=train_loader,
                 val_dataloaders=val_loader
                 )
