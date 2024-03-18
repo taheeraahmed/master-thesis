@@ -13,10 +13,10 @@ class MultiLabelModelTrainer(LightningModule):
         self.num_labels = num_labels
 
         # Adjust metrics for multi-label
-        self.accuracy = Accuracy(num_classes=num_labels, average='macro', multilabel=True)
-        self.f1_score = F1Score(num_classes=num_labels, average='macro', multilabel=True)
+        self.accuracy = Accuracy(num_labels=num_labels, average='macro', task='multilabel')
+        self.f1_score = F1Score(num_labels=num_labels, average='macro', task='multilabel')
         # Uncomment and adjust AUROC for multi-label if needed
-        # self.auroc = AUROC(num_classes=num_labels, average='macro', compute_on_step=False, multilabel=True)
+        # self.auroc = AUROC(num_classes=num_labels, average='macro', compute_on_step=False, task='multilabel')
 
     def forward(self, pixel_values):
         outputs = self.model(pixel_values=pixel_values)

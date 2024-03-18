@@ -16,7 +16,7 @@ class ModelConfig():
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.test_mode = test_mode
-        self.max_steps = 100
+        self.max_steps = 40000
 
     def __str__(self):
 

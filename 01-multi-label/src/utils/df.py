@@ -139,8 +139,7 @@ def get_df(file_manager, one_hot=True):
         df=df, val_size=0.2)
 
     # TODO: Convert one-hot encoded labels back to integers THIS ONE IS DEPENDENT ON ONE-HOT-ENCODED LABELS :))
-    integer_labels = convert_one_hot_to_integers(train_df, labels)
-    class_weights = calculate_class_weights(integer_labels)
+    
 
     # plot the number of patients with each disease
     try:
@@ -167,10 +166,14 @@ def get_df(file_manager, one_hot=True):
         train_df = train_df.drop('No Finding', axis=1)
         val_df = val_df.drop('No Finding', axis=1)
 
+        integer_labels = convert_one_hot_to_integers(train_df, labels)
+        class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
     else:
         train_df = label_encode(train_df, labels=labels)
         val_df = label_encode(val_df, labels=labels)
+        integer_labels = convert_one_hot_to_integers(train_df, labels)
+        class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 
     file_manager.logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")

@@ -10,7 +10,7 @@ from torchvision.transforms import (CenterCrop,
 import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
-from utils import FileManager, ModelConfig
+from utils import FileManager, ModelConfig, FocalLoss
 from trainers import MultiLabelModelTrainer
 from transformers import AutoModelForImageClassification
 
@@ -56,20 +56,13 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     logger = TensorBoardLogger(
         save_dir=file_manager.output_folder, name=file_manager.output_folder)
     
-    if model_config.loss == 'ce':
-        criterion = torch.nn.CrossEntropyLoss()
-    elif model_config.loss == 'wce':
-        criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
-    elif model_config.loss == 'wfl':
-        criterion = torch.hub.load(
-            'adeelh/pytorch-multi-class-focal-loss',
-            model='FocalLoss',
-            alpha=class_weights,
-            gamma=2,
-            reduction='mean',
-            force_reload=False
-        )
-
+    if model_config.loss == 'bce_logits':
+        criterion = torch.nn.BCEWithLogitsLoss()
+    elif model_config.loss == 'multi_label_soft_margin':
+        criterion = torch.nn.MultiLabelSoftMarginLoss()
+    elif model_config.loss == 'weigthed_focal_loss':
+        criterion = FocalLoss(weight=class_weights, gamma=2, reduction="mean")
+    
     id2label = {id: label for id, label in enumerate(labels)}
     label2id = {label: id for id, label in id2label.items()}
 
@@ -95,7 +88,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         logger=logger,
         gpus=1,
         fast_dev_run=model_config.test_mode,
-        max_steps=10 if model_config.test_mode else None
+        max_steps=10 if model_config.test_mode else model_config.max_steps
     )
 
     pl_trainer.fit(training_module,
