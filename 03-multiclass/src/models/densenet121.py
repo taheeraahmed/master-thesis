@@ -15,7 +15,7 @@ import torchxrayvision as xrv
 from trainers import MulticlassModelTrainer
 
 
-def densenet(model_config: ModelConfig, file_manager: FileManager) -> None:
+def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
     train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
