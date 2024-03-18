@@ -10,7 +10,7 @@ from torchvision.transforms import (CenterCrop,
 import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
-from utils import FileManager, ModelConfig, FocalLoss
+from utils import FileManager, ModelConfig
 from trainers import TrainerPL
 
 
