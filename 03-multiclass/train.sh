@@ -33,11 +33,13 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
         fi
 
-        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
-        mkdir -p /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/images            # Store images
+        ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/03-multiclass/output"
+        mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
+        mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/images            # Store images
 
-        echo "Made directory: /cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME"
-        OUTPUT_FILE="/cluster/home/$USER/code/master-thesis/03-multiclass/output/$EXPERIMENT_NAME/idun_out.out"
+        echo "Made directory: $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME"
+        
+        OUTPUT_FILE="$ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/idun_out.out"
         echo "Current OUTPUT_FOLDER is: $EXPERIMENT_NAME"
 
         # Define the destination path for the code
