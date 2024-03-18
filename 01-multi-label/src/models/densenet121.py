@@ -8,15 +8,15 @@ from torchvision.transforms import (CenterCrop,
                                     Resize,
                                     ToTensor)
 import torch
-from data.chestxray14 import ChestXray14HFDataset
+from data.chestxray14 import ChestXray14Dataset
 from utils.df import get_df
 from utils import FileManager, ModelConfig
 import torchxrayvision as xrv
-from trainers import MulticlassModelTrainer
+from trainers import MultiLabelModelTrainer
 
 
 def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
-    model_name = "microsoft/swinv2-tiny-patch4-window8-256"
+    model = xrv.models.get_model(weights="densenet121-res224-nih")
 
     train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
 
@@ -43,10 +43,10 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    train_dataset = ChestXray14HFDataset(
-        dataframe=train_df, model_name=model_name, transform=train_transforms)
-    val_dataset = ChestXray14HFDataset(
-        dataframe=val_df, model_name=model_name, transform=val_transforms)
+    train_dataset = ChestXray14Dataset(
+        dataframe=train_df, transform=train_transforms)
+    val_dataset = ChestXray14Dataset(
+        dataframe=val_df, transform=val_transforms)
 
     train_loader = DataLoader(
         train_dataset, batch_size=model_config.batch_size, shuffle=True)
@@ -70,12 +70,7 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
             force_reload=False
         )
 
-    id2label = {id: label for id, label in enumerate(labels)}
-    label2id = {label: id for id, label in id2label.items()}
-
-    model = xrv.models.get_model(weights="densenet121-res224-nih")
-
-    training_module = MulticlassModelTrainer(
+    training_module = MultiLabelModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,

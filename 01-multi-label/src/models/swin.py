@@ -10,15 +10,15 @@ from torchvision.transforms import (CenterCrop,
 import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
-from utils import FileManager, ModelConfig
-import torchxrayvision as xrv
-from trainers import MulticlassModelTrainer
+from utils import FileManager, ModelConfig, FocalLoss
+from trainers import MultiLabelModelTrainer
+from transformers import AutoModelForImageClassification
 
 
-def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
+def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
-    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
+    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=True)
 
     if model_config.test_mode:
         file_manager.logger.warning('Using smaller dataset')
@@ -56,26 +56,25 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
     logger = TensorBoardLogger(
         save_dir=file_manager.output_folder, name=file_manager.output_folder)
     
-    if model_config.loss == 'ce':
-        criterion = torch.nn.CrossEntropyLoss()
-    elif model_config.loss == 'wce':
-        criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
-    elif model_config.loss == 'wfl':
-        criterion = torch.hub.load(
-            'adeelh/pytorch-multi-class-focal-loss',
-            model='FocalLoss',
-            alpha=class_weights,
-            gamma=2,
-            reduction='mean',
-            force_reload=False
-        )
-
+    if model_config.loss == 'bce_logits':
+        criterion = torch.nn.BCEWithLogitsLoss()
+    elif model_config.loss == 'multi_label_soft_margin':
+        criterion = torch.nn.MultiLabelSoftMarginLoss()
+    elif model_config.loss == 'weigthed_focal_loss':
+        criterion = FocalLoss(weight=class_weights, gamma=2, reduction="mean")
+    
     id2label = {id: label for id, label in enumerate(labels)}
     label2id = {label: id for id, label in id2label.items()}
 
-    model = xrv.models.get_model(weights="densenet121-res224-nih")
+    model = AutoModelForImageClassification.from_pretrained(
+            model_name,
+            num_labels=len(labels),
+            id2label=id2label,
+            label2id=label2id,
+            ignore_mismatched_sizes=True
+        )
 
-    training_module = MulticlassModelTrainer(
+    training_module = MultiLabelModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,

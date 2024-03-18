@@ -11,14 +11,14 @@ import torch
 from data.chestxray14 import ChestXray14HFDataset
 from utils.df import get_df
 from utils import FileManager, ModelConfig
-import torchxrayvision as xrv
-from trainers import MulticlassModelTrainer
+from trainers import MultiLabelModelTrainer
+from transformers import AutoModelForImageClassification
 
 
-def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
-    model_name = "microsoft/swinv2-tiny-patch4-window8-256"
+def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
+    model_name = "google/vit-base-patch16-224-in21k"
 
-    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
+    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=True)
 
     if model_config.test_mode:
         file_manager.logger.warning('Using smaller dataset')
@@ -73,9 +73,15 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
     id2label = {id: label for id, label in enumerate(labels)}
     label2id = {label: id for id, label in id2label.items()}
 
-    model = xrv.models.get_model(weights="densenet121-res224-nih")
+    model = AutoModelForImageClassification.from_pretrained(
+            model_name,
+            num_labels=len(labels),
+            id2label=id2label,
+            label2id=label2id,
+            ignore_mismatched_sizes=True
+        )
 
-    training_module = MulticlassModelTrainer(
+    training_module = MultiLabelModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,
@@ -89,7 +95,7 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
         logger=logger,
         gpus=1,
         fast_dev_run=model_config.test_mode,
-        max_steps=10 if model_config.test_mode else model_config.max_steps
+        max_steps=10 if model_config.test_mode else None
     )
 
     pl_trainer.fit(training_module,
