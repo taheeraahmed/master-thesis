@@ -17,7 +17,7 @@ from trainers import TrainerPL
 def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
 
-    train_df, val_df, labels, class_weights = get_df(file_manager)
+    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=False)
 
     if model_config.test_mode:
         file_manager.logger.warning('Using smaller dataset')
@@ -29,7 +29,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
 
     train_transforms = Compose([
         Resize(256),
-        CenterCrop(224),
+        CenterCrop(256),
         RandomHorizontalFlip(),
         ToTensor(),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -37,7 +37,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
 
     val_transforms = Compose([
         Resize(256),
-        CenterCrop(224),
+        CenterCrop(256),
         ToTensor(),
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
@@ -54,28 +54,38 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
 
     logger = TensorBoardLogger(
         save_dir=file_manager.model_ckpts_folder, name=file_manager.output_folder)
+    
     if model_config.loss == 'ce':
         criterion = torch.nn.CrossEntropyLoss()
-    if model_config.loss == 'wce':
+    elif model_config.loss == 'wce':
         criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
     elif model_config.loss == 'wfl':
-        criterion = FocalLoss(alpha=class_weights)
+        criterion = torch.hub.load(
+            'adeelh/pytorch-multi-class-focal-loss',
+            model='FocalLoss',
+            alpha=class_weights,
+            gamma=2,
+            reduction='mean',
+            force_reload=False
+        )
 
     model = TrainerPL(
-        num_labels=model_config.num_classes,
+        file_manager=file_manager,
+        num_labels=len(labels),
         criterion=criterion,
         labels=labels,
         model_name=model_name,
         learning_rate=model_config.learning_rate,
     )
 
-    trainer = Trainer(max_epochs=model_config.num_epochs,
-                      logger=logger,
-                      gpus=1,
-                      progress_bar_refresh_rate=20
-                      )
+    trainer = Trainer(
+        max_epochs=model_config.num_epochs,
+        logger=logger,
+        gpus=1,
+        fast_dev_run=model_config.test_mode
+    )
 
     trainer.fit(model,
-                train_dataloader=train_loader,
+                train_dataloaders=train_loader,
                 val_dataloaders=val_loader
                 )
