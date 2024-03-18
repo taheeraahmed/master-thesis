@@ -4,7 +4,7 @@ from torchmetrics.classification import Accuracy, F1Score, AUROC
 import torch.nn.functional as F
 import torch
 
-class MulticlassModelTrainer(LightningModule):
+class MultiLabelModelTrainer(LightningModule):
     def __init__(self, file_manager, model, num_labels, labels, criterion, learning_rate=2e-5):
         super().__init__()
 
