@@ -2,7 +2,7 @@
 TEST_MODE=true
 
 MODELS=("swin")
-LOSSES=("wfl")
+LOSSES=("wfl" "ce" "wce")
 
 BATCH_SIZE=28
 LEARNING_RATE=0.001
