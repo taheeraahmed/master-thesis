@@ -89,7 +89,7 @@ def densenet(model_config: ModelConfig, file_manager: FileManager) -> None:
         logger=logger,
         gpus=1,
         fast_dev_run=model_config.test_mode,
-        max_steps=10 if model_config.test_mode else None
+        max_steps=10 if model_config.test_mode else model_config.max_steps
     )
 
     pl_trainer.fit(training_module,
