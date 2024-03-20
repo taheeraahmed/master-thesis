@@ -70,6 +70,7 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         )
 
     training_module = MultiLabelModelTrainer(
+        model_config=model_config,
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,

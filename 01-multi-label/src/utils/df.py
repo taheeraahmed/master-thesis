@@ -158,9 +158,9 @@ def get_df(file_manager, one_hot=True):
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
     else:
+        integer_labels = convert_one_hot_to_integers(train_df, labels)
         train_df = label_encode(train_df, labels=labels)
         val_df = label_encode(val_df, labels=labels)
-        integer_labels = convert_one_hot_to_integers(train_df, labels)
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 

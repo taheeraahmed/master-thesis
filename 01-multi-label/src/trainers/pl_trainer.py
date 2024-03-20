@@ -2,12 +2,14 @@ from pytorch_lightning import LightningModule
 from torchmetrics.classification import Accuracy, F1Score, AUROC
 import torch
 import torch.nn.functional as F
+from utils import FileManager, ModelConfig
 
 class MultiLabelModelTrainer(LightningModule):
-    def __init__(self, file_manager, model, num_labels, labels, criterion, learning_rate=2e-5):
+    def __init__(self, file_manager: FileManager, model_config: ModelConfig, model, num_labels, labels, criterion, learning_rate=2e-5):
         super().__init__()
         self.file_manager = file_manager
         self.model = model
+        self.model_config = model_config
         self.criterion = criterion
         self.learning_rate = learning_rate
         self.num_labels = num_labels
@@ -23,8 +25,12 @@ class MultiLabelModelTrainer(LightningModule):
         return outputs.logits
 
     def step(self, batch):
-        pixel_values = batch['pixel_values']
-        labels = batch['labels']
+        if self.model_config.model == 'densenet':
+            pixel_values = batch['img']
+            labels = batch['lab']
+        else:
+            pixel_values = batch['pixel_values']
+            labels = batch['labels']
         logits = self(pixel_values)
         loss = self.criterion(logits, labels)
         return loss, logits, labels
@@ -61,8 +67,10 @@ class MultiLabelModelTrainer(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
-        return optimizer
-        #scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
+        scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
         
-        #return [optimizer], [scheduler]
+        return [optimizer], [scheduler]
+    
+    def save_model(self, path):
+        torch.save(self.model.state_dict(), path)
 

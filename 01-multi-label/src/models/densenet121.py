@@ -58,6 +58,7 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
     criterion = set_criterion(model_config.loss, class_weights=class_weights)
     
     training_module = MultiLabelModelTrainer(
+        model_config=model_config,
         file_manager=file_manager,
         num_labels=len(labels),
         criterion=criterion,
