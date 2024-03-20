@@ -8,51 +8,18 @@ from datetime import datetime, timedelta
 import time
 
 
-class ModelConfig():
-    def __init__(self, model, loss, num_epochs, batch_size, learning_rate, test_mode):
-        self.model = model
-        self.loss = loss
-        self.num_epochs = num_epochs
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.test_mode = test_mode
-        self.max_steps = 40000
-
-    def __str__(self):
-
-        table_str = (
-            f"🚀 Model Configuration 🚀\n"
-            f"-------------------------------------------------\n"
-            f"| Attribute         | Value                     |\n"
-            f"-------------------------------------------------\n"
-            f"| 📦 Model          | {self.model:<25} |\n"
-            f"| 💥 Loss Function  | {self.loss:<25} |\n"
-            f"| 🔄 Epochs         | {self.num_epochs:<25} |\n"
-            f"| 📏 Batch Size     | {self.batch_size:<25} |\n"
-            f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
-            f"| 🔬 Test Mode      | {'Enabled' if self.test_mode else 'Disabled':<25} |\n"
-            f"-------------------------------------------------"
-        )
-        return table_str
-
-    def __repr__(self):
-        return f'model: {self.model}, loss: {self.loss}, num_epochs: {self.num_epochs}, batch_size: {self.batch_size}, learning_rate: {self.learning_rate}'
-
-    def __eq__(self, other):
-        return self.model == other.model and self.loss == other.loss and self.num_epochs == other.num_epochs and self.batch_size == other.batch_size and self.learning_rate == other.learning_rate
-
-
 class FileManager():
     def __init__(self, experiment_name, idun_datetime_done):
-        self.root = '/cluster/home/taheeraa/master-thesis/03-multiclass/output'
         self.experiment_name = experiment_name
+        self.idun_datetime_done = idun_datetime_done
 
-        self.output_folder = f'{self.root}/{experiment_name}/output'
+        self.root = '/cluster/home/taheeraa/code/master-thesis/01-multi-label/output'
+        self.output_folder = f'{self.root}/{experiment_name}'
+
         self.model_ckpts_folder = f'{self.output_folder}/model_checkpoints'
         self.image_folder = f'{self.output_folder}/images'
 
         self.logger = self._set_up_logger()
-        self.idun_datetime_done = idun_datetime_done
         create_directory_if_not_exists(self.model_ckpts_folder)
         self.data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
         self.project_root = os.path.abspath(
@@ -61,6 +28,7 @@ class FileManager():
     def __str__(self):
         table_str = (
             f"🗃️ File Manager Configuration 🗃️\n"
+            f"🌲 Root folder: {self.root:<25}\n"
             f"📁 Output Folder: {self.output_folder:<25}\n"
             f"🗂️ Model Checkpoints: {self.model_ckpts_folder:<25}\n"
             f"🖼️ Image Folder: {self.image_folder:<25}\n"
@@ -76,9 +44,8 @@ class FileManager():
         return self.output_folder == other.output_folder
 
     def _set_up_logger(self):
-        LOG_DIR = self.output_folder
-        create_directory_if_not_exists(LOG_DIR)
-        LOG_FILE = f"{LOG_DIR}/log_file.txt"
+        create_directory_if_not_exists(self.output_folder)
+        LOG_FILE = f"{self.output_folder}/log_file.txt"
 
         logging.basicConfig(level=logging.INFO,
                             format='[%(levelname)s] %(asctime)s - %(message)s',

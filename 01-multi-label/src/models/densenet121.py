@@ -7,10 +7,9 @@ from torchvision.transforms import (CenterCrop,
                                     RandomHorizontalFlip,
                                     Resize,
                                     ToTensor)
-import torch
-from data.chestxray14 import ChestXray14Dataset
+from data import ChestXray14Dataset
 from utils.df import get_df
-from utils import FileManager, ModelConfig
+from utils import FileManager, ModelConfig, set_criterion
 import torchxrayvision as xrv
 from trainers import MultiLabelModelTrainer
 
@@ -56,20 +55,8 @@ def densenet121(model_config: ModelConfig, file_manager: FileManager) -> None:
     logger = TensorBoardLogger(
         save_dir=file_manager.output_folder, name=file_manager.output_folder)
     
-    if model_config.loss == 'ce':
-        criterion = torch.nn.CrossEntropyLoss()
-    elif model_config.loss == 'wce':
-        criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
-    elif model_config.loss == 'wfl':
-        criterion = torch.hub.load(
-            'adeelh/pytorch-multi-class-focal-loss',
-            model='FocalLoss',
-            alpha=class_weights,
-            gamma=2,
-            reduction='mean',
-            force_reload=False
-        )
-
+    criterion = set_criterion(model_config.loss, class_weights=class_weights)
+    
     training_module = MultiLabelModelTrainer(
         file_manager=file_manager,
         num_labels=len(labels),

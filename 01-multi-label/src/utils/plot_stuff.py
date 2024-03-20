@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import pandas as pd
+from utils import FileManager
 
 # Set style and color palette
 sns.set(style='darkgrid', palette='mako')
@@ -72,41 +73,49 @@ def plot_pred(inputs, labels, preds, output_folder, logger):
     logger.info('Done training')
 
 
-def plot_percentage_train_val(train_df, val_df, diseases, image_output='./'):
-    # calculate the percentages of each disease in the train and validation sets
-    train_percentages = train_df[diseases].mean() * 100
-    val_percentages = val_df[diseases].mean() * 100
+def plot_percentage_train_val(file_manager: FileManager, train_df: pd.DataFrame, val_df: pd.DataFrame, diseases: list) -> None:
+    try:
+        # calculate the percentages of each disease in the train and validation sets
+        train_percentages = train_df[diseases].mean() * 100
+        val_percentages = val_df[diseases].mean() * 100
 
-    # create a DataFrame that contains the calculated percentages
-    data = {
-        'Train': train_percentages,
-        'Validation': val_percentages
-    }
-    percentage_df = pd.DataFrame(data)
+        # create a DataFrame that contains the calculated percentages
+        data = {
+            'Train': train_percentages,
+            'Validation': val_percentages
+        }
+        percentage_df = pd.DataFrame(data)
 
-    # reset index to make 'Disease' a column
-    percentage_df = percentage_df.reset_index().rename(
-        columns={'index': 'Disease'})
+        # reset index to make 'Disease' a column
+        percentage_df = percentage_df.reset_index().rename(
+            columns={'index': 'Disease'})
 
-    # melt the DataFrame from wide format to long format for plotting
-    percentage_df = percentage_df.melt(
-        id_vars='Disease', var_name='Set', value_name='Percentage')
+        # melt the DataFrame from wide format to long format for plotting
+        percentage_df = percentage_df.melt(
+            id_vars='Disease', var_name='Set', value_name='Percentage')
 
-    # create a bar plot that compares the percentages of each disease in the train and validation sets
-    plt.figure(figsize=(12, 8))
-    sns.barplot(data=percentage_df, x='Percentage',
-                y='Disease', hue='Set', alpha=1)
-    plt.title('Comparison of Disease Percentages in Train and Validation Sets')
-    plt.savefig(image_output)
+        # create a bar plot that compares the percentages of each disease in the train and validation sets
+        plt.figure(figsize=(12, 8))
+        sns.barplot(data=percentage_df, x='Percentage',
+                    y='Disease', hue='Set', alpha=1)
+        plt.title('Comparison of Disease Percentages in Train and Validation Sets')
+        plt.savefig(file_manager.image_folder+ "/percentage_train_val.png")
+    except Exception as e:
+        file_manager.logger.error(
+            f'Error plotting percentage_train_val: {e}')
 
 
-def plot_number_patient_disease(df, diseases, image_output="./"):
-    # What are the label counts for each disease?
-    label_counts = df[diseases].sum().sort_values(ascending=False)
-    # Plot the value counts
-    plt.figure(figsize=(12, 8))
-    sns.barplot(x=label_counts.values, y=label_counts.index)
-    plt.xlabel('Number of Patients')
-    plt.ylabel('Disease')
-    plt.title('Number of Patients per Disease')
-    plt.savefig(image_output)
+def plot_number_patient_disease(file_manager: FileManager, df: pd.DataFrame, diseases: list) -> None:
+    try:
+        # What are the label counts for each disease?
+        label_counts = df[diseases].sum().sort_values(ascending=False)
+        # Plot the value counts
+        plt.figure(figsize=(12, 8))
+        sns.barplot(x=label_counts.values, y=label_counts.index)
+        plt.xlabel('Number of Patients')
+        plt.ylabel('Disease')
+        plt.title('Number of Patients per Disease')
+        plt.savefig(file_manager.image_folder + '/number_patient_disease.png')
+    except Exception as e:
+        file_manager.logger.error(
+            f'Error plotting number_patient_disease: {e}')
