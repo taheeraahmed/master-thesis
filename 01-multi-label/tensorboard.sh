@@ -22,7 +22,7 @@ for dir in "$target_directory"/*; do
         stripped=$(echo "$base_name" | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}-//; s/-t[0-9]{2}:[0-9]{2}:[0-9]{2}$//')
         experiment_names+=("$stripped")
 
-        LOGDIR_SPEC="${LOGDIR_SPEC}${stripped}:${dir},"
+        LOGDIR_SPEC="${LOGDIR_SPEC}${stripped}-${dir_count}:${dir},"
     fi
 done
 
