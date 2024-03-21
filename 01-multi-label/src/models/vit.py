@@ -85,6 +85,7 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         gpus=1,
         fast_dev_run=model_config.test_mode,
         max_steps=10 if model_config.test_mode else model_config.max_steps,
+        max_epochs=1 if model_config.test_mode else model_config.num_epochs,
     )
 
     pl_trainer.fit(training_module,
