@@ -1,31 +1,38 @@
 #!/bin/bash
 
-# The parent directory you want to search in
-PARENT_DIR=$(pwd)/output
+target_directory="output"
+cd "$(dirname "$0")"
 
-# Initialize the logdir_spec argument for TensorBoard
+# Initialize
+experiment_dirs=()
+experiment_names=()
 LOGDIR_SPEC=""
 
-# Counter to name each found log directory uniquely
-COUNTER=1
+dir_count=0
+for dir in "$target_directory"/*; do
+    # Check if the item is a directory and starts with a number
+    if [[ -d "$dir" && "$(basename "$dir")" =~ ^[0-9] ]]; then
 
-# Find directories containing TensorBoard log files and construct logdir_spec
-find "${PARENT_DIR}" -type f -name 'events.out.tfevents.*' | while read -r FILE; do
-    DIR=$(dirname "${FILE}")
-    # Use the counter or a meaningful name based on your directory structure
-    NAME="run${COUNTER}"
-    # Append this directory to the logdir_spec argument
-    LOGDIR_SPEC="${LOGDIR_SPEC}${NAME}:${DIR},"
-    ((COUNTER++))
+        # Add the directory to the array
+        experiment_dirs+=("$(basename "$dir")")
+        ((dir_count++))
+
+        # Extract name for run
+        base_name="${dir##*/}"
+        stripped=$(echo "$base_name" | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}-//; s/-t[0-9]{2}:[0-9]{2}:[0-9]{2}$//')
+        experiment_names+=("$stripped")
+
+        LOGDIR_SPEC="${LOGDIR_SPEC}${stripped}:${dir},"
+    fi
 done
+
+# Print the directories found
+echo "Opening these experiments in tensorboard: "
+printf '%s\n' "${experiment_names[@]}"
 
 # Remove the last comma
 LOGDIR_SPEC=${LOGDIR_SPEC%,}
 
-# Check if LOGDIR_SPEC is not empty
-if [[ -n "${LOGDIR_SPEC}" ]]; then
-    # Print the TensorBoard command
-    echo "tensorboard --logdir_spec=${LOGDIR_SPEC}"
-else
-    echo "No TensorBoard log files found in ${PARENT_DIR}."
-fi
+# Running tensorboard
+tensorboard_command="tensorboard --logdir_spec=${LOGDIR_SPEC}"
+eval "${tensorboard_command}"
