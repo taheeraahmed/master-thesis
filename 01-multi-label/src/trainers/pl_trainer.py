@@ -46,14 +46,16 @@ class MultiLabelModelTrainer(LightningModule):
         self.f1_score(probs, labels)
 
         # Log metrics
-        self.log('train_accuracy', self.accuracy, on_step=False, on_epoch=True, prog_bar=True)
-        self.log('train_f1', self.f1_score, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('train_accuracy', self.accuracy, on_step=False,
+                 on_epoch=True, prog_bar=True, logger=True)
+        self.log('train_f1', self.f1_score, on_step=False,
+                 on_epoch=True, prog_bar=True, logger=True)
         
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, logits, labels = self.step(batch)
-        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         probs = torch.sigmoid(logits)
 
@@ -62,15 +64,18 @@ class MultiLabelModelTrainer(LightningModule):
         self.f1_score(probs, labels)
 
         # Log metrics
-        self.log('val_accuracy', self.accuracy, on_epoch=True, prog_bar=True)
-        self.log('val_f1', self.f1_score, on_epoch=True, prog_bar=True)
+        self.log('val_accuracy', self.accuracy,
+                 on_epoch=True, prog_bar=True, logger=True)
+        self.log('val_f1', self.f1_score, on_epoch=True,
+                 prog_bar=True, logger=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
         
         return [optimizer], [scheduler]
     
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
+
 
