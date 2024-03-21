@@ -17,9 +17,10 @@ from transformers import AutoModelForImageClassification
 
 def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
-    img_size=256
+    img_size = 256
 
-    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=True)
+    train_df, val_df, labels, class_weights = get_df(
+        file_manager, one_hot=True)
     criterion = set_criterion(model_config.loss, class_weights)
 
     if model_config.test_mode:
@@ -51,12 +52,12 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         dataframe=val_df, model_name=model_name, transform=val_transforms)
 
     train_loader = DataLoader(
-        train_dataset, batch_size=model_config.batch_size, shuffle=True)
+        train_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(
-        val_dataset, batch_size=model_config.batch_size, shuffle=False)
+        val_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     logger = TensorBoardLogger(
-        save_dir=file_manager.output_folder, name="lightning_logs")
+        save_dir=file_manager.output_folder, name=file_manager.output_folder)
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_f1',  # Monitor F1 score validation metric
@@ -69,12 +70,12 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     label2id = {label: id for id, label in id2label.items()}
 
     model = AutoModelForImageClassification.from_pretrained(
-            model_name,
-            num_labels=len(labels),
-            id2label=id2label,
-            label2id=label2id,
-            ignore_mismatched_sizes=True
-        )
+        model_name,
+        num_labels=len(labels),
+        id2label=id2label,
+        label2id=label2id,
+        ignore_mismatched_sizes=True
+    )
 
     training_module = MultiLabelModelTrainer(
         model_config=model_config,
@@ -92,11 +93,10 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         gpus=1,
         fast_dev_run=model_config.test_mode,
         max_steps=10 if model_config.test_mode else model_config.max_steps,
-        max_epochs=1 if model_config.test_mode else model_config.num_epochs,
         callbacks=[checkpoint_callback],
     )
 
     pl_trainer.fit(training_module,
-                train_dataloaders=train_loader,
-                val_dataloaders=val_loader
-                )
+                   train_dataloaders=train_loader,
+                   val_dataloaders=val_loader
+                   )

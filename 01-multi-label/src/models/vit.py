@@ -49,9 +49,9 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         dataframe=val_df, model_name=model_name, transform=val_transforms)
 
     train_loader = DataLoader(
-        train_dataset, batch_size=model_config.batch_size, shuffle=True)
+        train_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(
-        val_dataset, batch_size=model_config.batch_size, shuffle=False)
+        val_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     logger = TensorBoardLogger(
         save_dir=file_manager.output_folder, name=file_manager.output_folder)
@@ -85,7 +85,6 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         gpus=1,
         fast_dev_run=model_config.test_mode,
         max_steps=10 if model_config.test_mode else model_config.max_steps,
-        max_epochs=1 if model_config.test_mode else model_config.num_epochs,
     )
 
     pl_trainer.fit(training_module,
