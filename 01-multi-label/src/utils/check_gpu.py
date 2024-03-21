@@ -1,5 +1,4 @@
 from pynvml import *
-import sys
 
 def check_gpu(logger):
     try:

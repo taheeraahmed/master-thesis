@@ -13,7 +13,8 @@ def train(args):
         num_epochs=args.num_epochs,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
-        test_mode=args.test_mode
+        test_mode=args.test_mode,
+        experiment_name=args.experiment_name
     )
 
     file_manager.logger.info(f'{model_config.__str__()}')
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
     parser.add_argument('-en', '--experiment_name',
-                        help="Name of folder output files will be added", required=False, default='./output/')
+                        help="Name of folder output files will be added, also name of run", required=False, default='./output/')
     parser.add_argument(
         "-it", "--idun_time", help="The duration of job set on IDUN", default=None, required=False)
     parser.add_argument("-t", "--test_mode", help="Test mode?",

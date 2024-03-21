@@ -138,27 +138,15 @@ def get_df(file_manager, one_hot=True):
     train_df, val_df = split_train_val(
         df=df, val_size=0.2)
 
-    # TODO: Convert one-hot encoded labels back to integers THIS ONE IS DEPENDENT ON ONE-HOT-ENCODED LABELS :))
-    
-
     # plot the number of patients with each disease
-    try:
-        plot_number_patient_disease(
-            df, labels, image_output=f'{file_manager.image_folder}/number_patient_disease.png')
-    except Exception as e:
-        file_manager.logger.error(f'Error plotting number_patient_disease: {e}')
+    plot_number_patient_disease(file_manager=file_manager, df=df, diseases=labels)    
 
-    # calculate the percentages of each disease in the train, validation, and test sets
-    try:
-        plot_percentage_train_val(train_df=train_df,
-                                  val_df=val_df,
-                                  diseases=labels,
-                                  image_output=f'{file_manager.image_folder}/percentage_class_train_val_test.png'
-                                  )
-    except Exception as e:
-        file_manager.logger.error(f'Error plotting percentage_train_val: {e}')
-
-    file_manager.logger.info(f"\n{train_df.head()}")
+    plot_percentage_train_val(
+        file_manager=file_manager,
+        train_df=train_df,
+        val_df=val_df,
+        diseases=labels,
+    )
 
     if one_hot: 
         if 'No Finding' in labels:
@@ -170,9 +158,9 @@ def get_df(file_manager, one_hot=True):
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
     else:
+        integer_labels = convert_one_hot_to_integers(train_df, labels)
         train_df = label_encode(train_df, labels=labels)
         val_df = label_encode(val_df, labels=labels)
-        integer_labels = convert_one_hot_to_integers(train_df, labels)
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 

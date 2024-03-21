@@ -1,7 +1,7 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
-MODELS=("swin")
+MODELS=("swin" "vit" "densenet")
 LOSSES=("bce_logits" "multi_label_soft_margin" "weigthed_focal_loss")
 TASK=multi-label
 
