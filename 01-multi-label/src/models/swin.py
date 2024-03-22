@@ -96,7 +96,8 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         callbacks=[checkpoint_callback],
     )
 
-    pl_trainer.fit(training_module,
-                   train_dataloaders=train_loader,
-                   val_dataloaders=val_loader
-                   )
+    pl_trainer.fit(
+        training_module,
+        train_dataloaders=train_loader,
+        val_dataloaders=val_loader
+    )

@@ -66,7 +66,7 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
             num_labels=len(labels),
             id2label=id2label,
             label2id=label2id,
-            ignore_mismatched_sizes=True
+            ignore_mismatched_sizes=True,
         )
 
     training_module = MultiLabelModelTrainer(
@@ -87,7 +87,8 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
         max_steps=10 if model_config.test_mode else model_config.max_steps,
     )
 
-    pl_trainer.fit(training_module,
-                train_dataloaders=train_loader,
-                val_dataloaders=val_loader
-                )
+    pl_trainer.fit(
+        training_module,
+        train_dataloaders=train_loader,
+        val_dataloaders=val_loader
+    )
