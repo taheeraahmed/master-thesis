@@ -16,12 +16,10 @@ class MultiLabelModelTrainer(LightningModule):
         self.criterion = criterion
         self.learning_rate = learning_rate
         self.num_labels = num_labels
+        self.log_step_interval = 10
 
-        # Adjust metrics for multi-label
         self.f1_score = MultilabelF1Score(
             num_labels=num_labels, threshold=0.5, average='macro')
-        # Uncomment and adjust AUROC for multi-label if needed
-        # self.auroc = AUROC(num_classes=num_labels, average='macro', compute_on_step=False, task='multilabel')
 
     def forward(self, pixel_values):
         outputs = self.model(pixel_values=pixel_values)
@@ -46,9 +44,9 @@ class MultiLabelModelTrainer(LightningModule):
         self.f1_score(logits, labels)
 
         # Log metrics
-        self.log('train_f1', self.f1_score, on_step=False,
-                 on_epoch=True, prog_bar=True, logger=True)
-
+        if batch_idx % self.log_step_interval == 0:
+            self.log('train_f1', self.f1_score.compute(), on_step=True,
+                     on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -60,8 +58,10 @@ class MultiLabelModelTrainer(LightningModule):
         self.f1_score(logits, labels)
 
         # Log metrics
-        self.log('val_f1', self.f1_score, on_epoch=True,
-                 prog_bar=True, logger=True)
+        if batch_idx % self.log_step_interval == 0:
+            self.log('val_f1', self.f1_score.compute(), on_step=True,
+                     on_epoch=True, prog_bar=True, logger=True)
+        return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
@@ -71,5 +71,6 @@ class MultiLabelModelTrainer(LightningModule):
 
         return [optimizer], [scheduler]
 
-    def save_model(self, path):
-        torch.save(self.model.state_dict(), path)
+    def save_model(self):
+        script = self.to_torchscript()
+        torch.jit.save(script, "model.pt")
