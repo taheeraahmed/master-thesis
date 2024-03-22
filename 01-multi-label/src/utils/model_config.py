@@ -20,7 +20,7 @@ class ModelConfig():
         self.learning_rate = learning_rate
         self.experiment_name = experiment_name
         self.test_mode = test_mode
-        self.max_steps = 40000
+        self.max_steps = 50000
 
     def __str__(self):
 
@@ -29,8 +29,10 @@ class ModelConfig():
             f"-------------------------------------------------\n"
             f"| Attribute         | Value                     |\n"
             f"-------------------------------------------------\n"
+            f"| 🧪 Experiment Name| {self.experiment_name:<25} |\n"
             f"| 📦 Model          | {self.model:<25} |\n"
-            f"| 💥 Loss Function  | {self.loss:<25} |\n"
+            f"| 🌟 Max Steps      | {self.max_steps:<25} |\n"
+            f"| 📈 Loss Function  | {self.loss:<25} |\n"
             f"| 🔄 Epochs         | {self.num_epochs:<25} |\n"
             f"| 📏 Batch Size     | {self.batch_size:<25} |\n"
             f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
