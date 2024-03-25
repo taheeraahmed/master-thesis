@@ -1,5 +1,4 @@
 import torch
-from utils import FocalLoss
 
 def set_criterion(loss: str, class_weights: torch.Tensor = None) -> torch.nn.Module:
     if loss == 'multi_label_soft_margin':
