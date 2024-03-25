@@ -2,12 +2,12 @@
 TEST_MODE=false
 
 MODELS=("swin" "vit")
-LOSSES=("multi_label_soft_margin")
+LOSSES=("multi_label_soft_margin" "weighted_multi_label_soft_margin")
 TASK=multi-label
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
-NUM_EPOCHS=25
+NUM_EPOCHS=35
 
 IDUN_TIME=45:00:00
 
