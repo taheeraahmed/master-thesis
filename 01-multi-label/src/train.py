@@ -1,5 +1,5 @@
 from utils import set_up, str_to_bool, ModelConfig
-from models import densenet121, swin, vit
+from models import swin, vit
 import argparse
 import sys
 
@@ -20,12 +20,7 @@ def train(args):
     file_manager.logger.info(f'{model_config.__str__()}')
     file_manager.logger.info(f'{file_manager.__str__()}')
 
-    if model_config.model == 'densenet':
-        densenet121(
-            model_config=model_config,
-            file_manager=file_manager,
-        )
-    elif model_config.model == 'swin':
+    if model_config.model == 'swin':
         swin(
             model_config=model_config,
             file_manager=file_manager,
@@ -43,7 +38,7 @@ def train(args):
 
 
 if __name__ == "__main__":
-    model_choices = ['densenet', 'swin', 'vit']
+    model_choices = ['swin', 'vit']
     loss_choices = ['multi_label_soft_margin',
                     'weighted_multi_label_soft_margin']
 
