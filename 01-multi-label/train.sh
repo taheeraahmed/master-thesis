@@ -1,11 +1,11 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("swin" "vit" "densenet")
-LOSSES=("bce_logits" "multi_label_soft_margin" "weigthed_focal_loss")
+MODELS=("swin" "vit")
+LOSSES=("multi_label_soft_margin")
 TASK=multi-label
 
-BATCH_SIZE=28
+BATCH_SIZE=32
 LEARNING_RATE=0.001
 NUM_EPOCHS=25
 
@@ -28,7 +28,7 @@ for MODEL in "${MODELS[@]}"; do
         if [ "$TEST_MODE" = true ]; then
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
             IDUN_TIME=00:09:00
-            BATCH_SIZE=28
+            BATCH_SIZE=32
             LEARNING_RATE=0.001
             NUM_EPOCHS=3
             PARTITION="short"

@@ -44,7 +44,8 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['densenet', 'swin', 'vit']
-    loss_choices = ['bce_logits', 'multi_label_soft_margin', 'weigthed_focal_loss']
+    loss_choices = ['multi_label_soft_margin',
+                    'weighted_multi_label_soft_margin']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")

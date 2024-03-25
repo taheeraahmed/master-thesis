@@ -2,12 +2,10 @@ import torch
 from utils import FocalLoss
 
 def set_criterion(loss: str, class_weights: torch.Tensor = None) -> torch.nn.Module:
-    if loss == 'bce_logits':
-        criterion = torch.nn.BCEWithLogitsLoss()
-    elif loss == 'multi_label_soft_margin':
+    if loss == 'multi_label_soft_margin':
         criterion = torch.nn.MultiLabelSoftMarginLoss()
-    elif loss == 'weigthed_focal_loss':
-        criterion = FocalLoss(weight=class_weights, gamma=2, reduction="mean")
+    elif loss == 'weighted_multi_label_soft_margin':
+        criterion = torch.nn.MultiLabelSoftMarginLoss(weight=class_weights)
     return criterion
 
 
