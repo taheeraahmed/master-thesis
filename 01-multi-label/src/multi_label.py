@@ -15,10 +15,7 @@ from trainers import MultiLabelModelTrainer
 from transformers import AutoModelForImageClassification
 
 
-def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
-    model_name = "microsoft/swinv2-tiny-patch4-window8-256"
-    img_size = 256
-
+def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, model_name, img_size) -> None:
     train_df, val_df, test_df, labels, class_weights = get_df(
         file_manager, one_hot=True)
     criterion = set_criterion(model_config.loss, class_weights)
@@ -106,7 +103,8 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         train_dataloaders=train_loader,
         val_dataloaders=val_loader,
     )
-    pl_trainer.test(
-        dataloaders=test_loader,
-        ckpt_path='best',
-    )
+    if not model_config.test_mode:
+        pl_trainer.test(
+            dataloaders=test_loader,
+            ckpt_path='best',
+        )
