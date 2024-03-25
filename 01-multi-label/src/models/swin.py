@@ -19,7 +19,7 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "microsoft/swinv2-tiny-patch4-window8-256"
     img_size = 256
 
-    train_df, val_df, labels, class_weights = get_df(
+    train_df, val_df, test_df, labels, class_weights = get_df(
         file_manager, one_hot=True)
     criterion = set_criterion(model_config.loss, class_weights)
 
@@ -50,11 +50,16 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
         dataframe=train_df, model_name=model_name, transform=train_transforms)
     val_dataset = ChestXray14HFDataset(
         dataframe=val_df, model_name=model_name, transform=val_transforms)
+    test_dataset = ChestXray14HFDataset(
+        dataframe=test_df, model_name=model_name, transform=val_transforms)
+    
 
     train_loader = DataLoader(
         train_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(
         val_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(
+        test_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     logger = TensorBoardLogger(
         save_dir=file_manager.output_folder, name=file_manager.output_folder)
@@ -99,5 +104,9 @@ def swin(model_config: ModelConfig, file_manager: FileManager) -> None:
     pl_trainer.fit(
         training_module,
         train_dataloaders=train_loader,
-        val_dataloaders=val_loader
+        val_dataloaders=val_loader,
+    )
+    pl_trainer.test(
+        dataloaders=test_loader,
+        ckpt_path='best',
     )

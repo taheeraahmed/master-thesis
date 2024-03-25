@@ -18,7 +18,7 @@ class ModelConfig():
         self.learning_rate = learning_rate
         self.experiment_name = experiment_name
         self.test_mode = test_mode
-        self.max_steps = 50000
+        self.max_steps = 80000
 
     def __str__(self):
 

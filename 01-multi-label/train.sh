@@ -2,12 +2,12 @@
 TEST_MODE=false
 
 MODELS=("swin" "vit")
-LOSSES=("multi_label_soft_margin")
+LOSSES=("multi_label_soft_margin" "weighted_multi_label_soft_margin")
 TASK=multi-label
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
-NUM_EPOCHS=25
+NUM_EPOCHS=35
 
 IDUN_TIME=45:00:00
 
@@ -22,7 +22,7 @@ ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
-        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK-pl
+        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK-testset
         echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
         if [ "$TEST_MODE" = true ]; then

@@ -75,24 +75,40 @@ def label_encode(df, labels):
 
     return final_df
 
-def split_train_val(df, val_size):
-    """
-    Split the data into train and validation sets
 
-    :param df: DataFrame with the image paths and labels
-    :param logger: The  logger object
+def split_data(df, val_size=0.2, test_size=0.1):
     """
+    Split the data into training, validation, and test sets based on unique patient IDs.
+    Ensures that all images from the same patient are kept in the same set, which is crucial 
+    for medical datasets to prevent information leakage across sets.
+    
+    :param df: DataFrame containing the image paths, labels, and patient IDs.
+    :param val_size: Proportion of the dataset to use for the validation set (after excluding the test set).
+    :param test_size: Proportion of the dataset to use for the test set.
+    :returns: Three DataFrames corresponding to the training, validation, and test sets.
+    """
+    # ensure that patient IDs are unique before splitting
     patient_ids = df['Patient ID'].unique()
+
+    # first split: separate out the test set based on patient IDs
+    train_val_ids, test_ids = train_test_split(
+        patient_ids, test_size=test_size, random_state=42)
+
+    # second split: separate the remaining patient IDs into training and validation sets
     train_ids, val_ids = train_test_split(
-        patient_ids, test_size=val_size, random_state=0)
+        train_val_ids, test_size=val_size / (1 - test_size), random_state=42)
 
-    train_df = df[df['Patient ID'].isin(train_ids)]
-    val_df = df[df['Patient ID'].isin(val_ids)]
+    # use the separated IDs to create the actual dataframes
+    train_df = df[df['Patient ID'].isin(train_ids)].reset_index(drop=True)
+    val_df = df[df['Patient ID'].isin(val_ids)].reset_index(drop=True)
+    test_df = df[df['Patient ID'].isin(test_ids)].reset_index(drop=True)
 
-    train_df = train_df.drop('Patient ID', axis=1).reset_index(drop=True)
-    val_df = val_df.drop('Patient ID', axis=1).reset_index(drop=True)
+    # drop the 'Patient ID' column if it's no longer needed
+    train_df = train_df.drop('Patient ID', axis=1)
+    val_df = val_df.drop('Patient ID', axis=1)
+    test_df = test_df.drop('Patient ID', axis=1)
 
-    return train_df, val_df
+    return train_df, val_df, test_df
 
 
 def get_labels(df):
@@ -139,13 +155,14 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
     labels = get_labels(df)
+
     if multi_class:
         df = multi_classification(df)
     # one-hot or label encode the diseases
     df = one_hot_encode(df, labels=labels)
 
-    train_df, val_df = split_train_val(
-        df=df, val_size=0.2)
+    train_df, val_df, test_df = split_data(
+        df=df, val_size=0.2, test_size=0.1)
 
     # plot the number of patients with each disease
     plot_number_patient_disease(file_manager=file_manager, df=df, diseases=labels)    
@@ -158,10 +175,12 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     )
 
     if one_hot: 
+        file_manager.logger.info(f"One-hotting dataframe")
         if 'No Finding' in labels:
             labels.remove('No Finding')
         train_df = train_df.drop('No Finding', axis=1)
         val_df = val_df.drop('No Finding', axis=1)
+        test_df = test_df.drop('No Finding', axis=1)
 
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         class_weights = calculate_class_weights(integer_labels)
@@ -170,11 +189,11 @@ def get_df(file_manager, one_hot=True, multi_class=False):
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         train_df = label_encode(train_df, labels=labels)
         val_df = label_encode(val_df, labels=labels)
+        test_df = label_encode(test_df, labels=labels)
+
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 
     file_manager.logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")
     file_manager.logger.info(f"Validation df\nColumns: {val_df.columns}\nShape: {val_df.shape}")
-    file_manager.logger.info(f"Disease Labels: {labels}")
-
-    return train_df, val_df, labels, class_weights
+    return train_df, val_df, test_df, labels, class_weights

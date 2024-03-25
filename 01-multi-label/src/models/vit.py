@@ -18,7 +18,7 @@ def vit(model_config: ModelConfig, file_manager: FileManager) -> None:
     model_name = "google/vit-base-patch16-224-in21k"
     img_size = 224
 
-    train_df, val_df, labels, class_weights = get_df(file_manager, one_hot=True)
+    train_df, val_df, test_df, labels, class_weights = get_df(file_manager, one_hot=True)
 
     if model_config.test_mode:
         file_manager.logger.warning('Using smaller dataset')
