@@ -1,5 +1,5 @@
 from utils import set_up, str_to_bool, ModelConfig
-from models import swin, vit
+from multi_label import train_and_evaluate_model
 import argparse
 import sys
 
@@ -21,19 +21,24 @@ def train(args):
     file_manager.logger.info(f'{file_manager.__str__()}')
 
     if model_config.model == 'swin':
-        swin(
-            model_config=model_config,
-            file_manager=file_manager,
-        )
+        model_name = "microsoft/swinv2-tiny-patch4-window8-256"
+        img_size = 256
     elif model_config.model == 'vit':
-        vit(
-            model_config=model_config,
-            file_manager=file_manager,
-        )
+        model_name = "google/vit-base-patch16-224-in21k"
+        img_size = 224
     else:
         file_manager.logger.error('Invalid model argument')
         sys.exit(1)
 
+    file_manager.logger.info(f'Model name: {model_name}')
+    file_manager.logger.info(f'Image size: {img_size}')
+
+    train_and_evaluate_model(
+            model_config=model_config,
+            file_manager=file_manager,
+            model_name=model_name,
+            img_size=img_size
+    )
     file_manager.logger.info('Training is done')
 
 

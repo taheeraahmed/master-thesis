@@ -47,23 +47,48 @@ class MultiLabelModelTrainer(LightningModule):
 
         # Log metrics
         if batch_idx % self.log_step_interval == 0:
-            self.log('train_f1', self.f1_score.compute(), on_step=True,
+            self.log('train_f1', f1, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
+            self.log('train_loss', loss, on_step=True,
+                     on_epoch=True, prog_bar=True, logger=True)
+        
         return {'loss': loss, 'f1': f1}
+    
+    def on_train_epoch_end(self):
+        self.f1_score.reset()
 
     def validation_step(self, batch, batch_idx):
         loss, logits, labels = self.step(batch)
-        self.log('val_loss', loss, on_step=False,
-                 on_epoch=True, prog_bar=True, logger=True)
 
         # Update metrics
         f1 = self.f1_score(logits, labels)
 
         # Log metrics
         if batch_idx % self.log_step_interval == 0:
-            self.log('val_f1', self.f1_score.compute(), on_step=True,
+            self.log('val_f1', f1, on_step=True,
+                     on_epoch=True, prog_bar=True, logger=True)
+            self.log('val_loss', loss, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
         return {'val_loss': loss, 'val_f1': f1}
+
+    def validation_epoch_end(self, outputs):
+        # Aggregate validation loss and F1 score
+        avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        avg_val_f1 = torch.stack([x['val_f1'] for x in outputs]).mean()
+
+        # Log the average validation loss and F1 score
+        self.log('avg_val_loss', avg_val_loss,
+                on_epoch=True, prog_bar=True, logger=True)
+        self.log('avg_val_f1', avg_val_f1, on_epoch=True,
+                prog_bar=True, logger=True)
+
+        self.file_manager.logger.info(
+            f'Validation loss: {avg_val_loss}, Validation F1: {avg_val_f1}'
+        )
+        self.f1_score.reset()
+
+        return {'avg_val_loss': avg_val_loss, 'avg_val_f1': avg_val_f1}
+
 
     def test_step(self, batch, batch_idx):
         loss, logits, labels = self.step(batch)
@@ -96,20 +121,3 @@ class MultiLabelModelTrainer(LightningModule):
     def save_model(self):
         script = self.to_torchscript()
         torch.jit.save(script, "model.pt")
-
-    def validation_epoch_end(self, outputs):
-        # Aggregate validation loss and F1 score
-        avg_val_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_val_f1 = torch.stack([x['val_f1'] for x in outputs]).mean()
-
-        # Log the average validation loss and F1 score
-        self.log('avg_val_loss', avg_val_loss,
-                on_epoch=True, prog_bar=True, logger=True)
-        self.log('avg_val_f1', avg_val_f1, on_epoch=True,
-                prog_bar=True, logger=True)
-
-        self.file_manager.logger.info(
-            f'Validation loss: {avg_val_loss}, Validation F1: {avg_val_f1}'
-        )
-        
-        return {'avg_val_loss': avg_val_loss, 'avg_val_f1': avg_val_f1}
