@@ -21,6 +21,7 @@ class MultiLabelModelTrainer(LightningModule):
 
         self.conf_matrix = ConfusionMatrix(
             num_labels=self.num_labels, task='multilabel')
+        
         self.f1_score = MultilabelF1Score(
             num_labels=num_labels, threshold=0.5, average='macro')
 
@@ -52,9 +53,8 @@ class MultiLabelModelTrainer(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('train_loss', loss, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
-
         return {'loss': loss, 'f1': f1}
-
+      
     def on_train_epoch_end(self):
         self.f1_score.reset()
 
@@ -96,20 +96,22 @@ class MultiLabelModelTrainer(LightningModule):
         self.log('test_loss', loss)
         self.log('test_f1', f1)
         preds = torch.argmax(logits, dim=1)
-
+        
         # Update confusion matrix
         self.conf_matrix.update(preds, labels.argmax(dim=1))
-
+        
         return {'test_loss': loss, 'test_f1': f1}
-
+    
     def test_epoch_end(self, outputs):
         # Compute the final confusion matrix for the test set
         final_conf_matrix = self.conf_matrix.compute()
-        self.logger.experiment.add_image(
-            "Confusion Matrix", final_conf_matrix, self.current_epoch)
-
-        # Make sure to reset the metric for future test runs
+        self.logger.experiment.add_image("Confusion Matrix", final_conf_matrix, self.current_epoch)
+        # Update confusion matrix
+        self.conf_matrix.update(preds, labels.argmax(dim=1))
         self.conf_matrix.reset()
+        return {'test_loss': loss, 'test_f1': f1}
+
+
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
