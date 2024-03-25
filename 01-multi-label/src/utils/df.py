@@ -155,7 +155,6 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
     labels = get_labels(df)
-
     if multi_class:
         df = multi_classification(df)
     # one-hot or label encode the diseases
