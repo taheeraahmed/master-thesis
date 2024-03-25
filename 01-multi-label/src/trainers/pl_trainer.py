@@ -19,7 +19,8 @@ class MultiLabelModelTrainer(LightningModule):
         self.num_labels = num_labels
         self.log_step_interval = 10
 
-        self.conf_matrix = ConfusionMatrix(num_labels=self.num_labels, task='multilabel')
+        self.conf_matrix = ConfusionMatrix(
+            num_labels=self.num_labels, task='multilabel')
         self.f1_score = MultilabelF1Score(
             num_labels=num_labels, threshold=0.5, average='macro')
 
@@ -51,9 +52,9 @@ class MultiLabelModelTrainer(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('train_loss', loss, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
-        
+
         return {'loss': loss, 'f1': f1}
-    
+
     def on_train_epoch_end(self):
         self.f1_score.reset()
 
@@ -78,9 +79,9 @@ class MultiLabelModelTrainer(LightningModule):
 
         # Log the average validation loss and F1 score
         self.log('avg_val_loss', avg_val_loss,
-                on_epoch=True, prog_bar=True, logger=True)
+                 on_epoch=True, prog_bar=True, logger=True)
         self.log('avg_val_f1', avg_val_f1, on_epoch=True,
-                prog_bar=True, logger=True)
+                 prog_bar=True, logger=True)
 
         self.file_manager.logger.info(
             f'Validation loss: {avg_val_loss}, Validation F1: {avg_val_f1}'
@@ -89,24 +90,24 @@ class MultiLabelModelTrainer(LightningModule):
 
         return {'avg_val_loss': avg_val_loss, 'avg_val_f1': avg_val_f1}
 
-
     def test_step(self, batch, batch_idx):
         loss, logits, labels = self.step(batch)
         f1 = self.f1(logits, labels)
         self.log('test_loss', loss)
         self.log('test_f1', f1)
         preds = torch.argmax(logits, dim=1)
-        
+
         # Update confusion matrix
         self.conf_matrix.update(preds, labels.argmax(dim=1))
-        
+
         return {'test_loss': loss, 'test_f1': f1}
-    
+
     def test_epoch_end(self, outputs):
         # Compute the final confusion matrix for the test set
         final_conf_matrix = self.conf_matrix.compute()
-        self.logger.experiment.add_image("Confusion Matrix", final_conf_matrix, self.current_epoch)
-        
+        self.logger.experiment.add_image(
+            "Confusion Matrix", final_conf_matrix, self.current_epoch)
+
         # Make sure to reset the metric for future test runs
         self.conf_matrix.reset()
 
