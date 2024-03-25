@@ -1,5 +1,6 @@
 from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
+from torchmetrics import ConfusionMatrix
 import torch
 import torch.nn.functional as F
 from utils import FileManager, ModelConfig
@@ -18,6 +19,7 @@ class MultiLabelModelTrainer(LightningModule):
         self.num_labels = num_labels
         self.log_step_interval = 10
 
+        self.conf_matrix = ConfusionMatrix(num_labels=self.num_labels, task='multilabel')
         self.f1_score = MultilabelF1Score(
             num_labels=num_labels, threshold=0.5, average='macro')
 
@@ -62,6 +64,26 @@ class MultiLabelModelTrainer(LightningModule):
             self.log('val_f1', self.f1_score.compute(), on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
         return {'val_loss': loss, 'val_f1': f1}
+
+    def test_step(self, batch, batch_idx):
+        loss, logits, labels = self.step(batch)
+        f1 = self.f1(logits, labels)
+        self.log('test_loss', loss)
+        self.log('test_f1', f1)
+        preds = torch.argmax(logits, dim=1)
+        
+        # Update confusion matrix
+        self.conf_matrix.update(preds, labels.argmax(dim=1))
+        
+        return {'test_loss': loss, 'test_f1': f1}
+    
+    def test_epoch_end(self, outputs):
+        # Compute the final confusion matrix for the test set
+        final_conf_matrix = self.conf_matrix.compute()
+        self.logger.experiment.add_image("Confusion Matrix", final_conf_matrix, self.current_epoch)
+        
+        # Make sure to reset the metric for future test runs
+        self.conf_matrix.reset()
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(

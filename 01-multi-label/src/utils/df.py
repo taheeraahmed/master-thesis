@@ -75,28 +75,40 @@ def label_encode(df, labels):
 
     return final_df
 
+
 def split_data(df, val_size=0.2, test_size=0.1):
     """
-    Split the data into training, validation, and test sets.
-
-    :param df: DataFrame with the image paths and labels.
-    :param val_size: Proportion of the data to use for the validation set.
-    :param test_size: Proportion of the data to use for the test set.
+    Split the data into training, validation, and test sets based on unique patient IDs.
+    Ensures that all images from the same patient are kept in the same set, which is crucial 
+    for medical datasets to prevent information leakage across sets.
+    
+    :param df: DataFrame containing the image paths, labels, and patient IDs.
+    :param val_size: Proportion of the dataset to use for the validation set (after excluding the test set).
+    :param test_size: Proportion of the dataset to use for the test set.
     :returns: Three DataFrames corresponding to the training, validation, and test sets.
     """
-    # First split to separate out the test set
-    rest_df, test_df = train_test_split(
-        df, test_size=test_size, random_state=42)
+    # ensure that patient IDs are unique before splitting
+    patient_ids = df['Patient ID'].unique()
 
-    # Adjust val_size to account for the reduced size of rest_df
-    adjusted_val_size = val_size / (1 - test_size)
+    # first split: separate out the test set based on patient IDs
+    train_val_ids, test_ids = train_test_split(
+        patient_ids, test_size=test_size, random_state=42)
 
-    # Second split to separate the rest_df into training and validation sets
-    train_df, val_df = train_test_split(
-        rest_df, test_size=adjusted_val_size, random_state=42)
+    # second split: separate the remaining patient IDs into training and validation sets
+    train_ids, val_ids = train_test_split(
+        train_val_ids, test_size=val_size / (1 - test_size), random_state=42)
+
+    # use the separated IDs to create the actual dataframes
+    train_df = df[df['Patient ID'].isin(train_ids)].reset_index(drop=True)
+    val_df = df[df['Patient ID'].isin(val_ids)].reset_index(drop=True)
+    test_df = df[df['Patient ID'].isin(test_ids)].reset_index(drop=True)
+
+    # drop the 'Patient ID' column if it's no longer needed
+    train_df = train_df.drop('Patient ID', axis=1)
+    val_df = val_df.drop('Patient ID', axis=1)
+    test_df = test_df.drop('Patient ID', axis=1)
 
     return train_df, val_df, test_df
-
 
 
 def get_labels(df):
@@ -143,7 +155,7 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
     labels = get_labels(df)
-    
+
     if multi_class:
         df = multi_classification(df)
     # one-hot or label encode the diseases

@@ -22,7 +22,7 @@ ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
-        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK-pl
+        EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK-testset
         echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
         if [ "$TEST_MODE" = true ]; then
