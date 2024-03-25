@@ -109,8 +109,17 @@ def get_labels(df):
     labels_list.sort()
     return labels_list
 
+def multi_classification(file_manager, df):
+    """
+    Removes all columns in dataframe with more than one class
+    """
+    file_manager.logger.info(f"Original DataFrame shape: {df.shape}")
+    df = df[~df['Finding Labels'].str.contains(r'\|')]
+    file_manager.logger.info(f"Multi-class DataFrame shape: {df.shape}")
+    return df
 
-def get_df(file_manager, one_hot=True):
+
+def get_df(file_manager, one_hot=True, multi_class=False):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
     :param args: The arguments
@@ -130,8 +139,8 @@ def get_df(file_manager, one_hot=True):
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
     labels = get_labels(df)
-    # removing all columns with more than one class
-    df = df[~df['Finding Labels'].str.contains(r'\|')]
+    if multi_class:
+        df = multi_classification(df)
     # one-hot or label encode the diseases
     df = one_hot_encode(df, labels=labels)
 
