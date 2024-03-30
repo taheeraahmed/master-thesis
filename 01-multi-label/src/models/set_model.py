@@ -1,5 +1,5 @@
 from models import ModelConfig
-from torchvision.models import resnet50
+from torchvision.models import resnet50, resnet34
 import torch
 from utils import FileManager
 
@@ -9,6 +9,10 @@ def set_model(model_config: ModelConfig, file_manager: FileManager):
 
     if model_config.model_arg == 'resnet50':
         model = resnet50(weights='IMAGENET1K_V1')
+        model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_labels, bias=True)
+        img_size = 224
+    elif model_config.model_arg == 'resnet34':
+        model = resnet34(weights='IMAGENET1K_V1')
         model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_labels, bias=True)
         img_size = 224    
     elif model_config.model_arg == 'swin':

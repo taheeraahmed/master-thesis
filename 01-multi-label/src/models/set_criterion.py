@@ -8,7 +8,7 @@ def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None)
         criterion = torch.nn.MultiLabelSoftMarginLoss(weight=class_weights)
     elif model_config.loss_arg == 'bce':
         """
-        Get this error for both bce and wbce:
+        Get this error for both bce and wbce with resnet:
         RuntimeError: CUDA error: device-side assert triggered
         CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
         For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
