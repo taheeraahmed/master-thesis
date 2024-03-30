@@ -19,7 +19,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     num_workers = 4
 
     if model_config.test_mode:
-        print('Using smaller dataset')
+        file_manager.logger.info('Using smaller dataset')
         train_subset_size = 100
         val_subset_size = 50
 
@@ -62,7 +62,6 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         verbose=True,  # Print a message whenever a new checkpoint is saved
     )
 
-    
     training_module = MultiLabelLightningModule(
         model_config=model_config,
         file_manager=file_manager,
