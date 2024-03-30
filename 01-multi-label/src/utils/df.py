@@ -3,10 +3,11 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import glob
 import torch
-from utils.plot_stuff import plot_percentage_train_val, plot_number_patient_disease
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 import torch
+from utils import FileManager
+
 
 def calculate_class_weights(integer_labels):
     """
@@ -16,7 +17,6 @@ def calculate_class_weights(integer_labels):
     class_weights = compute_class_weight(
         'balanced', classes=unique_classes, y=integer_labels)
     return torch.tensor(class_weights, dtype=torch.float)
-
 
 
 def get_df_image_paths_labels(df, data_path):
@@ -135,7 +135,7 @@ def multi_classification(file_manager, df):
     return df
 
 
-def get_df(file_manager, one_hot=True, multi_class=False):
+def get_df(file_manager: FileManager, data_path, one_hot=True, multi_class=False):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
     :param args: The arguments
@@ -149,8 +149,10 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     class_weights: The class weights
     """
 
-    df = pd.read_csv(f'{file_manager.data_path}/Data_Entry_2017.csv')
-    df = get_df_image_paths_labels(df=df, data_path=file_manager.data_path)
+    logger = file_manager.logger
+
+    df = pd.read_csv(f'{data_path}/Data_Entry_2017.csv')
+    df = get_df_image_paths_labels(df=df, data_path=data_path)
     # select the columns we need
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
     # get the labels from the DataFrame
@@ -164,27 +166,11 @@ def get_df(file_manager, one_hot=True, multi_class=False):
     train_df, val_df, test_df = split_data(
         df=df, val_size=0.2, test_size=0.1)
 
-    # plot the number of patients with each disease
-    plot_number_patient_disease(file_manager=file_manager, df=df, diseases=labels)    
-
-    plot_percentage_train_val(
-        file_manager=file_manager,
-        train_df=train_df,
-        val_df=val_df,
-        diseases=labels,
-    )
-
     if one_hot: 
-        file_manager.logger.info(f"One-hotting dataframe")
-        if 'No Finding' in labels:
-            labels.remove('No Finding')
-        train_df = train_df.drop('No Finding', axis=1)
-        val_df = val_df.drop('No Finding', axis=1)
-        test_df = test_df.drop('No Finding', axis=1)
-
+        logger.info(f"One-hotting dataframe")
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         class_weights = calculate_class_weights(integer_labels)
-        assert(len(labels) == 14), f"Expected 14 labels, but found {len(labels)}"
+        assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
     else:
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         train_df = label_encode(train_df, labels=labels)
@@ -194,6 +180,6 @@ def get_df(file_manager, one_hot=True, multi_class=False):
         class_weights = calculate_class_weights(integer_labels)
         assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 
-    file_manager.logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")
-    file_manager.logger.info(f"Validation df\nColumns: {val_df.columns}\nShape: {val_df.shape}")
+    logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")
+    logger.info(f"Validation df\nColumns: {val_df.columns}\nShape: {val_df.shape}")
     return train_df, val_df, test_df, labels, class_weights

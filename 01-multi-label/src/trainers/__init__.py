@@ -1,2 +1,2 @@
 from .class_trainer import TrainerClass
-from .pl_trainer import MultiLabelModelTrainer
+from .pl_trainer import MultiLabelLightningModule
