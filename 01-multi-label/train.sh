@@ -1,9 +1,10 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
-MODELS=("resnet50")
-LOSSES=("bce" "wbce" "wmlsm" "mlsm")
+MODELS=("resnet34")
+LOSSES=("wmlsm" "mlsm")
 TASK=multi-label
+ACCOUNT=share-ie-idi
 
 BATCH_SIZE=32
 LEARNING_RATE=0.001
@@ -68,10 +69,11 @@ for MODEL in "${MODELS[@]}"; do
         echo "Running slurm job from $CODE_PATH"
 
         sbatch --partition=$PARTITION \
-            --account=ie-idi \
+            --account=$ACCOUNT \
             --time=$IDUN_TIME \
             --nodes=1 \
             --ntasks-per-node=1 \
+            --cpus-per-task=4 \
             --mem=50G \
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
