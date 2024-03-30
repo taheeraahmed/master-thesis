@@ -45,7 +45,7 @@ def train(args):
 
 
 if __name__ == "__main__":
-    model_choices = ['swin', 'vit', 'resnet']
+    model_choices = ['swin', 'vit', 'resnet50']
     loss_choices = ['mlsm',
                     'wmlsm', 'bce', 'wbce']
 

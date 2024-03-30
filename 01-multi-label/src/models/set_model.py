@@ -7,7 +7,7 @@ from utils import FileManager
 def set_model(model_config: ModelConfig, file_manager: FileManager):
     num_labels = model_config.num_labels
 
-    if model_config.model_arg == 'resnet':
+    if model_config.model_arg == 'resnet50':
         model = resnet50(weights='IMAGENET1K_V1')
         model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_labels, bias=True)
         img_size = 224    

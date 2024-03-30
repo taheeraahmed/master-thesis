@@ -1,8 +1,8 @@
 #!/bin/bash
 TEST_MODE=true
 
-MODELS=("resnet")
-LOSSES=("bce")
+MODELS=("resnet50")
+LOSSES=("bce" "wbce" "wmlsm" "mlsm")
 TASK=multi-label
 
 BATCH_SIZE=32
