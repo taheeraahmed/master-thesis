@@ -9,14 +9,22 @@ echo "We are using $SLURM_CPUS_ON_NODE cores per node"
 echo "Total of $SLURM_NTASKS cores"
 echo "Total time at IDUN $IDUN_TIME"
 
-echo "nvidia-smi"
+echo ""
+echo "----------------------------------------------"
+echo ">> nvidia-smi"
 nvidia-smi
+
+echo ">> module load Python/3.10.8-GCCcore-12.2.0"
 module load Python/3.10.8-GCCcore-12.2.0
 
-echo "installing requirements"
-pip install -q -r requirements.txt
+echo ">> source /cluster/home/taheeraa/code/master-thesis/.venv/bin/activate"
+source /cluster/home/taheeraa/code/master-thesis/.venv/bin/activate
 
-echo "running python-script"
+echo ">> which python"
+which python
+
+echo ">> python train.py"
+echo ""
 python $CODE_PATH/src/train.py \
   --test_mode $TEST_MODE \
   --experiment_name $EXPERIMENT_NAME\
@@ -27,4 +35,4 @@ python $CODE_PATH/src/train.py \
   --num_epochs $NUM_EPOCHS \
   --loss $LOSS \
 
-echo "done running train.py"
+echo ">> done"

@@ -1,35 +1,31 @@
-import torch
-
-def set_criterion(loss: str, class_weights: torch.Tensor = None) -> torch.nn.Module:
-    if loss == 'multi_label_soft_margin':
-        criterion = torch.nn.MultiLabelSoftMarginLoss()
-    elif loss == 'weighted_multi_label_soft_margin':
-        criterion = torch.nn.MultiLabelSoftMarginLoss(weight=class_weights)
-    return criterion
-
-
 class ModelConfig():
-    def __init__(self, model, loss, num_epochs, batch_size, learning_rate, test_mode, experiment_name):
-        self.model = model
-        self.loss = loss
+    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name):
+        self.model_arg = model_arg # The argumenet from train.py 
+        self.loss_arg = loss_arg # The loss function argument
+        self.model = None # The actual pytorch base model
+        self.criterion = None
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.experiment_name = experiment_name
         self.test_mode = test_mode
+        self.img_size = None
         self.max_steps = 80000
+        self.num_labels = None
+        self.labels = None
 
     def __str__(self):
-
+        criterion_name = self.criterion.__class__.__name__ if self.criterion else 'None'
+    
         table_str = (
             f"🚀 Model Configuration 🚀\n"
             f"-------------------------------------------------\n"
             f"| Attribute         | Value                     |\n"
             f"-------------------------------------------------\n"
             f"| 🧪 Experiment Name| {self.experiment_name:<25} |\n"
-            f"| 📦 Model          | {self.model:<25} |\n"
+            f"| 📦 Model          | {self.model_arg:<25} |\n"
             f"| 🌟 Max Steps      | {self.max_steps:<25} |\n"
-            f"| 📈 Loss Function  | {self.loss:<25} |\n"
+            f"| 📈 Loss Function  | {criterion_name:<25} |\n"
             f"| 🔄 Epochs         | {self.num_epochs:<25} |\n"
             f"| 📏 Batch Size     | {self.batch_size:<25} |\n"
             f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"

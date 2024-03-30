@@ -1,4 +1,5 @@
-from utils import set_up, str_to_bool, ModelConfig
+from utils import get_df, set_up, str_to_bool
+from models import set_model, ModelConfig, set_criterion
 from multi_label import train_and_evaluate_model
 import argparse
 import sys
@@ -8,8 +9,8 @@ def train(args):
     file_manager = set_up(args)
 
     model_config = ModelConfig(
-        model=args.model,
-        loss=args.loss,
+        model_arg=args.model,
+        loss_arg=args.loss,
         num_epochs=args.num_epochs,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
@@ -17,35 +18,36 @@ def train(args):
         experiment_name=args.experiment_name
     )
 
+    train_df, val_df, test_df, labels, class_weights = get_df(
+        file_manager=file_manager, 
+        one_hot=True, 
+        data_path=file_manager.data_path
+    )
+
+    model_config.num_labels = len(labels)
+    model_config.labels = labels
+    model_config.model, model_config.img_size = set_model(model_config, file_manager)
+    model_config.criterion = set_criterion(model_config, class_weights)
+
     file_manager.logger.info(f'{model_config.__str__()}')
     file_manager.logger.info(f'{file_manager.__str__()}')
-
-    if model_config.model == 'swin':
-        model_name = "microsoft/swinv2-tiny-patch4-window8-256"
-        img_size = 256
-    elif model_config.model == 'vit':
-        model_name = "google/vit-base-patch16-224-in21k"
-        img_size = 224
-    else:
-        file_manager.logger.error('Invalid model argument')
-        sys.exit(1)
-
-    file_manager.logger.info(f'Model name: {model_name}')
-    file_manager.logger.info(f'Image size: {img_size}')
 
     train_and_evaluate_model(
             model_config=model_config,
             file_manager=file_manager,
-            model_name=model_name,
-            img_size=img_size
+            train_df=train_df,
+            val_df=val_df,
+            test_df=test_df,
+            labels=labels,
     )
+
     file_manager.logger.info('Training is done')
 
 
 if __name__ == "__main__":
-    model_choices = ['swin', 'vit']
-    loss_choices = ['multi_label_soft_margin',
-                    'weighted_multi_label_soft_margin']
+    model_choices = ['swin', 'vit', 'resnet']
+    loss_choices = ['mlsm',
+                    'wmlsm', 'bce', 'wbce']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
