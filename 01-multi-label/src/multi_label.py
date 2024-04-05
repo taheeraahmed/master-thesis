@@ -29,14 +29,14 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     train_transforms = Compose([
         Resize((model_config.img_size, model_config.img_size), interpolation=InterpolationMode.BILINEAR, antialias=True),
         ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        RandomHorizontalFlip(),
+        #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        #RandomHorizontalFlip(),
     ])
 
     val_transforms = Compose([
         Resize((model_config.img_size, model_config.img_size), interpolation=InterpolationMode.BILINEAR, antialias=True),
         ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     train_dataset = ChestXray14HFDataset(
@@ -56,8 +56,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     logger = TensorBoardLogger(save_dir='kaggle/working')
 
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_f1',  # Monitor F1 score validation metric
-        mode='max',  # Maximize the F1 score
+        monitor='val_loss',  # Monitor F1 score validation metric
+        mode='min',
         save_top_k=1,  # Save the best checkpoint only
         verbose=True,  # Print a message whenever a new checkpoint is saved
     )
@@ -72,7 +72,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         logger=logger,
         # gpus=1,
         fast_dev_run=model_config.test_mode,
-        max_steps=10 if model_config.test_mode else model_config.max_steps,
+        #max_steps=10 if model_config.test_mode else model_config.max_steps,
         callbacks=[checkpoint_callback],
     )
 
