@@ -17,7 +17,7 @@ from torchvision.transforms import InterpolationMode
 
 def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df, labels) -> None:
     num_workers = 4
-
+    pin_memory = False
     if model_config.test_mode:
         file_manager.logger.info('Using smaller dataset')
         train_subset_size = 100
@@ -47,13 +47,28 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         dataframe=test_df, transform=val_transforms)
 
     train_loader = DataLoader(
-        train_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+        train_dataset, 
+        batch_size=model_config.batch_size, 
+        shuffle=True, 
+        num_workers=num_workers, 
+        pin_memory=pin_memory
+    )
     val_loader = DataLoader(
-        val_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        val_dataset, 
+        batch_size=model_config.batch_size, 
+        shuffle=False, 
+        num_workers=num_workers, 
+        pin_memory=pin_memory
+    )
     test_loader = DataLoader(
-        test_dataset, batch_size=model_config.batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        test_dataset, 
+        batch_size=model_config.batch_size, 
+        shuffle=False, 
+        num_workers=num_workers, 
+        pin_memory=pin_memory
+    )
 
-    logger = TensorBoardLogger(save_dir='kaggle/working')
+    logger = TensorBoardLogger(save_dir=f'{file_manager.model_ckpts_folder}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',  # Monitor F1 score validation metric
