@@ -1,15 +1,16 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("resnet34")
-LOSSES=("wmlsm" "mlsm")
+MODELS=("alexnet")
+LOSSES=("bce")
 TASK=multi-label
-ACCOUNT=share-ie-idi
 
 BATCH_SIZE=32
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
+ACCOUNT=share-ie-idi
+NUM_CORES=8
 IDUN_TIME=45:00:00
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
@@ -28,7 +29,7 @@ for MODEL in "${MODELS[@]}"; do
 
         if [ "$TEST_MODE" = true ]; then
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
-            IDUN_TIME=00:09:00
+            IDUN_TIME=00:10:00
             BATCH_SIZE=32
             LEARNING_RATE=0.001
             NUM_EPOCHS=3
@@ -73,7 +74,7 @@ for MODEL in "${MODELS[@]}"; do
             --time=$IDUN_TIME \
             --nodes=1 \
             --ntasks-per-node=1 \
-            --cpus-per-task=4 \
+            --cpus-per-task=$NUM_CORES \
             --mem=50G \
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \

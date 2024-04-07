@@ -24,9 +24,6 @@ class MultiLabelLightningModule(LightningModule):
         self.num_labels = model_config.num_labels
         self.log_step_interval = 10
 
-        self.conf_matrix = ConfusionMatrix(
-            num_labels=self.num_labels, task='multilabel')
-        
         self.f1_score = MultilabelF1Score(
             num_labels=self.num_labels, threshold=0.5, average='macro')
 
