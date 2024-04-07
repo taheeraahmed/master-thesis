@@ -8,6 +8,8 @@ import sys
 def train(args):
     file_manager = set_up(args)
 
+    file_manager.logger.info('Set-up is completed')
+
     model_config = ModelConfig(
         model_arg=args.model,
         loss_arg=args.loss,
@@ -20,13 +22,18 @@ def train(args):
 
     train_df, val_df, test_df, labels, class_weights = get_df(
         file_manager=file_manager, 
-        one_hot=True, 
-        data_path=file_manager.data_path
+        one_hot=True,
+        few_labels=True,
+        multi_class=False, 
     )
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
-    model_config.model, model_config.img_size = set_model(model_config, file_manager)
+    model_config.model, model_config.img_size = set_model(
+        model_config.model_arg, 
+        model_config.num_labels, 
+    )
+
     model_config.criterion = set_criterion(model_config, class_weights)
 
     file_manager.logger.info(f'{model_config.__str__()}')
@@ -37,8 +44,6 @@ def train(args):
             file_manager=file_manager,
             train_df=train_df,
             val_df=val_df,
-            test_df=test_df,
-            labels=labels,
     )
 
     file_manager.logger.info('Training is done')
@@ -46,7 +51,7 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', "alexnet"]
-    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce']
+    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
