@@ -1,7 +1,6 @@
 from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
 from torchmetrics import AUROC
-from torchmetrics import ConfusionMatrix
 import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
