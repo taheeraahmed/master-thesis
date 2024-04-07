@@ -21,7 +21,6 @@ def train(args):
     train_df, val_df, test_df, labels, class_weights = get_df(
         file_manager=file_manager, 
         one_hot=True, 
-        data_path=file_manager.data_path
     )
 
     model_config.num_labels = len(labels)

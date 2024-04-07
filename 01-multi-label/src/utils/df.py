@@ -135,31 +135,41 @@ def multi_classification(file_manager, df):
     return df
 
 
-def get_df(file_manager: FileManager, data_path, one_hot=True, multi_class=False):
+def get_df(file_manager: FileManager, one_hot=True, multi_class=False, few_labels=True):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
-    :param args: The arguments
-    :param data_path: The path to the data
-    :param logger: The logger object
+    :param file_manager: The file manager object
+    :param one_hot: Whether to one-hot encode the labels
+    :param multi_class: Whether to remove all columns with more than one class
+    :param few_labels: Whether to use a subset of labels
 
     Returns:
     train_df: The training DataFrame, does not consist of the "No finding" label
     val_df: The validation DataFrame
+    test_df: The test DataFrame
     labels: The labels for the diseases, and it consists of the "No finding" label
     class_weights: The class weights
     """
 
     logger = file_manager.logger
 
-    df = pd.read_csv(f'{data_path}/Data_Entry_2017.csv')
-    df = get_df_image_paths_labels(df=df, data_path=data_path)
+    df = pd.read_csv(f'{file_manager.data_path}/Data_Entry_2017.csv')
+    df = get_df_image_paths_labels(df=df, data_path=file_manager.data_path)
     # select the columns we need
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
-    # get the labels from the DataFrame
+
+    if few_labels: 
+        labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax']
+        # Create a boolean mask where each row is True if it contains any of the conditions
+        mask = df['Finding Labels'].str.contains('|'.join(labels), case=False, na=False)
+        df_filtered = df[mask]
+        df = df_filtered
+
     labels = get_labels(df)
 
     if multi_class:
         df = multi_classification(df)
+
     # one-hot or label encode the diseases
     df = one_hot_encode(df, labels=labels)
 
@@ -170,15 +180,12 @@ def get_df(file_manager: FileManager, data_path, one_hot=True, multi_class=False
         logger.info(f"One-hotting dataframe")
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         class_weights = calculate_class_weights(integer_labels)
-        assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
     else:
         integer_labels = convert_one_hot_to_integers(train_df, labels)
         train_df = label_encode(train_df, labels=labels)
         val_df = label_encode(val_df, labels=labels)
         test_df = label_encode(test_df, labels=labels)
-
         class_weights = calculate_class_weights(integer_labels)
-        assert(len(labels) == 15), f"Expected 15 labels, but found {len(labels)}"
 
     logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")
     logger.info(f"Validation df\nColumns: {val_df.columns}\nShape: {val_df.shape}")
