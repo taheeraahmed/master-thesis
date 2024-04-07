@@ -76,13 +76,15 @@ def inference():
             outputs = model(images)
             probs = torch.sigmoid(outputs)
 
-            f1_score.update(outputs, gt.int())
+            f1_score.update(probs, gt.int())
+            f1_score_micro.update(probs, gt.int())
             auroc.update(probs, gt.int())
 
             _, predicted = torch.max(outputs, 1)
             all_preds.extend(predicted.cpu().numpy())  
             all_gt.extend(gt.cpu().numpy())  
     print("finished inference")
+    
     final_f1_score = f1_score.compute()
     final_auroc = auroc.compute()
     final_f1_score_micro = f1_score_micro.compute()
