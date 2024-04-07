@@ -45,7 +45,7 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', "alexnet"]
-    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce']
+    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")

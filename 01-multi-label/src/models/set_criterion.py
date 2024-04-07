@@ -10,6 +10,8 @@ def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None)
         criterion = torch.nn.BCEWithLogitsLoss(weight=None)
     elif model_config.loss_arg == 'wbce':
         raise NotImplementedError
+    elif model_config.loss_arg == 'focal':
+        raise NotImplementedError
     else:
         raise ValueError(f'Invalid loss argument: {model_config.loss_arg}')
     return criterion

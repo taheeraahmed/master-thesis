@@ -159,16 +159,17 @@ def get_df(file_manager: FileManager, one_hot=True, multi_class=False, few_label
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
 
     if few_labels: 
+        logger.info(f"Using a subset of labels")
         labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax']
         # Create a boolean mask where each row is True if it contains any of the conditions
         mask = df['Finding Labels'].str.contains('|'.join(labels), case=False, na=False)
         df_filtered = df[mask]
         df = df_filtered
+    else:
+        labels = get_labels(df)
+    
+    logger.info(f"Labels: {labels}")
 
-    labels = get_labels(df)
-
-    if multi_class:
-        df = multi_classification(df)
 
     # one-hot or label encode the diseases
     df = one_hot_encode(df, labels=labels)
