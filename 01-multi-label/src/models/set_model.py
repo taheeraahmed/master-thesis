@@ -36,5 +36,10 @@ def set_model(model_config: ModelConfig, file_manager: FileManager):
         img_size = int(224*2) 
     else:
         raise ValueError(f'Invalid model argument: {model_config.model_arg}')
+    
+    model_info = str(model)
+    with open((f"{file_manager.output_folder}/model_architecture.txt"), "w") as file:
+        file.write(model_info)
+        
     return model, img_size
      

@@ -1,5 +1,5 @@
 #!/bin/bash
-TEST_MODE=false
+TEST_MODE=true
 
 MODELS=("alexnet")
 LOSSES=("bce")
