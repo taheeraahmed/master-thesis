@@ -45,7 +45,6 @@ def train(args):
             train_df=train_df,
             val_df=val_df,
             test_df=test_df,
-            labels=labels,
     )
 
     file_manager.logger.info('Training is done')

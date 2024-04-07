@@ -15,9 +15,10 @@ from data import ChestXray14HFDataset
 from torchvision.transforms import InterpolationMode    
 
 
-def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df, labels) -> None:
+def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
     num_workers = 4
     pin_memory = False
+
     if model_config.test_mode:
         file_manager.logger.info('Using smaller dataset')
         train_subset_size = 100
