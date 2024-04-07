@@ -44,7 +44,6 @@ def train(args):
             file_manager=file_manager,
             train_df=train_df,
             val_df=val_df,
-            test_df=test_df,
     )
 
     file_manager.logger.info('Training is done')
@@ -52,7 +51,7 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', "alexnet"]
-    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal']
+    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
