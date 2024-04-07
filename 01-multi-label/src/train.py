@@ -29,7 +29,11 @@ def train(args):
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
-    model_config.model, model_config.img_size = set_model(model_config, file_manager)
+    model_config.model, model_config.img_size = set_model(
+        model_config.model_arg, 
+        model_config.num_labels, 
+    )
+
     model_config.criterion = set_criterion(model_config, class_weights)
 
     file_manager.logger.info(f'{model_config.__str__()}')
