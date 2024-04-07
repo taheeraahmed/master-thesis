@@ -8,6 +8,8 @@ import sys
 def train(args):
     file_manager = set_up(args)
 
+    file_manager.logger.info('Set-up is completed')
+
     model_config = ModelConfig(
         model_arg=args.model,
         loss_arg=args.loss,
@@ -20,7 +22,9 @@ def train(args):
 
     train_df, val_df, test_df, labels, class_weights = get_df(
         file_manager=file_manager, 
-        one_hot=True, 
+        one_hot=True,
+        few_labels=True,
+        multi_class=False, 
     )
 
     model_config.num_labels = len(labels)

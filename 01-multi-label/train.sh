@@ -2,7 +2,7 @@
 TEST_MODE=true
 
 MODELS=("alexnet")
-LOSSES=("bce")
+LOSSES=("focal")
 TASK=multi-label
 
 BATCH_SIZE=32
