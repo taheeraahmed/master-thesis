@@ -15,7 +15,7 @@ from trainers import MultiLabelLightningModule
 from data import ChestXray14HFDataset
 
 
-def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df) -> None:
+def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
     """
     Start the training and validation of the model
     :param model_config: ModelConfig object
@@ -52,6 +52,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         dataframe=train_df, transform=train_transforms)
     val_dataset = ChestXray14HFDataset(
         dataframe=val_df, transform=val_transforms)
+    test_dataset = ChestXray14HFDataset(
+        dataframe=test_df, transform=val_transforms)
 
     train_loader = DataLoader(
         train_dataset, 
@@ -62,6 +64,13 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     )
     val_loader = DataLoader(
         val_dataset, 
+        batch_size=model_config.batch_size, 
+        shuffle=False, 
+        num_workers=num_workers, 
+        pin_memory=pin_memory
+    )
+    test_loader = DataLoader(
+        test_dataset, 
         batch_size=model_config.batch_size, 
         shuffle=False, 
         num_workers=num_workers, 
@@ -103,3 +112,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         train_dataloaders=train_loader,
         val_dataloaders=val_loader,
     )
+
+    if not model_config.test_mode:
+        pl_trainer.test(
+            test_dataloaders=test_loader,
+        )

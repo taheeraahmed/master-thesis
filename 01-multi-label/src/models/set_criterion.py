@@ -6,29 +6,23 @@ import torch.nn.functional as F
 
 class FocalLoss(nn.Module):
     """
-    Taken from: https://github.com/n0obcoder/NIH-Chest-X-Rays-Multi-Label-Image-Classification-In-Pytorch/blob/master/losses.py
-    Modified to include class weights.
+    Taken from: 
+    
     """
-    def __init__(self, device, gamma=1.0, class_weights=None):
+    def __init__(self, alpha=0.25, gamma=2.5, weights=None):
         super(FocalLoss, self).__init__()
-        self.device = device
-        self.gamma = torch.tensor(gamma, dtype=torch.float32).to(device)
-        self.class_weights = class_weights
-        if class_weights is not None:
-            self.class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
-        self.eps = 1e-6
-        
-    def forward(self, input, target):
-        if self.class_weights is not None:
-            BCE_loss = F.binary_cross_entropy_with_logits(input, target, reduction='none', pos_weight=self.class_weights).to(self.device)
-        else:
-            BCE_loss = F.binary_cross_entropy_with_logits(input, target, reduction='none').to(self.device)
-        
-        pt = torch.exp(-BCE_loss)
-        F_loss = (1 - pt) ** self.gamma * BCE_loss
-        
-        return F_loss.mean()
-
+        self.alpha = alpha
+        self.gamma = gamma
+        self.loss = nn.BCEWithLogitsLoss(weight=weights)
+    def forward(self, inputs, targets):
+        '''
+        :param inputs: batch_size * dim
+        :param targets: (batch,)
+        :return:
+        '''
+        bce_loss = self.loss(inputs, targets)
+        loss = self.alpha * (1 - torch.exp(-bce_loss)) ** self.gamma * bce_loss
+        return loss
 
 def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None) -> torch.nn.Module:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,7 +38,7 @@ def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None)
     elif model_config.loss_arg == 'focal':
         criterion = FocalLoss(device=device, gamma=2.0)
     elif model_config.loss_arg == 'wfocal':
-        criterion = FocalLoss(device=device, gamma=2.0, class_weights=class_weights)
+        criterion = FocalLoss(device=device, gamma=2.0, weights=class_weights)
     else:
         raise ValueError(f'Invalid loss argument: {model_config.loss_arg}')
     return criterion

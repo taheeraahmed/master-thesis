@@ -33,6 +33,10 @@ def train(args):
         model_config.model_arg, 
         model_config.num_labels, 
     )
+    # write model to a txt file called model-architecture.txt
+    model_file =f"{file_manager.output_folder}/model-architecture.txt"
+    with open(model_file, 'w') as f:
+        f.write(str(model_config.model.__repr__()))
 
     model_config.criterion = set_criterion(model_config, class_weights)
 
@@ -44,6 +48,7 @@ def train(args):
             file_manager=file_manager,
             train_df=train_df,
             val_df=val_df,
+            test_df=test_df,
     )
 
     file_manager.logger.info('Training is done')
