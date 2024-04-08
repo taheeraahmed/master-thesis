@@ -26,19 +26,18 @@ def set_model(model_arg: str, num_labels: int):
             nn.Dropout(p=0.2),
             nn.Linear(768, 128),
             nn.ReLU(),
-            nn.Linear(128, num_target_classes),
+            nn.Linear(128, num_labels),
         )
 
     elif model_arg == "alexnet": 
         model = alexnet(weights="DEFAULT")
     
-        num_target_classes = num_labels
         model.classifier = nn.Sequential(
             nn.Dropout(p=0.2),
             nn.Linear(256 * 6 * 6, 128),
             nn.ReLU(),
             nn.BatchNorm1d(num_features=128),
-            nn.Linear(128, num_target_classes),
+            nn.Linear(128, num_labels),
         )
         img_size = int(224*2) 
     else:
