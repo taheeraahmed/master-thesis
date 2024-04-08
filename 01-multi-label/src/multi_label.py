@@ -42,6 +42,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         #RandomHorizontalFlip(),
     ])
 
+    file_manager.logger.info(f"Using these augmentations: {train_transforms}")
+
     val_transforms = Compose([
         Resize((model_config.img_size, model_config.img_size), interpolation=InterpolationMode.BILINEAR, antialias=True),
         ToTensor(),
@@ -115,5 +117,6 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
 
     if not model_config.test_mode:
         pl_trainer.test(
-            test_dataloaders=test_loader,
+            model=training_module,
+            dataloaders=test_loader,
         )
