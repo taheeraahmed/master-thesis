@@ -2,8 +2,9 @@
 TEST_MODE=true
 
 MODELS=("alexnet")
-LOSSES=("focal")
-TASK=multi-label
+LOSSES=("wbce")
+TASK=8-multi-label
+ADD_TRANSFORMS=true
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
@@ -31,12 +32,15 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
             IDUN_TIME=00:10:00
             BATCH_SIZE=32
-            LEARNING_RATE=0.001
             NUM_EPOCHS=3
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE"
+        fi
+
+        if [ "$ADD_TRANSFORMS" = true ]; then
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-add-transforms"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
@@ -79,7 +83,7 @@ for MODEL in "${MODELS[@]}"; do
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS \
+            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS \
             $CODE_PATH/train.slurm
     done
 done

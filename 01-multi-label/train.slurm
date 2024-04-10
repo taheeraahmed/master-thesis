@@ -34,5 +34,6 @@ python $CODE_PATH/src/train.py \
   --learning_rate $LEARNING_RATE \
   --num_epochs $NUM_EPOCHS \
   --loss $LOSS \
+  --add_transforms $ADD_TRANSFORMS \
 
 echo ">> done"

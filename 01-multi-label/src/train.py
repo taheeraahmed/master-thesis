@@ -17,7 +17,8 @@ def train(args):
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
         test_mode=args.test_mode,
-        experiment_name=args.experiment_name
+        experiment_name=args.experiment_name,
+        add_transforms=args.add_transforms
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
@@ -33,7 +34,7 @@ def train(args):
         model_config.model_arg, 
         model_config.num_labels, 
     )
-    # write model to a txt file called model-architecture.txt
+
     model_file =f"{file_manager.output_folder}/model-architecture.txt"
     with open(model_file, 'w') as f:
         f.write(str(model_config.model.__repr__()))
@@ -76,7 +77,10 @@ if __name__ == "__main__":
                         help="Learning rate", type=float, default=0.01)
     parser.add_argument("-l", "--loss", choices=loss_choices,
                         help="Type of loss function used", default="wce")
+    parser.add_argument("-a", "--add_transforms",
+                        help="Add transforms", default=False, required=False)
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
+    args.add_transforms = str_to_bool(args.add_transforms)
     train(args)
