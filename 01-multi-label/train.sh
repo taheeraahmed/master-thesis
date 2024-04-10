@@ -1,9 +1,10 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
 MODELS=("alexnet")
-LOSSES=("focal")
-TASK=multi-label
+LOSSES=("wbce" "bce" "mlsm" "wmlsm")
+TASK=9-multi-label
+ADD_TRANSFORMS=false
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
@@ -11,7 +12,7 @@ NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=45:00:00
+IDUN_TIME=10:00:00
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
 
@@ -19,7 +20,6 @@ DATE=$(date "+%Y-%m-%d-%H:%M:%S")
 USER=$(whoami)
 CURRENT_PATH=$(pwd)
 ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
-
 
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
@@ -31,12 +31,15 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
             IDUN_TIME=00:10:00
             BATCH_SIZE=32
-            LEARNING_RATE=0.001
             NUM_EPOCHS=3
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-t$IDUN_TIME"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE"
+        fi
+
+        if [ "$ADD_TRANSFORMS" = true ]; then
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-add-transforms"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
@@ -79,7 +82,7 @@ for MODEL in "${MODELS[@]}"; do
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS \
+            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS \
             $CODE_PATH/train.slurm
     done
 done

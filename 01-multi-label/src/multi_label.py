@@ -2,17 +2,11 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from torch.utils.data import DataLoader
-from torchvision.transforms import (Compose,
-                                    Normalize,
-                                    RandomHorizontalFlip,
-                                    Resize,
-                                    ToTensor)
-from torchvision.transforms import InterpolationMode    
 
 from utils import FileManager
 from models import ModelConfig
 from trainers import MultiLabelLightningModule
-from data import ChestXray14HFDataset
+from data import ChestXray14HFDataset, set_transforms
 
 
 def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
@@ -35,20 +29,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
 
-    train_transforms = Compose([
-        Resize((model_config.img_size, model_config.img_size), interpolation=InterpolationMode.BILINEAR, antialias=True),
-        ToTensor(),
-        #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        #RandomHorizontalFlip(),
-    ])
-
-    file_manager.logger.info(f"Using these augmentations: {train_transforms}")
-
-    val_transforms = Compose([
-        Resize((model_config.img_size, model_config.img_size), interpolation=InterpolationMode.BILINEAR, antialias=True),
-        ToTensor(),
-        #Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    train_transforms, val_transforms = set_transforms(model_config, file_manager)
 
     train_dataset = ChestXray14HFDataset(
         dataframe=train_df, transform=train_transforms)
