@@ -1,10 +1,10 @@
 #!/bin/bash
-TEST_MODE=true
+TEST_MODE=false
 
 MODELS=("alexnet")
-LOSSES=("wbce")
+LOSSES=("wbce" "bce" "mlsm" "wmlsm")
 TASK=9-multi-label
-ADD_TRANSFORMS=true
+ADD_TRANSFORMS=false
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
@@ -12,7 +12,7 @@ NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=45:00:00
+IDUN_TIME=10:00:00
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
 
