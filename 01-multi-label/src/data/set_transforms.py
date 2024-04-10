@@ -34,15 +34,9 @@ class GaussianBlur(object):
 def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     if model_config.add_transforms:
         normalize = transforms.Normalize(mean=[0.5056, 0.5056, 0.5056], std=[0.252, 0.252, 0.252])
-
+        # https://github.com/thtang/CheXNet-with-localization/blob/master/train.py#L100
         train_transforms = transforms.Compose([
-            transforms.Resize((model_config.img_size, model_config.img_size), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
-            transforms.RandomApply([
-                        transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-                    ], p=0.8),
-            transforms.RandomRotation(degrees=(0, 45)),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomCrop(model_config.img_size),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             normalize,
