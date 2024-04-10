@@ -3,7 +3,7 @@ TEST_MODE=true
 
 MODELS=("alexnet")
 LOSSES=("wbce")
-TASK=8-multi-label
+TASK=9-multi-label
 ADD_TRANSFORMS=true
 
 BATCH_SIZE=32
@@ -20,7 +20,6 @@ DATE=$(date "+%Y-%m-%d-%H:%M:%S")
 USER=$(whoami)
 CURRENT_PATH=$(pwd)
 ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
-
 
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do

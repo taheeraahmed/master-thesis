@@ -1,22 +1,8 @@
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import train_test_split
 import glob
+import pandas as pd
 import torch
-import numpy as np
-from sklearn.utils.class_weight import compute_class_weight
-import torch
+from sklearn.model_selection import train_test_split
 from utils import FileManager
-
-
-def calculate_class_weights(integer_labels):
-    """
-    Calculate class weights given a series of integer labels.
-    """
-    unique_classes = np.unique(integer_labels)
-    class_weights = compute_class_weight(
-        'balanced', classes=unique_classes, y=integer_labels)
-    return torch.tensor(class_weights, dtype=torch.float)
 
 
 def get_df_image_paths_labels(df, data_path):
@@ -37,44 +23,17 @@ def get_df_image_paths_labels(df, data_path):
     return df
 
 
-def convert_one_hot_to_integers(df, labels):
-    """
-    Convert one-hot encoded DataFrame columns for labels into a single column of integer labels.
-    """
-    labels_df = df[labels]  # Assuming labels are the column names for the one-hot encoded labels
-    integer_labels = labels_df.idxmax(axis=1).apply(labels.index)
-    return integer_labels
-
-
 def one_hot_encode(df, labels):
     """
     One-hot encode the diseases in the DataFrame
     :param df: DataFrame with the image paths and labels
-    :param diseases: List with the diseases
+    :param labels: List with the diseases
     """
-    for disease in labels:
-        df[disease] = df['Finding Labels'].apply(
-            lambda x: 1 if disease in x else 0)
+    for pathology in labels:
+        df.loc[:, pathology] = df['Finding Labels'].apply(lambda x: 1 if pathology in x else 0)
+
     df = df.drop('Finding Labels', axis=1)
     return df
-
-def label_encode(df, labels):
-    """
-    Label encode the diseases in the DataFrame.
-    :param df: DataFrame with the image paths and labels.
-    :param labels: List with the diseases.
-    """
-    # create a mapping from disease to integer
-    label2id = {label: i for i, label in enumerate(labels)}
-    # extract only the disease columns for idxmax operation
-    disease_columns = df[labels]
-    # apply the mapping to get the encoded labels
-    df['Encoded Labels'] = disease_columns.idxmax(axis=1).map(label2id)
-    # keep only the 'Image Path' and 'Encoded Labels' columns in the final DataFrame
-    final_df = df[['Image Path', 'Encoded Labels']]
-
-    return final_df
-
 
 def split_data(df, val_size=0.2, test_size=0.1):
     """
@@ -119,23 +78,32 @@ def get_labels(df):
     """
     # explode the 'Finding Labels' into individual labels and get unique values
     labels = df['Finding Labels'].str.split('|').explode().unique()
-    # convert to list for easier manipulation
-    labels_list = list(labels)
-    # sort the list of labels
-    labels_list.sort()
+    labels_list = list(labels) # convert to list for easier manipulation
+    labels_list.sort() # sort the list of labels
     return labels_list
 
-def multi_classification(file_manager, df):
+
+def calculate_class_weights(train_df: pd.DataFrame) -> torch.Tensor:
     """
-    Removes all columns in dataframe with more than one class
-    """
-    file_manager.logger.info(f"Original DataFrame shape: {df.shape}")
-    df = df[~df['Finding Labels'].str.contains(r'\|')]
-    file_manager.logger.info(f"Multi-class DataFrame shape: {df.shape}")
-    return df
+    Calculate the class weights for the dataset.
+    :param train_df: The training DataFrame
+
+    Returns:
+    class_weights_tensor: The class weights as a tensor
+    """ 
+    targets = train_df.drop('Image Path', axis=1)
+    targets = targets.to_numpy()
+
+    from .handle_class_imbalance import generate_class_weights
+    class_weights = generate_class_weights(targets, multi_class=False, one_hot_encoded=True)
+
+    num_labels = len(class_weights)
+    values = [class_weights[i] for i in range(num_labels)]
+    class_weights_tensor = torch.tensor(values)
+    return class_weights_tensor
 
 
-def get_df(file_manager: FileManager, one_hot=True, multi_class=False, few_labels=True):
+def get_df(file_manager: FileManager):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
     :param file_manager: The file manager object
@@ -153,41 +121,22 @@ def get_df(file_manager: FileManager, one_hot=True, multi_class=False, few_label
 
     logger = file_manager.logger
 
-    df = pd.read_csv(f'{file_manager.data_path}/Data_Entry_2017.csv')
-    df = get_df_image_paths_labels(df=df, data_path=file_manager.data_path)
-    # select the columns we need
+    root_folder = file_manager.data_path
+    file_path_data_entry = root_folder + '/Data_Entry_2017.csv'
+    df = pd.read_csv(file_path_data_entry)
+    df = get_df_image_paths_labels(df, root_folder)
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
+    labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax', 'No Finding']
+    logger.info(f"One-hot encoding labels")
+    df = one_hot_encode(df, labels)
+    row_label_sums = df.iloc[:, 2:].sum(axis=1)
+    df = df[row_label_sums > 0]
 
-    if few_labels: 
-        logger.info(f"Using a subset of labels")
-        labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax']
-        # Create a boolean mask where each row is True if it contains any of the conditions
-        mask = df['Finding Labels'].str.contains('|'.join(labels), case=False, na=False)
-        df_filtered = df[mask]
-        df = df_filtered
-    else:
-        labels = get_labels(df)
+    train_df, val_df, test_df = split_data(df, val_size=0.2, test_size=0.1)
     
+    class_weights = calculate_class_weights(train_df)
+    logger.info(f"Train dataframe shape: {train_df.shape}")
     logger.info(f"Labels: {labels}")
-
-
-    # one-hot or label encode the diseases
-    df = one_hot_encode(df, labels=labels)
-
-    train_df, val_df, test_df = split_data(
-        df=df, val_size=0.2, test_size=0.1)
-
-    if one_hot: 
-        logger.info(f"One-hotting dataframe")
-        integer_labels = convert_one_hot_to_integers(train_df, labels)
-        class_weights = calculate_class_weights(integer_labels)
-    else:
-        integer_labels = convert_one_hot_to_integers(train_df, labels)
-        train_df = label_encode(train_df, labels=labels)
-        val_df = label_encode(val_df, labels=labels)
-        test_df = label_encode(test_df, labels=labels)
-        class_weights = calculate_class_weights(integer_labels)
-
-    logger.info(f"Training df\nColumns: {train_df.columns}\nShape: {train_df.shape}")
-    logger.info(f"Validation df\nColumns: {val_df.columns}\nShape: {val_df.shape}")
+    logger.info(f"Class weights: {class_weights}")
+    logger.info(f"Class weights shape: {class_weights.shape}")
     return train_df, val_df, test_df, labels, class_weights
