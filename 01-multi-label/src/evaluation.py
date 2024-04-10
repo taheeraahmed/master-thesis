@@ -5,30 +5,13 @@ from torchvision.transforms import Compose, Resize, ToTensor
 from torchmetrics.classification import MultilabelF1Score
 from torchmetrics import AUROC
 import glob
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 from models import set_model
 from data import ChestXray14HFDataset
-from utils import create_directory_if_not_exists
+from utils import create_directory_if_not_exists, save_sample
 
-# Function to display a single image, its true labels, and its predicted labels
-def save_sample(image, true_labels, predicted_labels, output_path, i):
-    """
-    Display the image along with its true and predicted labels.
-    """
-    # Assuming image is a torch.Tensor, convert it to a numpy array and transpose it
-    if torch.is_tensor(image):
-        image = image.numpy()
-    if image.shape[0] == 3:  # If it's a 3-channel image
-        image = np.transpose(image, (1, 2, 0))  # Convert from (C, H, W) to (H, W, C)
-    
-    plt.figure(figsize=(10, 8))  # Optional: Adjust figure size
-    plt.imshow(image, cmap='gray')
-    plt.title("Sample CXR")
-    plt.xlabel(f"True: {', '.join(true_labels)}\nPredicted: {', '.join(predicted_labels)}")
-    plt.xticks([])  # Remove x-axis tick marks
-    plt.yticks([])  # Remove y-axis tick mark
+
 
 def inference(experiment_name, model_arg, labels):
     root_path = "/cluster/home/taheeraa/code/master-thesis/01-multi-label/output"
@@ -40,13 +23,18 @@ def inference(experiment_name, model_arg, labels):
     checkpoint_files = glob.glob(f"{experiment_path}/model_checkpoints/lightning_logs/version_0/checkpoints/*.ckpt")
     if not checkpoint_files:
         raise FileNotFoundError(f"No checkpoint file found in {experiment_path}/model_checkpoints/lightning_logs/version_0/checkpoints/")
-    checkpoint_file = checkpoint_files[0]  # Assuming there's only one file
+    checkpoint_file = checkpoint_files[-1]
     
     test_ids_csv = f"{root_path}/other/8_test_ids.csv"
     num_labels = len(labels)
     model, img_size = set_model(model_arg, num_labels)
+
     checkpoint = torch.load(checkpoint_file, map_location=torch.device('cpu'))
-    adjusted_state_dict = {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items()}
+    adjusted_state_dict = {
+    k.replace('model.', ''): v 
+        for k, v in checkpoint['state_dict'].items() 
+        if 'criterion' not in k  # Exclude criterion-related keys
+    }
     model.load_state_dict(adjusted_state_dict)
 
     test_transforms = Compose([
@@ -98,7 +86,7 @@ def inference(experiment_name, model_arg, labels):
 
             all_gt.extend(gt.cpu().numpy())  
     print("finished inference")
-    
+
     final_f1_score = f1_score.compute()
     final_auroc = auroc.compute()
     final_f1_score_micro = f1_score_micro.compute()
@@ -112,10 +100,12 @@ def inference(experiment_name, model_arg, labels):
 
 def main():
     experiment_names = [
-        #"2024-04-08-12:37:18-alexnet-wmlsm-multi-label-e35-bs32-lr0.0005-t20:00:00",
-        "2024-04-08-12:37:06-alexnet-mlsm-multi-label-e35-bs32-lr0.0005-t20:00:00",
-        "2024-04-08-12:35:45-alexnet-bce-multi-label-e35-bs32-lr0.0005-t20:00:00",
-        #"2024-04-07-22:48:38-alexnet-wbce-multi-label-e35-bs32-lr0.0005-t45:00:00"
+        "2024-04-07-22:48:38-alexnet-wbce-8-multi-label-e35-bs32-lr0.0005-no-transforms",
+        "2024-04-08-12:35:45-alexnet-bce-8-multi-label-e35-bs32-lr0.0005-no-transforms",
+        "2024-04-09-00:39:25-alexnet-bce-8-multi-label-e35-bs32-lr0.0005-add-transforms",
+        "2024-04-09-00:39:25-alexnet-wbce-8-multi-label-e35-bs32-lr0.0005-add-transforms",
+        "2024-04-10-09:33:59-alexnet-bce-8-multi-label-e35-bs32-lr0.0005-add-transforms-other-norm",
+        "2024-04-10-09:33:59-alexnet-wbce-8-multi-label-e35-bs32-lr0.0005-add-transforms-other-norm",
     ]
     model_arg = "alexnet"
     labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax']

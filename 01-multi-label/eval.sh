@@ -2,8 +2,8 @@
 echo "Running eval.sh"
 
 
-sbatch --partition=short \
-    --account=share-ie-idi \
+sbatch --partition=GPUQ \
+    --account=ie-idi \
     --time=00:10:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
