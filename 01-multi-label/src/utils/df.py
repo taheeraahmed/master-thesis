@@ -33,6 +33,9 @@ def one_hot_encode(df, labels):
         df.loc[:, pathology] = df['Finding Labels'].apply(lambda x: 1 if pathology in x else 0)
 
     df = df.drop('Finding Labels', axis=1)
+    # removing columns with no ground truth labels
+    row_label_sums = df.iloc[:, 2:].sum(axis=1)
+    df = df[row_label_sums > 0]
     return df
 
 def split_data(df, val_size=0.2, test_size=0.1):
@@ -120,23 +123,29 @@ def get_df(file_manager: FileManager):
     """
 
     logger = file_manager.logger
-
     root_folder = file_manager.data_path
+    labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax', 'No Finding']
     file_path_data_entry = root_folder + '/Data_Entry_2017.csv'
+
     df = pd.read_csv(file_path_data_entry)
     df = get_df_image_paths_labels(df, root_folder)
     df = df[['Image Path', 'Finding Labels', 'Patient ID']]
-    labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax', 'No Finding']
+
     logger.info(f"One-hot encoding labels")
     df = one_hot_encode(df, labels)
-    row_label_sums = df.iloc[:, 2:].sum(axis=1)
-    df = df[row_label_sums > 0]
 
-    train_df, val_df, test_df = split_data(df, val_size=0.2, test_size=0.1)
+    val_size = 0.2
+    test_size = 0.1
+    train_df, val_df, test_df = split_data(df, val_size=val_size, test_size=test_size)
+    logger.info(f"Splitting data into train, validation {val_size}, and test {test_size} sets")
+
     
     class_weights = calculate_class_weights(train_df)
-    logger.info(f"Train dataframe shape: {train_df.shape}")
+
+    logger.info(f"Train dataframe shape: {train_df.shape} (1 size larger than expected due to 'Image Path')")
+    logger.info(f"Train columns: {train_df.columns}")
     logger.info(f"Labels: {labels}")
     logger.info(f"Class weights: {class_weights}")
     logger.info(f"Class weights shape: {class_weights.shape}")
+
     return train_df, val_df, test_df, labels, class_weights
