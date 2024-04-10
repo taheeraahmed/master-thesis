@@ -1,7 +1,7 @@
 matplotlib==3.8.3
 numpy==1.26.4
 pandas==2.2.0
-pillow==10.2.0
+pillow==10.3.0
 pyfiglet==1.0.2
 pynvml==11.5.0
 pytorch-lightning==2.2.1
