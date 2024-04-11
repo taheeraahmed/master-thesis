@@ -21,7 +21,7 @@ class MultiLabelLightningModule(LightningModule):
         self.criterion = model_config.criterion
         self.learning_rate = model_config.learning_rate
         self.num_labels = model_config.num_labels
-        self.log_step_interval = 10
+        self.log_step_interval = 100
 
         self.f1_score = MultilabelF1Score(
             num_labels=self.num_labels, threshold=0.5, average='macro')
