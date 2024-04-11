@@ -2,7 +2,6 @@ from models import ModelConfig
 from torchvision.models import resnet50, resnet34, alexnet, vit_b_16
 import torch
 from torch import nn
-from utils import FileManager
 
 
 def set_model(model_arg: str, num_labels: int):
@@ -26,7 +25,7 @@ def set_model(model_arg: str, num_labels: int):
         img_size = int(224*2) 
         raise NotImplementedError
     elif model_arg == "vit":
-        img_size = int(224*2) 
+        img_size = int(224) 
         model = vit_b_16()
 
         model.heads = nn.Sequential(
