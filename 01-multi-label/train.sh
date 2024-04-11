@@ -1,10 +1,10 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("alexnet")
-LOSSES=("wbce" "bce" "mlsm" "wmlsm")
+MODELS=("vit")
+LOSSES=("bce")
 TASK=9-multi-label
-ADD_TRANSFORMS=false
+ADD_TRANSFORMS=true
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
