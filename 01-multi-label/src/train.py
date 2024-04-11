@@ -49,6 +49,10 @@ def train(args):
             test_df=test_df,
     )
 
+    done_file = f"{file_manager.output_folder}/✅.txt"
+    with open(done_file, 'w') as f:
+        f.write("done!!")
+
     file_manager.logger.info('Training is done')
 
 
