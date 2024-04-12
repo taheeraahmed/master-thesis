@@ -89,10 +89,6 @@ class MultiLabelLightningModule(LightningModule):
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
 
-        preds = torch.sigmoid(logits) > 0.5
-        if batch_idx == 0:  # For example, just visualize for the first batch
-            self.visualize_predictions(batch, preds, batch_idx)
-
         self.log('test_loss', loss)
         self.log('test_f1', f1)
         self.log('test_f1_micro', f1_micro)
@@ -102,6 +98,8 @@ class MultiLabelLightningModule(LightningModule):
         self.file_manager.logger.info(f"Test f1_macro: {f1}")
         self.file_manager.logger.info(f"Test f1_micro: {f1_micro}")
         self.file_manager.logger.info(f"Test auroc: {auroc}")
+
+        self.save_model()
         
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
@@ -113,9 +111,8 @@ class MultiLabelLightningModule(LightningModule):
         return [optimizer], [scheduler]
 
     def save_model(self):
-        torch.save(self.model, f"{self.file_mangager.model}model.pt")
-        #script = self.to_torchscript()
-        #torch.jit.save(script, "model.pt")
+        img_size = self.model_config.img_size
+        self.model.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
@@ -128,19 +125,3 @@ class MultiLabelLightningModule(LightningModule):
     def auroc_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
         return self.auroc(preds, labels.type(torch.int32))
-    
-    def visualize_predictions(self, batch, preds, batch_idx):
-        # Assuming 'pixel_values' are your images in the batch
-        images, true_labels = batch['pixel_values'], batch['labels']
-        fig, axs = plt.subplots(nrows=1, ncols=len(images), figsize=(15, 5))
-        
-        for i, (img, pred, label) in enumerate(zip(images, preds, true_labels)):
-            img = img.cpu().numpy().transpose(1, 2, 0)  # Assuming images are in CxHxW format
-            pred = pred.cpu().numpy()
-            label = label.cpu().numpy()
-            axs[i].imshow(img)
-            axs[i].set_title(f"Pred: {pred}, True: {label}")
-            axs[i].axis('off')
-        
-        plt.savefig(f"{self.file_manager.image_folder}/sample_preds_{batch_idx}.png")
-        plt.close()
