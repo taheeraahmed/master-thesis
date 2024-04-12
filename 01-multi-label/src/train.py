@@ -57,7 +57,7 @@ def train(args):
 
 
 if __name__ == "__main__":
-    model_choices = ['swin', 'vit', 'resnet50', 'resnet34' "alexnet"]
+    model_choices = ['swin', 'vit', 'resnet50', 'resnet34' "alexnet", "densenet121"]
     loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
 
     parser = argparse.ArgumentParser(
