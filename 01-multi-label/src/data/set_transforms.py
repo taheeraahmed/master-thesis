@@ -3,42 +3,53 @@
 from torchvision import transforms
 from utils import FileManager
 from models import ModelConfig
-from PIL import ImageFilter
-import random
-import numbers
-from collections.abc import Sequence
 
-class GaussianBlur(object):
-    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709"""
+from torchvision.transforms import functional as F
+from torchvision import transforms
+class AdjustSharpness:
+    def __init__(self, sharpness_factor):
+        super().__init__()
+        self.sharpness_factor = sharpness_factor
+        
+    def __call__(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be gamma adjusted.
 
-    def __init__(self, sigma=[.1, 2.]):
-        self.sigma = sigma
-
-    def __call__(self, x):
-        sigma = random.uniform(self.sigma[0], self.sigma[1])
-        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return x
+        Returns:
+            PIL Image or Tensor: Gamma adjusted image.
+        """
+        return F.adjust_sharpness(img, self.sharpness_factor)
     
-    def _setup_size(size, error_msg):
-        if isinstance(size, numbers.Number):
-            return int(size), int(size)
+class AdjustGamma:
+    def __init__(self, gamma, gain=1):
+        super().__init__()
+        self.gamma = gamma
+        self.gain = gain
 
-        if isinstance(size, Sequence) and len(size) == 1:
-            return size[0], size[0]
+    def __call__(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be gamma adjusted.
 
-        if len(size) != 2:
-            raise ValueError(error_msg)
-
-        return size
-
+        Returns:
+            PIL Image or Tensor: Gamma adjusted image.
+        """
+        return F.adjust_gamma(img, self.gamma, self.gain)
+    
 def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     if model_config.add_transforms:
-        normalize = transforms.Normalize(mean=[0.5056, 0.5056, 0.5056], std=[0.252, 0.252, 0.252])
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         # https://github.com/thtang/CheXNet-with-localization/blob/master/train.py#L100
         train_transforms = transforms.Compose([
-            transforms.RandomCrop(model_config.img_size),
-            transforms.RandomHorizontalFlip(),
+            transforms.Resize((224, 224)),
+            transforms.RandomHorizontalFlip(p=0.3),
+            transforms.RandomApply([transforms.RandomRotation(degrees=5)], p=1),
+            #transforms.ColorJitter(brightness=0.4, contrast=0.2, saturation=0.3, hue=0),
+            #transforms.GaussianBlur(1, sigma=(0.1, 2.0)),
             transforms.ToTensor(),
+            AdjustGamma(gamma=0.8, gain=1),
+            AdjustSharpness(sharpness_factor=2),
             normalize,
         ])
 
