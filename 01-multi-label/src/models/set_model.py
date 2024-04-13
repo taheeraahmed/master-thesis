@@ -1,10 +1,11 @@
 from models import ModelConfig
 from torchvision.models import resnet50, resnet34, alexnet, vit_b_16, densenet121
+from transformers import Swinv2ForImageClassification
 import torch
 from torch import nn
 
 
-def set_model(model_arg: str, num_labels: int):
+def set_model(model_arg: str, num_labels: int, labels: list):
 
     if model_arg == 'resnet50':
         model = resnet50(weights='IMAGENET1K_V1')
@@ -24,8 +25,19 @@ def set_model(model_arg: str, num_labels: int):
         img_size = int(224*2)     
 
     elif model_arg == 'swin':
-        img_size = int(224*2) 
-        raise NotImplementedError
+        id2label = {id: label for id, label in enumerate(labels)}
+        label2id = {label: id for id, label in id2label.items()}
+
+        img_size = int(256) 
+
+        model = Swinv2ForImageClassification.from_pretrained(
+            "microsoft/swinv2-tiny-patch4-window8-256", 
+            num_labels=num_labels,
+            id2label=id2label,
+            label2id=label2id,
+            ignore_mismatched_sizes=True
+        )
+        raise NotImplementedError("Swin Transformer is not yet supported")
     
     elif model_arg == "vit":
         img_size = int(224) 
