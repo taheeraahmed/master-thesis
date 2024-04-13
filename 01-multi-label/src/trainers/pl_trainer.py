@@ -16,7 +16,9 @@ torch.backends.cudnn.benchmark = True
 class MultiLabelLightningModule(LightningModule):
     def __init__(self, model_config: ModelConfig, file_manager: FileManager):
         super().__init__()
+        self.model_config = model_config
         self.model = model_config.model
+        self.model_arg = model_config.model_arg
         self.file_manager = file_manager
         self.criterion = model_config.criterion
         self.learning_rate = model_config.learning_rate
@@ -41,7 +43,12 @@ class MultiLabelLightningModule(LightningModule):
     def step(self, batch):
         pixel_values = batch['pixel_values']
         labels = batch['labels']
-        logits = self.forward(pixel_values)
+        
+        if self.model_arg == 'swin':
+            logits = self.forward(pixel_values.logit)
+        else:
+            logits = self.forward(pixel_values)
+
         loss = self.criterion(logits, labels)
         return loss, logits, labels
 
