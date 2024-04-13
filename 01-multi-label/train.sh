@@ -1,12 +1,12 @@
 #!/bin/bash
-TEST_MODE=false
+TEST_MODE=true
 
-MODELS=("vit")
+MODELS=("alexnet")
 LOSSES=("bce")
 TASK=9-multi-label
 ADD_TRANSFORMS=true
 
-BATCH_SIZE=32
+BATCH_SIZE=16
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
@@ -39,7 +39,7 @@ for MODEL in "${MODELS[@]}"; do
         fi
 
         if [ "$ADD_TRANSFORMS" = true ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-add-transforms"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
