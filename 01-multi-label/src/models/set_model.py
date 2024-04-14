@@ -1,5 +1,5 @@
 from models import ModelConfig
-from torchvision.models import resnet50, resnet34, alexnet, vit_b_16, densenet121
+from torchvision.models import resnet50, resnet34, alexnet, vit_b_16, densenet121, efficientnet_b2
 from transformers import Swinv2ForImageClassification
 import torch
 from torch import nn
@@ -70,6 +70,20 @@ def set_model(model_arg: str, num_labels: int, labels: list):
             nn.Linear(1024, 128),
             nn.ReLU(),
             nn.BatchNorm1d(num_features=128),
+            nn.Linear(128, num_labels),
+        )
+    
+    elif model_arg == "efficientnet":
+        img_size = int(260*2)
+        model = efficientnet_b2(weights="IMAGENET1K_V1")
+
+        model.classifier = nn.Sequential(
+            nn.Dropout(p=0.3),
+            nn.Linear(1408, 512),
+            nn.BatchNorm1d(num_features=512),
+            nn.ReLU(),
+            nn.Linear(512, 128),
+            nn.ReLU(),
             nn.Linear(128, num_labels),
         )
 

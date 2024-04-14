@@ -1,7 +1,7 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("vit" "alexnet" "resnet50")
+MODELS=("efficientnet")
 LOSSES=("bce" "wbce" "mlsm" "wmlsm")
 TASK=9-multi-label
 ADD_TRANSFORMS=true
