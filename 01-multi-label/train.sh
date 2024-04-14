@@ -1,12 +1,12 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("efficientnet")
-LOSSES=("bce" "wbce" "mlsm" "wmlsm")
+MODELS=("resnet50")
+LOSSES=("bce" "wbce")
 TASK=9-multi-label
 ADD_TRANSFORMS=true
 
-BATCH_SIZE=32
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
@@ -35,7 +35,7 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-frfrfr-not-test-leggo-pls-dont-fail"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints

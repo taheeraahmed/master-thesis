@@ -9,20 +9,20 @@ def set_model(model_arg: str, num_labels: int, labels: list):
 
     if model_arg == 'resnet50':
         model = resnet50(weights='IMAGENET1K_V1')
-        img_size = int(224*2) 
+        img_size = int(224) 
 
         model.fc = nn.Sequential(
-            nn.Dropout(p=0.2),
-            nn.Linear(in_features=model.fc.in_features, out_features=128),
+            #nn.Dropout(p=0.2),
+            nn.Linear(in_features=model.fc.in_features, out_features=256),
             nn.ReLU(),
-            nn.BatchNorm1d(num_features=128),
-            nn.Linear(128, num_labels),
+            nn.BatchNorm1d(num_features=256),
+            nn.Linear(256, num_labels),
         )
 
     elif model_arg == 'resnet34':
         model = resnet34(weights='IMAGENET1K_V1')
         model.fc = torch.nn.Linear(in_features=model.fc.in_features, out_features=num_labels, bias=True)
-        img_size = int(224*2)     
+        img_size = int(224)     
 
     elif model_arg == 'swin':
         id2label = {id: label for id, label in enumerate(labels)}
@@ -52,7 +52,7 @@ def set_model(model_arg: str, num_labels: int, labels: list):
 
     elif model_arg == "alexnet": 
         model = alexnet(weights="DEFAULT")
-        img_size = int(224*2) 
+        img_size = int(224) 
     
         model.classifier = nn.Sequential(
             nn.Dropout(p=0.2),
@@ -62,7 +62,7 @@ def set_model(model_arg: str, num_labels: int, labels: list):
             nn.Linear(128, num_labels),
         )
     elif model_arg == "densenet121":
-        img_size = int(224*2) 
+        img_size = int(224) 
         model = densenet121(weights="IMAGENET1K_V1")
         
         model.classifier = nn.Sequential(
@@ -74,7 +74,7 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         )
     
     elif model_arg == "efficientnet":
-        img_size = int(260*2)
+        img_size = int(260)
         model = efficientnet_b2(weights="IMAGENET1K_V1")
 
         model.classifier = nn.Sequential(
