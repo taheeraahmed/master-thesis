@@ -45,6 +45,7 @@ def set_transforms(model_config: ModelConfig, file_manager: FileManager):
             transforms.Resize(size=(model_config.img_size, model_config.img_size)),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomApply([transforms.RandomRotation(degrees=5)], p=0.1),
+            transforms.ColorJitter(brightness=0.2),
             transforms.ToTensor(),
             normalize
         ])

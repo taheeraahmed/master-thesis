@@ -106,7 +106,8 @@ class MultiLabelLightningModule(LightningModule):
         self.file_manager.logger.info(f"Test f1_micro: {f1_micro}")
         self.file_manager.logger.info(f"Test auroc: {auroc}")
 
-        self.save_model()
+        if batch_idx == 0:  # save only on the first batch or after all batches
+            self.save_model()
         
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
@@ -119,7 +120,7 @@ class MultiLabelLightningModule(LightningModule):
 
     def save_model(self):
         img_size = self.model_config.img_size
-        self.model.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
+        self.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)

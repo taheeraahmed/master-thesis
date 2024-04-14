@@ -30,14 +30,13 @@ def show_batch_images(file_manager: FileManager, dataloader: DataLoader):
         dataiter = iter(dataloader)
         batch = next(dataiter)
         images = batch['pixel_values']  # Adjust this if your key is different
-        labels = batch['labels']  # Adjust this if your key is different
 
         img = torchvision.utils.make_grid(images)
         npimg = img.numpy()
         # Convert from (C, H, W) to (H, W, C)
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         plt.axis('off')
-        plt.savefig(f"{file_manager.image_folder}/batch_images.png")
+        plt.savefig(f"{file_manager.image_folder}/train_dataloader_batch_images.png")
     except Exception as e:
         file_manager.logger.error(f'Error saving batch images: {e}')
 
