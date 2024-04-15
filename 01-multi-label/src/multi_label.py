@@ -96,6 +96,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         val_dataloaders=val_loader,
     )
 
+    file_manager.logger.info('✅ Training is done')
+
     if not model_config.test_mode:
         pl_trainer.test(
             model=training_module,

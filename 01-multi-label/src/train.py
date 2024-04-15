@@ -56,7 +56,6 @@ def train(args):
     with open(done_file, 'w') as f:
         f.write("done!!")
 
-    file_manager.logger.info('✅ Training is done')
 
 
 if __name__ == "__main__":
