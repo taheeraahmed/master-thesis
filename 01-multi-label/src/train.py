@@ -22,7 +22,7 @@ def train(args):
         add_transforms=args.add_transforms
     )
 
-    train_df, val_df, test_df, labels, class_weights = get_df(
+    train_df, val_df, test_df, labels, _ = get_df(
         file_manager=file_manager, 
     )
 
@@ -39,7 +39,7 @@ def train(args):
     with open(model_file, 'w') as f:
         f.write(str(model_config.model.__repr__()))
 
-    model_config.criterion = set_criterion(model_config, class_weights)
+    model_config.criterion = set_criterion(model_config, None)
 
     file_manager.logger.info(f'{model_config.__str__()}')
     file_manager.logger.info(f'{file_manager.__str__()}')

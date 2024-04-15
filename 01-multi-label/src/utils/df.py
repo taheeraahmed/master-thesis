@@ -1,89 +1,7 @@
-import glob
 import pandas as pd
 import torch
-from sklearn.model_selection import train_test_split
 from utils import FileManager
-
-
-def get_df_image_paths_labels(df, data_path):
-    """
-    This function will add the image paths to the DataFrame
-    :param df: DataFrame with the image labels
-    :param data_path: Path to the data
-    """
-    image_paths = []
-    for i in range(1, 13):
-        folder_name = f'{data_path}/images_{i:03}'
-        files_in_subfolder = glob.glob(f'{folder_name}/images/*')
-        image_paths.extend(files_in_subfolder)
-
-    assert len(
-        image_paths) == 112120, f"Expected 112120 images, but found {len(image_paths)}"
-    df['Image Path'] = image_paths
-    return df
-
-
-def one_hot_encode(df, labels):
-    """
-    One-hot encode the diseases in the DataFrame
-    :param df: DataFrame with the image paths and labels
-    :param labels: List with the diseases
-    """
-    for pathology in labels:
-        df.loc[:, pathology] = df['Finding Labels'].apply(lambda x: 1 if pathology in x else 0)
-
-    df = df.drop('Finding Labels', axis=1)
-    # removing columns with no ground truth labels
-    row_label_sums = df.iloc[:, 2:].sum(axis=1)
-    df = df[row_label_sums > 0]
-    return df
-
-def split_data(df, val_size=0.2, test_size=0.1):
-    """
-    Split the data into training, validation, and test sets based on unique patient IDs.
-    Ensures that all images from the same patient are kept in the same set, which is crucial 
-    for medical datasets to prevent information leakage across sets.
-    
-    :param df: DataFrame containing the image paths, labels, and patient IDs.
-    :param val_size: Proportion of the dataset to use for the validation set (after excluding the test set).
-    :param test_size: Proportion of the dataset to use for the test set.
-    :returns: Three DataFrames corresponding to the training, validation, and test sets.
-    """
-    # ensure that patient IDs are unique before splitting
-    patient_ids = df['Patient ID'].unique()
-
-    # first split: separate out the test set based on patient IDs
-    train_val_ids, test_ids = train_test_split(
-        patient_ids, test_size=test_size, random_state=42)
-
-    # second split: separate the remaining patient IDs into training and validation sets
-    train_ids, val_ids = train_test_split(
-        train_val_ids, test_size=val_size / (1 - test_size), random_state=42)
-
-    # use the separated IDs to create the actual dataframes
-    train_df = df[df['Patient ID'].isin(train_ids)].reset_index(drop=True)
-    val_df = df[df['Patient ID'].isin(val_ids)].reset_index(drop=True)
-    test_df = df[df['Patient ID'].isin(test_ids)].reset_index(drop=True)
-
-    # drop the 'Patient ID' column if it's no longer needed
-    train_df = train_df.drop('Patient ID', axis=1)
-    val_df = val_df.drop('Patient ID', axis=1)
-    test_df = test_df.drop('Patient ID', axis=1)
-
-    return train_df, val_df, test_df
-
-
-def get_labels(df):
-    """
-    Get the labels from the DataFrame from the column 'Finding Labels' in DataEntry2017.csv,
-    excluding 'No Findings'.
-    :param df: DataFrame with the image paths and labels
-    """
-    # explode the 'Finding Labels' into individual labels and get unique values
-    labels = df['Finding Labels'].str.split('|').explode().unique()
-    labels_list = list(labels) # convert to list for easier manipulation
-    labels_list.sort() # sort the list of labels
-    return labels_list
+import os
 
 
 def calculate_class_weights(train_df: pd.DataFrame) -> torch.Tensor:
@@ -126,29 +44,64 @@ def get_df(file_manager: FileManager):
     """
 
     logger = file_manager.logger
-    root_folder = file_manager.data_path
-    labels = ['Atelectasis', 'Cardiomegaly', 'Effusion', 'Infiltration', 'Mass', 'Nodule', 'Pneumonia', 'Pneumothorax', 'No Finding']
-    file_path_data_entry = root_folder + '/Data_Entry_2017.csv'
+    data_path = file_manager.data_path
 
-    df = pd.read_csv(file_path_data_entry)
-    df = get_df_image_paths_labels(df, root_folder)
-    df = df[['Image Path', 'Finding Labels', 'Patient ID']]
+    labels = [
+        "Atelectasis",
+        "Cardiomegaly",
+        "Consolidation",
+        "Edema",
+        "Effusion",
+        "Emphysema",
+        "Fibrosis",
+        "Hernia",
+        "Infiltration",
+        "Mass",
+        "Nodule",
+        "Pleural Thickening",
+        "Pneumonia",
+        "Pneumothorax"
+    ]
+    file_path_train = data_path + '/train_official.txt'
+    file_path_val = data_path + '/val_official.txt'
+    file_path_test = data_path + '/test_official.txt'
 
-    logger.info(f"One-hot encoding labels")
-    df = one_hot_encode(df, labels)
+    columns = ['Image Filename'] + labels
 
-    val_size = 0.2
-    test_size = 0.1
-    train_df, val_df, test_df = split_data(df, val_size=val_size, test_size=test_size)
-    logger.info(f"Splitting data into train, validation {val_size}, and test {test_size} sets")
+    df_train = pd.read_csv(file_path_train, sep='\s+', names=columns)
+    df_val = pd.read_csv(file_path_val, sep='\s+', names=columns)
+    df_test = pd.read_csv(file_path_test, sep='\s+', names=columns)
 
-    
-    class_weights = calculate_class_weights(train_df)
+    # Finding all image paths, and mapping them to the DataFrame
+    subfolders = [f"images_{i:03}/images" for i in range(1, 13)]  # Generates 'images_001' to 'images_012'
+    path_mapping = {}
+    for subfolder in subfolders:
+        full_folder_path = os.path.join(data_path, subfolder)
+        for img_file in os.listdir(full_folder_path):
+            path_mapping[img_file] = os.path.join(full_folder_path, img_file)
 
-    logger.info(f"Train dataframe shape: {train_df.shape} (1 size larger than expected due to 'Image Path')")
-    logger.info(f"Train columns: {train_df.columns}")
+    # Update the DataFrame using the mapping
+    df_train['Full Image Path'] = df_train['Image Filename'].map(path_mapping)
+    df_val['Full Image Path'] = df_val['Image Filename'].map(path_mapping)
+    df_test['Full Image Path'] = df_test['Image Filename'].map(path_mapping)
+
+    # Move 'Full Image Path' to the front of the DataFrame
+    cols_train = ['Full Image Path'] + [col for col in df_train.columns if col != 'Full Image Path']
+    cols_val = ['Full Image Path'] + [col for col in df_val.columns if col != 'Full Image Path']
+    cols_test = ['Full Image Path'] + [col for col in df_test.columns if col != 'Full Image Path']
+    df_train = df_train[cols_train]
+    df_val = df_val[cols_val]
+    df_test = df_test[cols_test]
+
+    # Drop 'Image Filename' column
+    df_train = df_train.drop(columns=['Image Filename'])
+    df_val = df_val.drop(columns=['Image Filename'])
+    df_test = df_test.drop(columns=['Image Filename'])
+
+
+    logger.info(f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
+    logger.info(f"Train columns: {df_train.columns}")
     logger.info(f"Labels: {labels}")
-    logger.info(f"Class weights: {class_weights}")
-    logger.info(f"Class weights shape: {class_weights.shape}")
 
-    return train_df, val_df, test_df, labels, class_weights
+    # TODO: Add class_weights? :)
+    return df_train, df_val, df_test, labels, None
