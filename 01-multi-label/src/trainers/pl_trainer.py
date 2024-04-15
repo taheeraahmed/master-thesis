@@ -2,12 +2,8 @@ from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
 from torchmetrics import AUROC
 import torch
-import torch.nn.functional as F
-import matplotlib.pyplot as plt
-import numpy as np
-import io
-import torchvision
 from utils import FileManager
+import onnx
 from models import ModelConfig
 
 torch.backends.cudnn.benchmark = True
@@ -119,6 +115,8 @@ class MultiLabelLightningModule(LightningModule):
         return [optimizer], [scheduler]
 
     def save_model(self):
+        self.file_manager.logger.info(onnx.__version__)  # This will print the version of ONNX installe
+
         img_size = self.model_config.img_size
         self.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
