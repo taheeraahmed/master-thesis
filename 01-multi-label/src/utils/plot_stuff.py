@@ -3,6 +3,8 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 from utils import FileManager
+from torch.utils.data import DataLoader
+import torchvision
 
 # Set style and color palette
 sns.set(style='darkgrid', palette='mako')
@@ -20,6 +22,25 @@ plot_settings = {
 
 # Use the dictionary variable to update the settings using matplotlib
 plt.rcParams.update(plot_settings)
+
+def show_batch_images(file_manager: FileManager, dataloader: DataLoader):
+    """Function to show images from a DataLoader that returns a dictionary, with labels"""
+    try:
+        # Get a batch of images
+        dataiter = iter(dataloader)
+        batch = next(dataiter)
+        images = batch['pixel_values']  # Adjust this if your key is different
+
+        img = torchvision.utils.make_grid(images)
+        npimg = img.numpy()
+        # Convert from (C, H, W) to (H, W, C)
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+        plt.axis('off')
+        plt.savefig(f"{file_manager.image_folder}/train_dataloader_batch_images.png")
+    except Exception as e:
+        file_manager.logger.error(f'Error saving batch images: {e}')
+
+
 
 
 def plot_metrics(train_arr, val_arr, output_folder, logger, type='None'):

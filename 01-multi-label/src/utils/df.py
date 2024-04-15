@@ -103,6 +103,9 @@ def calculate_class_weights(train_df: pd.DataFrame) -> torch.Tensor:
     num_labels = len(class_weights)
     values = [class_weights[i] for i in range(num_labels)]
     class_weights_tensor = torch.tensor(values)
+
+    # normalize the class weights
+    class_weights_tensor = class_weights_tensor / class_weights_tensor.sum()
     return class_weights_tensor
 
 

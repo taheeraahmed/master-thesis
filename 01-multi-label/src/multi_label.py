@@ -3,7 +3,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from torch.utils.data import DataLoader
 
-from utils import FileManager
+from utils import FileManager, show_batch_images
 from models import ModelConfig
 from trainers import MultiLabelLightningModule
 from data import ChestXray14HFDataset, set_transforms
@@ -60,6 +60,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         pin_memory=pin_memory
     )
 
+    show_batch_images(file_manager=file_manager, dataloader=train_loader)
     logger = TensorBoardLogger(save_dir=f'{file_manager.model_ckpts_folder}')
 
     checkpoint_callback = ModelCheckpoint(
@@ -76,7 +77,6 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         verbose=True,
         mode='min'
     )
-
 
     training_module = MultiLabelLightningModule(
         model_config=model_config,

@@ -16,12 +16,14 @@ torch.backends.cudnn.benchmark = True
 class MultiLabelLightningModule(LightningModule):
     def __init__(self, model_config: ModelConfig, file_manager: FileManager):
         super().__init__()
+        self.model_config = model_config
         self.model = model_config.model
+        self.model_arg = model_config.model_arg
         self.file_manager = file_manager
         self.criterion = model_config.criterion
         self.learning_rate = model_config.learning_rate
         self.num_labels = model_config.num_labels
-        self.log_step_interval = 10
+        self.log_step_interval = 100
 
         self.f1_score = MultilabelF1Score(
             num_labels=self.num_labels, threshold=0.5, average='macro')
@@ -41,7 +43,12 @@ class MultiLabelLightningModule(LightningModule):
     def step(self, batch):
         pixel_values = batch['pixel_values']
         labels = batch['labels']
-        logits = self.forward(pixel_values)
+        
+        if self.model_arg == 'swin':
+            logits = self.forward(pixel_values.logit)
+        else:
+            logits = self.forward(pixel_values)
+
         loss = self.criterion(logits, labels)
         return loss, logits, labels
 
@@ -93,6 +100,14 @@ class MultiLabelLightningModule(LightningModule):
         self.log('test_f1', f1)
         self.log('test_f1_micro', f1_micro)
         self.log('test_auroc', auroc)
+
+        self.file_manager.logger.info(f"Test loss: {loss}")
+        self.file_manager.logger.info(f"Test f1_macro: {f1}")
+        self.file_manager.logger.info(f"Test f1_micro: {f1_micro}")
+        self.file_manager.logger.info(f"Test auroc: {auroc}")
+
+        if batch_idx == 0:  # save only on the first batch or after all batches
+            self.save_model()
         
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
@@ -104,9 +119,8 @@ class MultiLabelLightningModule(LightningModule):
         return [optimizer], [scheduler]
 
     def save_model(self):
-        torch.save(self.model, f"{self.file_mangager.model}model.pt")
-        #script = self.to_torchscript()
-        #torch.jit.save(script, "model.pt")
+        img_size = self.model_config.img_size
+        self.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)

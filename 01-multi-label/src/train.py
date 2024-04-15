@@ -27,9 +27,11 @@ def train(args):
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
+
     model_config.model, model_config.img_size = set_model(
         model_config.model_arg, 
         model_config.num_labels, 
+        model_config.labels
     )
 
     model_file =f"{file_manager.output_folder}/model-architecture.txt"
@@ -49,11 +51,15 @@ def train(args):
             test_df=test_df,
     )
 
-    file_manager.logger.info('Training is done')
+    done_file = f"{file_manager.output_folder}/✅.txt"
+    with open(done_file, 'w') as f:
+        f.write("done!!")
+
+    file_manager.logger.info('✅ Training is done')
 
 
 if __name__ == "__main__":
-    model_choices = ['swin', 'vit', 'resnet50', 'resnet34' "alexnet"]
+    model_choices = ['swin', 'vit', 'resnet50', 'resnet34', 'alexnet', 'densenet121', 'efficientnet']
     loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
 
     parser = argparse.ArgumentParser(
