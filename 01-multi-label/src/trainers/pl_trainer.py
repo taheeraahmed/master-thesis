@@ -97,19 +97,14 @@ class MultiLabelLightningModule(LightningModule):
         self.log('test_f1_micro', f1_micro)
         self.log('test_auroc', auroc)
 
-        self.file_manager.logger.info(f"Test loss: {loss}")
-        self.file_manager.logger.info(f"Test f1_macro: {f1}")
-        self.file_manager.logger.info(f"Test f1_micro: {f1_micro}")
-        self.file_manager.logger.info(f"Test auroc: {auroc}")
-
         if batch_idx == 0:  # save only on the first batch or after all batches
             self.save_model()
         
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
-            self.model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        #optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
         scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer), 'monitor': 'val_loss'}
         return [optimizer], [scheduler]
@@ -118,7 +113,7 @@ class MultiLabelLightningModule(LightningModule):
         self.file_manager.logger.info(onnx.__version__)  # This will print the version of ONNX installe
 
         img_size = self.model_config.img_size
-        self.to_onnx("test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
+        self.to_onnx(f"{self.file_manager.model_ckpts_folder}/test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
