@@ -102,6 +102,7 @@ def get_df(file_manager: FileManager):
     logger.info(f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
     logger.info(f"Train columns: {df_train.columns}")
     logger.info(f"Labels: {labels}")
+    logger.info(f"Number of labels: {len(labels)}")
 
     # TODO: Add class_weights? :)
     return df_train, df_val, df_test, labels, None
