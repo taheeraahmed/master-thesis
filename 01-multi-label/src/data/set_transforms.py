@@ -71,7 +71,8 @@ def set_transforms(model_config: ModelConfig, file_manager: FileManager):
             transforms.ToTensor(),
         ])
     
-    file_manager.logger.info(f"Using these augmentations: {train_transforms}")
+    file_manager.logger.info(f"Train augmentations: \n {train_transforms}")
+    file_manager.logger.info(f"Validation augmentations: \n {val_transforms}")
     return train_transforms, val_transforms
 
     
