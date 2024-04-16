@@ -97,11 +97,11 @@ class MultiLabelLightningModule(LightningModule):
         self.log('test_f1_micro', f1_micro)
         self.log('test_auroc', auroc)
 
-        if batch_idx == 0:  # save only on the first batch or after all batches
-            self.save_model()
-        
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
+    def on_test_end(self):
+        self.save_model()
+
     def configure_optimizers(self):
         #optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.learning_rate)
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
