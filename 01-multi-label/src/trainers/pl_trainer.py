@@ -103,10 +103,11 @@ class MultiLabelLightningModule(LightningModule):
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
     def configure_optimizers(self):
+        #optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.model.parameters()), lr=self.learning_rate)
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         #optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
-        scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer), 'monitor': 'val_loss'}
+        #scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
         return [optimizer], [scheduler]
 
     def save_model(self):

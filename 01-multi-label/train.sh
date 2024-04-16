@@ -1,8 +1,8 @@
 #!/bin/bash
 TEST_MODE=false
 
-MODELS=("resnet50")
-LOSSES=("bce" "wbce")
+MODELS=("resnet50" "alexnet" "densenet121")
+LOSSES=("bce" "mlsm" "focal")
 TASK=9-multi-label
 ADD_TRANSFORMS=true
 
@@ -35,7 +35,7 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-contrast-new-scheduler"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints

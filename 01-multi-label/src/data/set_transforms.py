@@ -48,13 +48,14 @@ def set_transforms(model_config: ModelConfig, file_manager: FileManager):
             transforms.CenterCrop(model_config.img_size),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomApply([transforms.RandomRotation(degrees=7)], p=0.5),
-            #transforms.ColorJitter(brightness=0.1),
+            transforms.ColorJitter(contrast=(0.9, 1.1)),
             transforms.ToTensor(),
             normalize,
         ])
         val_transforms = transforms.Compose([
             transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
             transforms.CenterCrop(model_config.img_size),
+            transforms.ColorJitter(contrast=(0.9, 1.1)),
             transforms.ToTensor(),
             normalize,
         ])
