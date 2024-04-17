@@ -1,4 +1,3 @@
-from models import ModelConfig
 from torchvision.models import resnet50, resnet34, alexnet, vit_b_16, densenet121, efficientnet_b2
 from transformers import Swinv2ForImageClassification
 import torch
