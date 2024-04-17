@@ -1,6 +1,6 @@
 from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
-from torchmetrics import AUROC
+from torchmetrics import AUROC, ConfusionMatrix
 import torch
 from utils import FileManager
 import onnx
@@ -104,7 +104,8 @@ class MultiLabelLightningModule(LightningModule):
 
     def configure_optimizers(self):
         optimizer = set_optimizer(self.model_config)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
+        scheduler = {'scheduler': torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10), 'monitor': 'val_loss'}
+        #scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
         return [optimizer], [scheduler]
 
     def save_model(self):

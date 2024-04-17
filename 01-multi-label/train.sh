@@ -2,14 +2,14 @@
 
 TEST_MODE=false
 
-MODELS=("resnet50" "densenet121" "alexnet")
+MODELS=("vit")
 LOSSES=("bce" "focal" "mlsm")
 OPTIMIZER=adamw
 TASK=14-multi-label
 ADD_TRANSFORMS=true
-DESCRIPTION=contrast-adamw-lower-batchsize
+DESCRIPTION=transformer-contrast-and-scheduler
 
-BATCH_SIZE=32
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
