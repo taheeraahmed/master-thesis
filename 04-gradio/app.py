@@ -1,10 +1,11 @@
 import requests
 import re
+from typing import List
 
 import gradio as gr
 import numpy as np
 import onnxruntime as ort
-from torch.nn.functional import softmax, topk
+from torch.nn.functional import sigmoid
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -65,34 +66,46 @@ class WebUI:
         ort_outs = self.model.run(None, ort_inputs)
         return torch.tensor(ort_outs[0])
 
-    def classify_image(self, image):
+    def do_inference(self, image):
+        # add transforms to image
         preprocessed_image = self.preprocess_image(image)
-        outputs = self.run_model(preprocessed_image.unsqueeze(0))
-        probabilities = softmax(outputs, dim=1).squeeze(0)
-        top_probs, top_idxs = topk(probabilities, self.num_labels)
+        # transform to tensor
+        preprocessed_tensor = torch.tensor(
+            preprocessed_image, dtype=torch.float32) 
+        # run model and create ouputs
+        outputs = self.run_model(preprocessed_tensor.unsqueeze(0))
+
+        # get probs
+        probabilities = sigmoid(outputs).squeeze(0)
+        # get top labels
+        top_probs, top_idxs = torch.topk(probabilities, self.num_labels, largest=True)
         result_labels = [(self.labels[idx], prob.item())
-                        for idx, prob in zip(top_idxs, top_probs)]
-        return result_labels
-    
+                         for idx, prob in zip(top_idxs, top_probs)]
+        # Convert list of tuples to dictionary
+        results_dict = {label: prob for label, prob in result_labels}
+        return results_dict
+            
     def explain_pred(self, image):
         raise NotImplementedError("Saliency maps are not yet supported")
-    
-    def run(self):
-        examples = ['00000003_000.png', '00000013_004.png', '00000013_018.png', '00000013_019.png', '00000013_021.png', '00000013_035.png', '00000032_015.png']
-        examples = [f"{self.image_path}/{example}" for example in examples]
 
+    def run(self):
+        img_filenames = ['00000003_000.png', '00000013_004.png', '00000013_018.png', '00000013_019.png', '00000013_021.png', '00000013_035.png', '00000032_015.png']
+        examples = [
+            f"{self.image_path}/{filename}" for filename in img_filenames]
+        
         with gr.Blocks() as demo:
             with gr.Row():
                 # Accept PIL Image directly
-                image = gr.Image(type="pil", tool="editor", height=512)
+                image = gr.Image(type="pil", height=512)
                 labels = gr.Label(num_top_classes=self.num_labels)
+
 
                 with gr.Column(scale=0.2, min_width=150):
                     run_btn = gr.Button(
                         "Run analysis", variant="primary", elem_id="run-button")
 
                     run_btn.click(
-                        fn=self.classify_image,
+                        fn=self.do_inference,
                         inputs=image,
                         outputs=labels,
                     )
@@ -101,7 +114,7 @@ class WebUI:
                         examples=examples,
                         inputs=image,
                         outputs=labels,
-                        fn=self.classify_image,
+                        fn=self.do_inference,
                         cache_examples=True,
                     )
 
