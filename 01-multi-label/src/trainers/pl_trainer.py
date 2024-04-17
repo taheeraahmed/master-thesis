@@ -108,8 +108,6 @@ class MultiLabelLightningModule(LightningModule):
         return [optimizer], [scheduler]
 
     def save_model(self):
-        self.file_manager.logger.info(onnx.__version__)  # This will print the version of ONNX installe
-
         img_size = self.model_config.img_size
         self.to_onnx(f"{self.file_manager.model_ckpts_folder}/test-model.onnx", input_sample=torch.randn(1, 3, img_size, img_size))
 
