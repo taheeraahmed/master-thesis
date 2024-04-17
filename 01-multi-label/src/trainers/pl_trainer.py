@@ -1,6 +1,6 @@
 from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
-from torchmetrics import AUROC
+from torchmetrics import AUROC, ConfusionMatrix
 import torch
 from utils import FileManager
 import onnx

@@ -40,7 +40,7 @@ def set_model(model_arg: str, num_labels: int, labels: list):
     
     elif model_arg == "vit":
         img_size = int(224) 
-        model = vit_b_16()
+        model = vit_b_16(weights="IMAGENET1K_V1")
 
         model.heads = nn.Sequential(
             nn.Dropout(p=0.2),
