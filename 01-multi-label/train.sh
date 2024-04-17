@@ -1,18 +1,23 @@
 #!/bin/bash
+
 TEST_MODE=false
 
-MODELS=("resnet50")
-LOSSES=("bce" "wbce")
-TASK=9-multi-label
+MODELS=("resnet50" "densenet121" "alexnet")
+LOSSES=("bce" "focal" "mlsm")
+OPTIMIZER=adamw
+TASK=14-multi-label
 ADD_TRANSFORMS=true
+DESCRIPTION=contrast-adamw-lower-batchsize
 
-BATCH_SIZE=64
+BATCH_SIZE=32
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8
 IDUN_TIME=10:00:00
+
+echo "Starting training :)"
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
 
@@ -24,6 +29,8 @@ ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output
 for MODEL in "${MODELS[@]}"; do
     for LOSS in "${LOSSES[@]}"; do
         PARTITION="GPUQ"
+        echo "Partition"
+        
         EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK
         echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
@@ -35,7 +42,7 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-opt$OPTIMIZER-$DESCRIPTION"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
@@ -78,7 +85,7 @@ for MODEL in "${MODELS[@]}"; do
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS \
+            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS,OPTIMIZER=$OPTIMIZER \
             $CODE_PATH/train.slurm
     done
 done

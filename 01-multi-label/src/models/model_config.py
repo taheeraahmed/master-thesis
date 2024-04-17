@@ -1,5 +1,5 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name, add_transforms):
+    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name, add_transforms, optimizer_arg):
         self.model_arg = model_arg # The argumenet from train.py 
         self.loss_arg = loss_arg # The loss function argument
         self.model = None # The actual pytorch base model
@@ -14,6 +14,7 @@ class ModelConfig():
         self.num_labels = None
         self.labels = None
         self.add_transforms = add_transforms
+        self.optimizer_arg = optimizer_arg
 
     def __str__(self):
         criterion_name = self.criterion.__class__.__name__ if self.criterion else 'None'
@@ -29,6 +30,7 @@ class ModelConfig():
             f"| 🌟 Max Steps      | {self.max_steps:<25} |\n"
             f"| 📈 Loss Function  | {criterion_name:<25} |\n"
             f"| 🔄 Epochs         | {self.num_epochs:<25} |\n"
+            f"| 🃏 Optimizer      | {self.optimizer_arg:<25} |\n"
             f"| 📏 Batch Size     | {self.batch_size:<25} |\n"
             f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
             f"| 🔬 Test Mode      | {'Enabled' if self.test_mode else 'Disabled':<25} |\n"

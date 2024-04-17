@@ -5,6 +5,7 @@ import argparse
 import sys
 
 
+
 def train(args):
     file_manager = set_up(args)
 
@@ -18,10 +19,11 @@ def train(args):
         learning_rate=args.learning_rate,
         test_mode=args.test_mode,
         experiment_name=args.experiment_name,
-        add_transforms=args.add_transforms
+        add_transforms=args.add_transforms,
+        optimizer_arg=args.optimizer,
     )
 
-    train_df, val_df, test_df, labels, class_weights = get_df(
+    train_df, val_df, test_df, labels, _ = get_df(
         file_manager=file_manager, 
     )
 
@@ -38,7 +40,7 @@ def train(args):
     with open(model_file, 'w') as f:
         f.write(str(model_config.model.__repr__()))
 
-    model_config.criterion = set_criterion(model_config, class_weights)
+    model_config.criterion = set_criterion(model_config, None)
 
     file_manager.logger.info(f'{model_config.__str__()}')
     file_manager.logger.info(f'{file_manager.__str__()}')
@@ -55,12 +57,12 @@ def train(args):
     with open(done_file, 'w') as f:
         f.write("done!!")
 
-    file_manager.logger.info('✅ Training is done')
 
 
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', 'resnet34', 'alexnet', 'densenet121', 'efficientnet']
     loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
+    optimizer_choice = ['adam', 'sgd', 'adamw']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -82,6 +84,8 @@ if __name__ == "__main__":
                         help="Type of loss function used", default="wce")
     parser.add_argument("-a", "--add_transforms",
                         help="Add transforms", default=False, required=False)
+    parser.add_argument("-o", "--optimizer", choices=optimizer_choice,
+                        help="Type of optimizer to use", default="adamw")
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)

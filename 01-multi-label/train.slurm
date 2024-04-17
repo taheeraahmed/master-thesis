@@ -17,8 +17,8 @@ nvidia-smi
 echo ">> module load Python/3.10.8-GCCcore-12.2.0"
 module load Python/3.10.8-GCCcore-12.2.0
 
-echo ">> source /cluster/home/taheeraa/code/master-thesis/.venv/bin/activate"
-source /cluster/home/taheeraa/code/master-thesis/.venv/bin/activate
+echo ">> source /cluster/home/taheeraa/code/master-thesis/01-multi-label/.venv/bin/activate"
+source /cluster/home/taheeraa/code/master-thesis/01-multi-label/.venv/bin/activate
 
 echo ">> which python"
 which python
@@ -35,5 +35,6 @@ python $CODE_PATH/src/train.py \
   --num_epochs $NUM_EPOCHS \
   --loss $LOSS \
   --add_transforms $ADD_TRANSFORMS \
+  --optimizer $OPTIMIZER \
 
 echo ">> done"
