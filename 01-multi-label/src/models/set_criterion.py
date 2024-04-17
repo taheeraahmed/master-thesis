@@ -50,8 +50,6 @@ def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None)
         raise NotImplementedError
     elif model_config.loss_arg == 'bce':
         criterion = torch.nn.BCEWithLogitsLoss()
-    elif model_config.loss_arg == 'bce-basic':
-        criterion = torch.nn.BCELoss()
     elif model_config.loss_arg == 'wbce':
         criterion = torch.nn.BCEWithLogitsLoss(weight=class_weights)
         raise NotImplementedError

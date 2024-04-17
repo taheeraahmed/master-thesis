@@ -35,5 +35,6 @@ python $CODE_PATH/src/train.py \
   --num_epochs $NUM_EPOCHS \
   --loss $LOSS \
   --add_transforms $ADD_TRANSFORMS \
+  --optimizer $OPTIMIZER \
 
 echo ">> done"

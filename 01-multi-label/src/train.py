@@ -19,7 +19,8 @@ def train(args):
         learning_rate=args.learning_rate,
         test_mode=args.test_mode,
         experiment_name=args.experiment_name,
-        add_transforms=args.add_transforms
+        add_transforms=args.add_transforms,
+        optimizer_arg=args.optimizer,
     )
 
     train_df, val_df, test_df, labels, _ = get_df(
@@ -60,7 +61,8 @@ def train(args):
 
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', 'resnet34', 'alexnet', 'densenet121', 'efficientnet']
-    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal', 'bce-basic']
+    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
+    optimizer_choice = ['adam', 'sgd', 'adamw']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -82,6 +84,8 @@ if __name__ == "__main__":
                         help="Type of loss function used", default="wce")
     parser.add_argument("-a", "--add_transforms",
                         help="Add transforms", default=False, required=False)
+    parser.add_argument("-o", "--optimizer", choices=optimizer_choice,
+                        help="Type of optimizer to use", default="adamw")
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
