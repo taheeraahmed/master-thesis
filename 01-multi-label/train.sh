@@ -1,12 +1,13 @@
 #!/bin/bash
 
-TEST_MODE=true
+TEST_MODE=false
 
-MODELS=("resnet50")
-LOSSES=("bce")
+MODELS=("resnet50" "densenet121" "alexnet")
+LOSSES=("bce" "focal" "mlsm")
 OPTIMIZER=adamw
-TASK=9-multi-label
+TASK=14-multi-label
 ADD_TRANSFORMS=true
+DESCRIPTION=contrast-adamw-lower-batchsize
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
@@ -15,6 +16,8 @@ NUM_EPOCHS=35
 ACCOUNT=share-ie-idi
 NUM_CORES=8
 IDUN_TIME=10:00:00
+
+echo "Starting training :)"
 
 #    ======= DO NOT EDIT THIS SCRIPT =======
 
@@ -39,7 +42,7 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-opt$OPTIMIZER"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-opt$OPTIMIZER-$DESCRIPTION"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
