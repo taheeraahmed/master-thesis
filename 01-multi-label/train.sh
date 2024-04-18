@@ -5,14 +5,14 @@ TEST_MODE=false
 MODELS=("resnet50")
 LOSSES=("bce" "focal" "mlsm")
 
-SCHEDULER=cosineannealinglr
-OPTIMIZER=sgd
+SCHEDULER=reduceonplateu
+OPTIMIZER=adam
 TASK=14-multi-label
 ADD_TRANSFORMS=true
-DESCRIPTION=step-one-train-classifier-head
+DESCRIPTION=step-two-train-the-backbone
 
 BATCH_SIZE=128
-LEARNING_RATE=0.01
+LEARNING_RATE=0.001
 NUM_EPOCHS=3
 
 ACCOUNT=share-ie-idi
