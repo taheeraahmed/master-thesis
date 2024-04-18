@@ -1,13 +1,15 @@
 #!/bin/bash
 
-TEST_MODE=false
+TEST_MODE=true
 
-MODELS=("resnet50" "densenet121" "alexnet")
+MODELS=("vit" "resnet50" "densenet121" "alexnet")
 LOSSES=("bce" "focal" "mlsm")
+
+SCHEDULER=cosineannealinglr
 OPTIMIZER=adamw
 TASK=14-multi-label
 ADD_TRANSFORMS=true
-DESCRIPTION=contrast-adamw-lower-batchsize
+DESCRIPTION=more-rotate-contrast-and-scheduler
 
 BATCH_SIZE=32
 LEARNING_RATE=0.0005
@@ -42,7 +44,7 @@ for MODEL in "${MODELS[@]}"; do
             PARTITION="short"
         fi
         if [ "$TEST_MODE" = false ]; then
-            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-opt$OPTIMIZER-$DESCRIPTION"
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-$DESCRIPTION"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
@@ -85,7 +87,7 @@ for MODEL in "${MODELS[@]}"; do
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS,OPTIMIZER=$OPTIMIZER \
+            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS,OPTIMIZER=$OPTIMIZER,SCHEDULER=$SCHEDULER \
             $CODE_PATH/train.slurm
     done
 done
