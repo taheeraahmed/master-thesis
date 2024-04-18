@@ -36,5 +36,6 @@ python $CODE_PATH/src/train.py \
   --loss $LOSS \
   --add_transforms $ADD_TRANSFORMS \
   --optimizer $OPTIMIZER \
+  --scheduler $SCHEDULER \
 
 echo ">> done"

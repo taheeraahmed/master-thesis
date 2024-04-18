@@ -4,7 +4,7 @@ from torchmetrics import AUROC, ConfusionMatrix
 import torch
 from utils import FileManager
 import onnx
-from models import ModelConfig, set_optimizer
+from models import ModelConfig, set_optimizer, set_scheduler
 
 torch.backends.cudnn.benchmark = True
 
@@ -107,8 +107,7 @@ class MultiLabelLightningModule(LightningModule):
 
     def configure_optimizers(self):
         optimizer = set_optimizer(self.model_config)
-        scheduler = {'scheduler': torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10), 'monitor': 'val_loss'}
-        #scheduler = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer), 'monitor': 'val_loss'}
+        scheduler = set_scheduler(self.model_config, optimizer)
         return [optimizer], [scheduler]
 
     def save_model(self):
