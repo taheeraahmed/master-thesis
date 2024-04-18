@@ -47,20 +47,20 @@ def get_df(file_manager: FileManager):
     data_path = file_manager.data_path
 
     labels = [
-        "Atelectasis",
+        "Atelectasis", 
         "Cardiomegaly",
-        "Consolidation",
-        "Edema",
-        "Effusion",
-        "Emphysema",
-        "Fibrosis",
-        "Hernia",
-        "Infiltration",
+        "Effusion", 
+        "Infiltration", 
         "Mass",
         "Nodule",
-        "Pleural Thickening",
         "Pneumonia",
-        "Pneumothorax"
+        "Pneumothorax",  
+        "Consolidation",
+        "Edema",
+        "Emphysema",
+        "Fibrosis",
+        "Pleural_Thickening",
+        "Hernia"
     ]
     file_path_train = data_path + '/train_official.txt'
     file_path_val = data_path + '/val_official.txt'
