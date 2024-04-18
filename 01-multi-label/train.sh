@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEST_MODE=true
+TEST_MODE=false
 
 MODELS=("vit" "resnet50" "densenet121" "alexnet")
 LOSSES=("bce" "focal" "mlsm")
@@ -8,10 +8,11 @@ LOSSES=("bce" "focal" "mlsm")
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adamw
 TASK=14-multi-label
-ADD_TRANSFORMS=true
-DESCRIPTION=more-rotate-contrast-and-scheduler
+DESCRIPTION=baseline
 
-BATCH_SIZE=32
+ADD_TRANSFORMS=true
+
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
