@@ -17,6 +17,12 @@ def set_model(model_arg: str, num_labels: int, labels: list):
             nn.BatchNorm1d(num_features=256),
             nn.Linear(256, num_labels),
         )
+        # TODO ONLY LAST LAYER
+        for param in model.parameters():
+            param.requires_grad = False
+
+        for param in model.fc.parameters():
+            param.requires_grad = True
 
     elif model_arg == 'resnet34':
         model = resnet34(weights='IMAGENET1K_V1')

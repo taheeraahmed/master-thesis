@@ -1,12 +1,12 @@
 #!/bin/bash
 
-TEST_MODE=true
+TEST_MODE=false
 
 MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
 LOSSES=("wbce" "wfocal" "wmlsm")
 
 SCHEDULER=cosineannealinglr
-OPTIMIZER=adamw
+OPTIMIZER=sgd
 TASK=14-multi-label
 
 ADD_TRANSFORMS=true
@@ -18,7 +18,7 @@ NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=10:00:00
+IDUN_TIME=5:00:00
 
 echo "Starting training :)"
 
