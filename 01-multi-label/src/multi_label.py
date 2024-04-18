@@ -22,7 +22,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     checkpoint_filename = "epoch=2-step=1767.ckpt"
     root_path = file_manager.root
     checkpoint_path = f"{root_path}/{experiment_name}/model_checkpoints/lightning_logs/version_0/checkpoints/{checkpoint_filename}"
-    file_manager.logger.info("Loaded checkpoint from experiment: ", experiment_name)
+    file_manager.logger.info(f"Loaded checkpoint from experiment: {experiment_name}")
     
     num_workers = 4
     pin_memory = False
