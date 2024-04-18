@@ -100,7 +100,10 @@ class MultiLabelLightningModule(LightningModule):
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
     def on_test_end(self):
-        self.save_model()
+        try:
+            self.save_model()
+        except Exception as e:
+            self.file_manager.logger.info(f"Error saving model: {e}")
 
     def configure_optimizers(self):
         optimizer = set_optimizer(self.model_config)
