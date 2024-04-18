@@ -119,8 +119,8 @@ class MultiLabelLightningModule(LightningModule):
             self.file_manager.logger.info(f"Error saving model: {e}")
 
     def configure_optimizers(self):
-        optimizer = set_optimizer(self.model_config)
-        scheduler = set_scheduler(self.model_config, optimizer)
+        optimizer = set_optimizer(self.model_config, self.file_manager)
+        scheduler = set_scheduler(self.model_config, self.file_manager, optimizer)
         return [optimizer], [scheduler]
 
     def save_model(self):
