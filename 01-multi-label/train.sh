@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEST_MODE=false
+TEST_MODE=true
 
 MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
 LOSSES=("wbce" "wfocal" "wmlsm")
