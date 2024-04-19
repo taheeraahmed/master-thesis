@@ -2,18 +2,18 @@
 
 TEST_MODE=false
 
-MODELS=("resnet50")
+MODELS=("resnet50" "densenet121" "vit" "alexnet")
 LOSSES=("bce" "focal" "mlsm")
 
-SCHEDULER=reduceonplateu
-OPTIMIZER=adam
+SCHEDULER=cosineannealinglr
+OPTIMIZER=sgd
 TASK=14-multi-label
 ADD_TRANSFORMS=true
-DESCRIPTION=step-two-train-the-backbone
+DESCRIPTION=step-one-train-the-classifier
 
 BATCH_SIZE=128
-LEARNING_RATE=0.001
-NUM_EPOCHS=3
+LEARNING_RATE=0.01
+NUM_EPOCHS=4
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8

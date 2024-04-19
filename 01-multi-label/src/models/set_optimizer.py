@@ -13,9 +13,9 @@ def set_optimizer(model_config: ModelConfig, file_manager: FileManager) -> torch
         )
     elif optimizer_arg == 'sgd':
         optimizer = torch.optim.SGD(
-            # TODO ONLY LAST LAYER
-            #model.fc.parameters(),
-            model.parameters(),
+            # step 1: TODO ONLY LAST LAYER
+            model.fc.parameters(),
+            #model.parameters(),
             lr=model_config.learning_rate,
         )
     elif optimizer_arg == 'adamw':
