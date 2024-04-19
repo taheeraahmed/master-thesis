@@ -23,7 +23,7 @@ def set_optimizer(model_config: ModelConfig, file_manager: FileManager) -> torch
     optimizer_arg = model_config.optimizer_arg
 
     # step 1: TODO COMMENT OUT
-    classifying_head = get_classifying_head(model_config)
+    # classifying_head = get_classifying_head(model_config)
 
     if optimizer_arg == 'adam':
         optimizer = torch.optim.Adam(
@@ -34,13 +34,13 @@ def set_optimizer(model_config: ModelConfig, file_manager: FileManager) -> torch
     elif optimizer_arg == 'sgd':
         optimizer = torch.optim.SGD(
             # step 1: TODO ONLY LAST LAYER
-            classifying_head,
-            #model.parameters(),
+            #classifying_head,
+            model.parameters(),
             lr=model_config.learning_rate,
         )
     elif optimizer_arg == 'adamw':
         optimizer = torch.optim.AdamW(
-            model.parameters(),
+            filter(lambda p: p.requires_grad, model.parameters()),
             lr=model_config.learning_rate,
         )
     else:

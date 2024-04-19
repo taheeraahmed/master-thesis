@@ -2,22 +2,22 @@
 
 TEST_MODE=false
 
-MODELS=("resnet50" "densenet121" "vit" "alexnet")
+MODELS=("resnet50")
 LOSSES=("bce" "focal" "mlsm")
 
 SCHEDULER=cosineannealinglr
-OPTIMIZER=sgd
+OPTIMIZER=adamw
 TASK=14-multi-label
 ADD_TRANSFORMS=true
-DESCRIPTION=step-one-train-the-classifier
+DESCRIPTION=step-two-train-backbone-freeze-head
 
 BATCH_SIZE=128
-LEARNING_RATE=0.01
-NUM_EPOCHS=4
+LEARNING_RATE=0.0005
+NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=5:00:00
+IDUN_TIME=10:00:00
 
 echo "Starting training :)"
 
