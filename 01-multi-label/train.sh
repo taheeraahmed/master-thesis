@@ -11,8 +11,9 @@ TASK=14-multi-label
 DESCRIPTION=baseline
 
 ADD_TRANSFORMS=true
+DESCRIPTION=contrast-adamw-lower-batchsize
 
-BATCH_SIZE=64
+BATCH_SIZE=32
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
