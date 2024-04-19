@@ -18,11 +18,11 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     :param val_df: DataFrame containing the validation data
     """
     # TODO: step 2: Load checkpoint
-    # experiment_name = "2024-04-18-11:09:39-resnet50-bce-14-multi-label-e3-bs128-lr0.01-step-one-train-classifier-head"
-    # checkpoint_filename = "epoch=2-step=1767.ckpt"
-    # root_path = file_manager.root
-    # checkpoint_path = f"{root_path}/{experiment_name}/model_checkpoints/lightning_logs/version_0/checkpoints/{checkpoint_filename}"
-    # file_manager.logger.info(f"Loaded checkpoint from experiment: {experiment_name}")
+    experiment_name = f"2024-04-19-12:16:35-{model_config.model_arg}-{model_config.loss_arg}-14-multi-label-e4-bs128-lr0.01-step-one-train-the-classifier"
+    checkpoint_filename = "epoch=3-step=2356.ckpt"
+    root_path = file_manager.root
+    checkpoint_path = f"{root_path}/{experiment_name}/model_checkpoints/lightning_logs/version_0/checkpoints/{checkpoint_filename}"
+    file_manager.logger.info(f"Loaded checkpoint from experiment: {experiment_name}")
     
     num_workers = 4
     pin_memory = False
@@ -84,11 +84,11 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         mode='min'
     )
     # TODO: step: 2 load for checkpiunt
-    # model_config.model = MultiLabelLightningModule.load_from_checkpoint(
-    #     checkpoint_path,
-    #     model_config=model_config,
-    #     file_manager=file_manager
-    # )
+    model_config.model = MultiLabelLightningModule.load_from_checkpoint(
+        checkpoint_path,
+        model_config=model_config,
+        file_manager=file_manager
+    )
 
     training_module = MultiLabelLightningModule(
         model_config=model_config,

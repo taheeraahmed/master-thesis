@@ -5,7 +5,6 @@ from torch import nn
 
 
 def set_model(model_arg: str, num_labels: int, labels: list):
-
     if model_arg == 'resnet50':
         model = resnet50(weights='IMAGENET1K_V1')
         img_size = int(224) 
@@ -19,10 +18,10 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         )
         # step 1: TODO ONLY LAST LAYER
         for param in model.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
 
         for param in model.fc.parameters():
-            param.requires_grad = True
+            param.requires_grad = False
 
     elif model_arg == 'resnet34':
         model = resnet34(weights='IMAGENET1K_V1')

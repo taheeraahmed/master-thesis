@@ -1,5 +1,5 @@
 from .model_config import ModelConfig
 from .set_criterion import set_criterion
 from .set_model import set_model
-from .set_optimizer import set_optimizer
+from .set_optimizer import set_optimizer, get_classifying_head
 from .set_scheduler import set_scheduler
