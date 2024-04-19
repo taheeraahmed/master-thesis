@@ -1,4 +1,3 @@
-from models import ModelConfig
 from torchvision.models import resnet50, resnet34, alexnet, vit_b_16, densenet121, efficientnet_b2
 from transformers import Swinv2ForImageClassification
 import torch
@@ -12,7 +11,7 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         img_size = int(224) 
 
         model.fc = nn.Sequential(
-            #nn.Dropout(p=0.2),
+            nn.Dropout(p=0.2),
             nn.Linear(in_features=model.fc.in_features, out_features=256),
             nn.ReLU(),
             nn.BatchNorm1d(num_features=256),

@@ -21,6 +21,7 @@ def train(args):
         experiment_name=args.experiment_name,
         add_transforms=args.add_transforms,
         optimizer_arg=args.optimizer,
+        scheduler_arg=args.scheduler,
     )
 
     train_df, val_df, test_df, labels, _ = get_df(
@@ -63,6 +64,7 @@ if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', 'resnet34', 'alexnet', 'densenet121', 'efficientnet']
     loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
     optimizer_choice = ['adam', 'sgd', 'adamw']
+    scheduler_choice = ['cosineannealinglr', 'cycliclr', 'step', 'reduceonplateu']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -86,6 +88,8 @@ if __name__ == "__main__":
                         help="Add transforms", default=False, required=False)
     parser.add_argument("-o", "--optimizer", choices=optimizer_choice,
                         help="Type of optimizer to use", default="adamw")
+    parser.add_argument("-s", "--scheduler", help="Type of scheduler to use", 
+                        default="cosineannealinglr", choices=scheduler_choice)
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
