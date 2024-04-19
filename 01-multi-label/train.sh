@@ -5,8 +5,8 @@ TEST_MODE=false
 MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
 LOSSES=("wbce" "wfocal" "wmlsm")
 
-SCHEDULER=reduceonplateu
-OPTIMIZER=adam
+SCHEDULER=cosineannealinglr
+OPTIMIZER=sgd
 TASK=14-multi-label
 
 ADD_TRANSFORMS=true
