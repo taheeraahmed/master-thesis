@@ -85,6 +85,14 @@ def set_model(model_arg: str, num_labels: int, labels: list):
             nn.ReLU(),
             nn.Linear(128, num_labels),
         )
+    elif model_arg == "chexnet":
+        img_size = int(224)
+        model = densenet121(weights="IMAGENET1K_V1")
+
+        # using sigmoid else where
+        model.classifier = nn.Sequential(
+            nn.Linear(model.classifier.in_features, num_labels)
+        )
 
     else:
         raise ValueError(f'Invalid model argument: {model_arg}')

@@ -2,7 +2,7 @@
 
 TEST_MODE=false
 
-MODELS=("vit" "resnet50" "densenet121" "alexnet")
+MODELS=("chexnet")
 LOSSES=("bce" "focal" "mlsm")
 
 SCHEDULER=cosineannealinglr
@@ -11,10 +11,10 @@ TASK=14-multi-label
 DESCRIPTION=baseline
 
 ADD_TRANSFORMS=true
-DESCRIPTION=contrast-adamw-lower-batchsize
+DESCRIPTION=chexnet-model-same-transforms
 
-BATCH_SIZE=32
-LEARNING_RATE=0.0005
+BATCH_SIZE=64
+LEARNING_RATE=0.0002
 NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
