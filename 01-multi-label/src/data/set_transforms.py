@@ -45,20 +45,16 @@ def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     if model_config.add_transforms:
         # https://github.com/thtang/CheXNet-with-localization/blob/master/train.py#L100
         train_transforms = transforms.Compose([
-            #transforms.Resize(size=(model_config.img_size, model_config.img_size)),
-            #transforms.RandomResizedCrop(model_config.img_size),
             transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
             transforms.CenterCrop(img_size),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomRotation(degrees=7),
-            #transforms.ColorJitter(contrast=(0.9, 1.1)),
             transforms.ToTensor(),
             normalize,
         ])
         val_transforms = transforms.Compose([
             transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
             transforms.CenterCrop(img_size),
-            #transforms.ColorJitter(contrast=(0.9, 1.1)),
             transforms.ToTensor(),
             normalize,
         ])

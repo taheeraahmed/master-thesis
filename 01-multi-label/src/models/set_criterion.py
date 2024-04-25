@@ -47,17 +47,14 @@ def set_criterion(model_config: ModelConfig, class_weights: torch.Tensor = None)
         criterion = torch.nn.MultiLabelSoftMarginLoss()
     elif model_config.loss_arg == 'wmlsm':
         criterion = torch.nn.MultiLabelSoftMarginLoss(weight=class_weights)
-        raise NotImplementedError
     elif model_config.loss_arg == 'bce':
         criterion = torch.nn.BCEWithLogitsLoss()
     elif model_config.loss_arg == 'wbce':
         criterion = torch.nn.BCEWithLogitsLoss(weight=class_weights)
-        raise NotImplementedError
     elif model_config.loss_arg == 'focal':
         criterion = FocalLoss(device=device, gamma=2.0)
     elif model_config.loss_arg == 'wfocal':
         criterion = FocalLoss(device=device, gamma=2.0, weights=class_weights)
-        raise NotImplementedError
     else:
         raise ValueError(f'Invalid loss argument: {model_config.loss_arg}')
     return criterion
