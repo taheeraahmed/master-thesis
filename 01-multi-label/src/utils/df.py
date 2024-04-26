@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from utils import FileManager, generate_class_weights
+from utils import FileManager
 import os
 
 def get_df(file_manager: FileManager):
@@ -75,6 +75,7 @@ def get_df(file_manager: FileManager):
     df_test = df_test.drop(columns=['Image Filename'])
 
     # Create class weights
+    from .handle_class_imbalance import generate_class_weights
     df_train_calculate_weights = df_train.drop(columns=['Full Image Path']).to_numpy()
     class_weights_dict = generate_class_weights(df_train_calculate_weights, multi_class=False, one_hot_encoded=True)
     class_weights_list = [class_weights_dict[i] for i in class_weights_dict]
