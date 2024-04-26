@@ -2,16 +2,15 @@
 
 TEST_MODE=false
 
-MODELS=("chexnet")
-LOSSES=("bce" "focal" "mlsm")
+MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
+LOSSES=("wbce" "wfocal" "wmlsm")
 
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adamw
 TASK=14-multi-label
-DESCRIPTION=baseline
 
 ADD_TRANSFORMS=true
-DESCRIPTION=chexnet-model-same-transforms
+DESCRIPTION=weighted-loss-functions
 
 BATCH_SIZE=64
 LEARNING_RATE=0.0002

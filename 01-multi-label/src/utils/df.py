@@ -1,31 +1,7 @@
 import pandas as pd
 import torch
-from utils import FileManager
+from utils import FileManager, generate_class_weights
 import os
-
-
-def calculate_class_weights(train_df: pd.DataFrame) -> torch.Tensor:
-    """
-    Calculate the class weights for the dataset.
-    :param train_df: The training DataFrame
-
-    Returns:
-    class_weights_tensor: The class weights as a tensor
-    """ 
-    targets = train_df.drop('Image Path', axis=1)
-    targets = targets.to_numpy()
-
-    from .handle_class_imbalance import generate_class_weights
-    class_weights = generate_class_weights(targets, multi_class=False, one_hot_encoded=True)
-
-    num_labels = len(class_weights)
-    values = [class_weights[i] for i in range(num_labels)]
-    class_weights_tensor = torch.tensor(values)
-
-    # normalize the class weights
-    class_weights_tensor = class_weights_tensor / class_weights_tensor.sum()
-    return class_weights_tensor
-
 
 def get_df(file_manager: FileManager):
     """
@@ -98,11 +74,18 @@ def get_df(file_manager: FileManager):
     df_val = df_val.drop(columns=['Image Filename'])
     df_test = df_test.drop(columns=['Image Filename'])
 
+    # Create class weights
+    df_train_calculate_weights = df_train.drop(columns=['Full Image Path']).to_numpy()
+    class_weights_dict = generate_class_weights(df_train_calculate_weights, multi_class=False, one_hot_encoded=True)
+    class_weights_list = [class_weights_dict[i] for i in class_weights_dict]
+    class_weights_tensor = torch.tensor(class_weights_list, dtype=torch.float32)
+
+    label_weights_dict = {labels[i]: class_weights_dict[i] for i in range(len(labels))}
+    logger.info(f"Class weights: {label_weights_dict}")
 
     logger.info(f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
     logger.info(f"Train columns: {df_train.columns}")
     logger.info(f"Labels: {labels}")
     logger.info(f"Number of labels: {len(labels)}")
 
-    # TODO: Add class_weights? :)
-    return df_train, df_val, df_test, labels, None
+    return df_train, df_val, df_test, labels, class_weights_tensor
