@@ -10,7 +10,7 @@ OPTIMIZER=adamw
 TASK=14-multi-label
 
 ADD_TRANSFORMS=true
-DESCRIPTION=weighted-loss-functions
+DESCRIPTION=weighted-loss-functions-between-0-1
 
 BATCH_SIZE=64
 LEARNING_RATE=0.0002

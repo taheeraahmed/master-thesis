@@ -80,13 +80,15 @@ def get_df(file_manager: FileManager):
     class_weights_dict = generate_class_weights(df_train_calculate_weights, multi_class=False, one_hot_encoded=True)
     class_weights_list = [class_weights_dict[i] for i in class_weights_dict]
     class_weights_tensor = torch.tensor(class_weights_list, dtype=torch.float32)
-
-    label_weights_dict = {labels[i]: class_weights_dict[i] for i in range(len(labels))}
-    logger.info(f"Class weights: {label_weights_dict}")
+    # Normalize weights to be in the range of 0 to 1
+    max_weight = torch.max(class_weights_tensor)
+    normalized_class_weights_tensor = class_weights_tensor / max_weight
+    
+    logger.info(f"Class weights: {normalized_class_weights_tensor}")
 
     logger.info(f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
     logger.info(f"Train columns: {df_train.columns}")
     logger.info(f"Labels: {labels}")
     logger.info(f"Number of labels: {len(labels)}")
 
-    return df_train, df_val, df_test, labels, class_weights_tensor
+    return df_train, df_val, df_test, labels, normalized_class_weights_tensor
