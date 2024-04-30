@@ -16,8 +16,6 @@ def get_classifying_head(model_config: ModelConfig) -> torch.nn.Module:
     return classifying_head
     
 
-
-
 def set_optimizer(model_config: ModelConfig, file_manager: FileManager) -> torch.optim.Optimizer:
     model = model_config.model
     optimizer_arg = model_config.optimizer_arg
