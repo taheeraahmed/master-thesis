@@ -1,0 +1,1 @@
+Both checkpoints are from https://github.com/lambert-x/medical_mae
