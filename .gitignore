@@ -2,9 +2,9 @@
 .ipynb_checkpoints/
 runs/
 __pycache__/
+checkpoints/
 images/
 mlruns/
 output/
 *.out
 .vscode
-checkpoints/

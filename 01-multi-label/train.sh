@@ -71,6 +71,7 @@ for MODEL in "${MODELS[@]}"; do
             --exclude='utils/__pycache__' \
             --exclude='trainers/__pycache__' \
             --exclude='mlruns/' \
+            --exclude='checkpoints/'\
             /cluster/home/$USER/code/master-thesis/01-multi-label/ $CODE_PATH
 
         echo "Current user is: $USER"
