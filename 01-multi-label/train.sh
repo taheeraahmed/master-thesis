@@ -2,17 +2,17 @@
 
 TEST_MODE=false
 
-MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
-LOSSES=("wbce" "wfocal" "wmlsm")
+MODELS=("resnet50" "densenet121" "efficientnet")
+LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adam
 TASK=14-multi-label
 
 ADD_TRANSFORMS=false
-DESCRIPTION=new-baseline-god-damn-no-augmentations
+DESCRIPTION=new-baseline-god-damn
 
-BATCH_SIZE=64
+BATCH_SIZE=128
 LEARNING_RATE=0.0004
 NUM_EPOCHS=35
 
