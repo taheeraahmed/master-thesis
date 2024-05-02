@@ -6,14 +6,14 @@ MODELS=("resnet50" "alexnet" "densenet121" "efficientnet")
 LOSSES=("wbce" "wfocal" "wmlsm")
 
 SCHEDULER=cosineannealinglr
-OPTIMIZER=adamw
+OPTIMIZER=adam
 TASK=14-multi-label
 
-ADD_TRANSFORMS=true
-DESCRIPTION=weighted-loss-functions-between-0-1
+ADD_TRANSFORMS=false
+DESCRIPTION=new-baseline-god-damn-no-augmentations
 
 BATCH_SIZE=64
-LEARNING_RATE=0.0002
+LEARNING_RATE=0.0004
 NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
