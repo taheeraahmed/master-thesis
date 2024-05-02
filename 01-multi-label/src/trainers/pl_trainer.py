@@ -4,6 +4,8 @@ from torchmetrics import AUROC
 import torch
 from utils import FileManager
 import onnx
+import csv
+import os
 from models import ModelConfig, set_optimizer, set_scheduler
 
 torch.backends.cudnn.benchmark = True
@@ -111,15 +113,56 @@ class MultiLabelLightningModule(LightningModule):
         self.log('test_f1_micro', f1_micro)
         self.log('test_auroc', auroc)
 
+        self.test_results.append({
+            'loss': loss.item(),
+            'f1': f1.item(),
+            'f1_micro': f1_micro.item(),
+            'auroc': auroc.item()
+        })
+
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
     def on_test_end(self):
         self.save_model()
+        self.save_metrics_to_csv()
 
     def configure_optimizers(self):
         optimizer = set_optimizer(self.model_config)
         scheduler = set_scheduler(self.model_config, optimizer)
         return [optimizer], [scheduler]
+    
+    def save_metrics_to_csv(self):
+        csv_file_path = os.path.join(self.file_manager.output_folder, 'test_metrics.csv')
+
+        model_info = {
+            'model_name': self.model_arg,
+            'loss_arg': self.model_config.loss_arg,
+            'batch_size': self.model_config.batch_size,
+            'scheduler_arg': self.model_config.scheduler_arg,
+            'optimizer_arg': self.model_config.optimizer_arg,
+            'learning_rate': self.model_config.learning_rate
+        }
+
+        # aggregate test results
+        if self.test_results:
+            aggregated_results = {key: sum([batch[key] for batch in self.test_results]) / len(self.test_results) 
+                                for key in self.test_results[0].keys()}
+        else:
+            aggregated_results = {}
+
+        # combine the model info and aggregated results for CSV output
+        final_results = {**model_info, **aggregated_results}
+        try:
+            # write to CSV
+            with open(csv_file_path, 'w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=final_results.keys())
+                writer.writeheader()
+                writer.writerow(final_results)
+
+            self.file_manager.logger.info(f"Test metrics saved to {csv_file_path}")
+        except Exception as e:
+            self.file_manager.logger.error(f"Error saving test metrics to {csv_file_path}: {e}")
+
 
     def save_model(self):
         img_size = self.model_config.img_size
