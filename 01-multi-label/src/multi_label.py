@@ -78,6 +78,17 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         mode='min'
     )
 
+    checkpoint_path = None
+    if checkpoint_path:
+        model_config.model = MultiLabelLightningModule.load_from_checkpoint(
+            checkpoint_path,
+            model_config=model_config,
+            file_manager=file_manager
+        )
+        file_manager.logger.info(f"🚀 Loaded the model {checkpoint_path}")
+    else:
+        file_manager.logger.info('🚀 Training the model from scratch')
+
     training_module = MultiLabelLightningModule(
         model_config=model_config,
         file_manager=file_manager,
