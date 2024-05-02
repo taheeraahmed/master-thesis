@@ -3,47 +3,14 @@
 from torchvision import transforms
 from utils import FileManager
 from models import ModelConfig
-import torch
 
-from torchvision.transforms import functional as F
 from torchvision import transforms
-class AdjustSharpness:
-    def __init__(self, sharpness_factor):
-        super().__init__()
-        self.sharpness_factor = sharpness_factor
-        
-    def __call__(self, img):
-        """
-        Args:
-            img (PIL Image or Tensor): Image to be gamma adjusted.
-
-        Returns:
-            PIL Image or Tensor: Gamma adjusted image.
-        """
-        return F.adjust_sharpness(img, self.sharpness_factor)
-    
-class AdjustGamma:
-    def __init__(self, gamma, gain=1):
-        super().__init__()
-        self.gamma = gamma
-        self.gain = gain
-
-    def __call__(self, img):
-        """
-        Args:
-            img (PIL Image or Tensor): Image to be gamma adjusted.
-
-        Returns:
-            PIL Image or Tensor: Gamma adjusted image.
-        """
-        return F.adjust_gamma(img, self.gamma, self.gain)
     
 def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     img_size = model_config.img_size
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     if model_config.add_transforms:
-        # https://github.com/thtang/CheXNet-with-localization/blob/master/train.py#L100
         train_transforms = transforms.Compose([
             transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
             transforms.CenterCrop(img_size),
