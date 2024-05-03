@@ -104,4 +104,5 @@ if __name__ == "__main__":
     args.eval_mode = str_to_bool(args.eval_mode)
     args.add_transforms = str_to_bool(args.add_transforms)
     args.fast_dev_run = str_to_bool(args.fast_dev_run)
+    args.test_time_augmentation = str_to_bool(args.test_time_augmentation)
     train(args)

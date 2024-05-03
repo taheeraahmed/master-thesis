@@ -2,19 +2,19 @@
 
 FAST_DEV_RUN_ENABLED=false 
 EVAL_MODE=false  # TODO: rename this to evaluation mode
-TEST_TIME_AUGMENTATION=true
+TEST_TIME_AUGMENTATION=false
 
 MODELS=("resnet50")
 LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adam
-BATCH_SIZE=64
+BATCH_SIZE=128
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
-ADD_TRANSFORMS=true
-DESCRIPTION=new-new-baseline-aug-tta
+ADD_TRANSFORMS=false
+DESCRIPTION=new-new-baseline-same-just-new-code
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi

@@ -5,7 +5,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from torch.utils.data import DataLoader
 
 from utils import FileManager, show_batch_images
-from models import ModelConfig
+from models import ModelConfig, set_optimizer, set_scheduler
 from trainers import MultiLabelLightningModule
 from data import ChestXray14HFDataset, set_transforms
 
@@ -18,7 +18,19 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     :param train_df: DataFrame containing the training data
     :param val_df: DataFrame containing the validation data
     """
-    
+    model = model_config.model
+    model_name = model_config.model_arg
+    experiment_name = model_config.experiment_name
+    criterion = model_config.criterion
+    learning_rate = model_config.learning_rate
+    num_labels = model_config.num_labels
+    labels = model_config.labels
+    optimizer_func = set_optimizer(model_config)
+    scheduler_func = set_scheduler(model_config, optimizer_func)
+    model_ckpts_folder = file_manager.model_ckpts_folder
+    logger = file_manager.logger
+    root_path = file_manager.root
+
     num_workers = model_config.num_cores
     pin_memory = False
 
@@ -31,7 +43,8 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         val_df = val_df.head(val_subset_size)
         test_df = test_df.head(val_subset_size)
 
-    train_transforms, val_transforms, test_transforms = set_transforms(model_config, file_manager)
+    train_transforms, val_transforms, test_transforms = set_transforms(
+        model_config, file_manager)
 
     train_dataset = ChestXray14HFDataset(
         dataframe=train_df, transform=train_transforms)
@@ -41,24 +54,24 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         dataframe=test_df, transform=test_transforms)
 
     train_loader = DataLoader(
-        train_dataset, 
-        batch_size=model_config.batch_size, 
-        shuffle=True, 
-        num_workers=num_workers, 
+        train_dataset,
+        batch_size=model_config.batch_size,
+        shuffle=True,
+        num_workers=num_workers,
         pin_memory=pin_memory
     )
     val_loader = DataLoader(
-        val_dataset, 
-        batch_size=model_config.batch_size, 
-        shuffle=False, 
-        num_workers=num_workers, 
+        val_dataset,
+        batch_size=model_config.batch_size,
+        shuffle=False,
+        num_workers=num_workers,
         pin_memory=pin_memory
     )
     test_loader = DataLoader(
-        test_dataset, 
-        batch_size=model_config.batch_size, 
-        shuffle=False, 
-        num_workers=num_workers, 
+        test_dataset,
+        batch_size=model_config.batch_size,
+        shuffle=False,
+        num_workers=num_workers,
         pin_memory=pin_memory
     )
 
@@ -68,34 +81,44 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode='min',
-        save_top_k=1, 
+        save_top_k=1,
         verbose=True,
     )
 
     early_stop_callback = EarlyStopping(
-        monitor='val_loss',  
+        monitor='val_loss',
         min_delta=0.00,
         patience=5,
         verbose=True,
         mode='min'
     )
 
+    training_module = MultiLabelLightningModule(
+        model=model,
+        criterion=criterion,
+        learning_rate=learning_rate,
+        num_labels=num_labels,
+        labels=labels,
+        optimizer_func=optimizer_func,
+        scheduler_func=scheduler_func,
+        model_ckpts_folder=model_ckpts_folder,
+        logger=logger,
+        root_path=root_path,
+        model_name=model_name,
+        experiment_name=experiment_name,
+    )
+
     checkpoint_path = None
-    #checkpoint_path = "/cluster/home/taheeraa/code/master-thesis/01-multi-label/output/v0-experiments/013-train-in-two-steps/2024-04-19-16:24:29-resnet50-bce-14-multi-label-e35-bs128-lr0.0005-step-two-train-backbone/model_checkpoints/lightning_logs/version_0/checkpoints/epoch=7-step=4712.ckpt"
+    # checkpoint_path = "/cluster/home/taheeraa/code/master-thesis/01-multi-label/output/v0-experiments/013-train-in-two-steps/2024-04-19-16:24:29-resnet50-bce-14-multi-label-e35-bs128-lr0.0005-step-two-train-backbone/model_checkpoints/lightning_logs/version_0/checkpoints/epoch=7-step=4712.ckpt"
     if checkpoint_path:
         checkpoint = torch.load(checkpoint_path)
-        adjusted_state_dict = {key.replace('model.model.', 'model.'): value 
-                            for key, value in checkpoint['state_dict'].items()}
-        training_module = MultiLabelLightningModule(model_config=model_config, file_manager=file_manager)
+        adjusted_state_dict = {key.replace('model.model.', 'model.'): value
+                               for key, value in checkpoint['state_dict'].items()}
         training_module.load_state_dict(adjusted_state_dict, strict=False)
         file_manager.logger.info(f"🚀 Loaded the model from {checkpoint_path}")
     else:
         file_manager.logger.info('🚀 Training the model from scratch')
-        training_module = MultiLabelLightningModule(
-            model_config=model_config,
-            file_manager=file_manager,
-        )
-        
+
     pl_trainer = Trainer(
         max_epochs=model_config.num_epochs,
         logger=logger,
