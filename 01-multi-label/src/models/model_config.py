@@ -1,5 +1,5 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run):
+    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run):
         self.model_arg = model_arg # The argumenet from train.py 
         self.loss_arg = loss_arg # The loss function argument
         self.model = None # The actual pytorch base model
@@ -8,7 +8,7 @@ class ModelConfig():
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.experiment_name = experiment_name
-        self.test_mode = test_mode
+        self.eval_mode = eval_mode
         self.img_size = None
         self.max_steps = 80000
         self.num_labels = None
@@ -39,7 +39,7 @@ class ModelConfig():
             f"| 🍓 Batch Size     | {self.batch_size:<25} |\n"
             f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
             f"| 🔬 Fast dev run   | {'Enabled' if self.fast_dev_run else 'Disabled':<25} |\n"
-            f"| 🦦 Test Mode      | {'Enabled' if self.test_mode else 'Disabled':<25} |\n"
+            f"| 🦦 Test Mode      | {'Enabled' if self.eval_mode else 'Disabled':<25} |\n"
             f"| 💗 TTA Enabled    | {'Enabled' if self.test_time_augmentation else 'Disabled':<25} |\n"
             f"-------------------------------------------------"
         )

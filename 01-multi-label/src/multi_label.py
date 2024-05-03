@@ -103,7 +103,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         callbacks=[checkpoint_callback, early_stop_callback],
     )
 
-    if not model_config.test_mode:
+    if not model_config.eval_mode:
         pl_trainer.fit(
             training_module,
             train_dataloaders=train_loader,

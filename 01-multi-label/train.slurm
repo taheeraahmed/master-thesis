@@ -27,7 +27,7 @@ which python
 echo ">> python train.py"
 echo ""
 python $CODE_PATH/src/train.py \
-  --test_mode $TEST_MODE \
+  --eval_mode $EVAL_MODE \
   --experiment_name $EXPERIMENT_NAME\
   --idun_time $IDUN_TIME \
   --model $MODEL \

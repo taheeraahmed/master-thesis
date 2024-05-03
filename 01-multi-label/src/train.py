@@ -20,7 +20,7 @@ def train(args):
         num_epochs=args.num_epochs,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
-        test_mode=args.test_mode,
+        eval_mode=args.eval_mode,
         experiment_name=args.experiment_name,
         add_transforms=args.add_transforms,
         optimizer_arg=args.optimizer,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                         help="Name of folder output files will be added, also name of run", required=False, default='./output/')
     parser.add_argument(
         "-it", "--idun_time", help="The duration of job set on IDUN", default=None, required=False)
-    parser.add_argument("-t", "--test_mode", help="Test mode?",
+    parser.add_argument("-t", "--eval_mode", help="Test mode?",
                         required=False, default=True)
     parser.add_argument("-m", "--model", choices=model_choices,
                         help="Model to run", required=True)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("-fdr", "--fast_dev_run", help="Fast dev run", default=False, required=False)
 
     args = parser.parse_args()
-    args.test_mode = str_to_bool(args.test_mode)
+    args.eval_mode = str_to_bool(args.eval_mode)
     args.add_transforms = str_to_bool(args.add_transforms)
     args.fast_dev_run = str_to_bool(args.fast_dev_run)
     train(args)
