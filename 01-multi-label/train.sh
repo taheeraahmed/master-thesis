@@ -1,8 +1,8 @@
 #!/bin/bash
 
-FAST_DEV_RUN_ENABLED=true 
-EVAL_MODE=true  # TODO: rename this to evaluation mode
-TEST_TIME_AUGMENTATION=false
+FAST_DEV_RUN_ENABLED=false 
+EVAL_MODE=false  # TODO: rename this to evaluation mode
+TEST_TIME_AUGMENTATION=true
 
 MODELS=("resnet50")
 LOSSES=("bce")
@@ -14,12 +14,13 @@ LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
 ADD_TRANSFORMS=true
-DESCRIPTION=new-baseline-god-damn-with-aug
+DESCRIPTION=new-new-baseline-aug-tta
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
 IDUN_TIME=10:00:00
+PARTITION="GPUQ"
 
 echo "Starting training :)"
 
@@ -31,10 +32,7 @@ CURRENT_PATH=$(pwd)
 ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
 
 for MODEL in "${MODELS[@]}"; do
-    for LOSS in "${LOSSES[@]}"; do
-        PARTITION="GPUQ"
-        echo "Partition"
-        
+    for LOSS in "${LOSSES[@]}"; do        
         EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK
         echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
@@ -49,6 +47,7 @@ for MODEL in "${MODELS[@]}"; do
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-$DESCRIPTION"
         fi
         if [ "$EVAL_MODE" = true ]; then
+            IDUN_TIME=00:15:00
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-$DESCRIPTION-evaluation"
         fi
 
@@ -57,7 +56,6 @@ for MODEL in "${MODELS[@]}"; do
 
         echo "Made directory: $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME"
         OUTPUT_FILE="$ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/idun_out.out"
-
 
         CODE_PATH="/cluster/home/$USER/runs/code/${EXPERIMENT_NAME}"
 
