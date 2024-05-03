@@ -24,6 +24,8 @@ class MultiLabelLightningModule(LightningModule):
         self.labels  = model_config.labels
         self.log_step_interval = 100
 
+        self.test_results=[]
+
         self.f1_score = MultilabelF1Score(
             num_labels=self.num_labels, threshold=0.5, average='macro')
 
@@ -132,7 +134,7 @@ class MultiLabelLightningModule(LightningModule):
         return [optimizer], [scheduler]
     
     def save_metrics_to_csv(self):
-        csv_file_path = os.path.join(self.file_manager.output_folder, 'test_metrics.csv')
+        csv_file_path = os.path.join(self.file_manager.root, 'test_metrics.csv')
 
         model_info = {
             'model_name': self.model_arg,
