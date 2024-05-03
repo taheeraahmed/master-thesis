@@ -22,8 +22,8 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         model = resnet50(weights='IMAGENET1K_V2')
         img_size = int(224) 
 
-        model.fc = classifying_head(model.fc.in_features, num_labels)
-
+        #model.fc = classifying_head(model.fc.in_features, num_labels)
+        model.fc = nn.Linear(model.fc.in_features, num_labels, bias=True)
         # step 1: TODO ONLY LAST LAYER
         # for param in model.parameters():
         #     param.requires_grad = True
@@ -62,19 +62,18 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         model = alexnet(weights="DEFAULT")
         img_size = int(224) 
     
-        model.classifier = classifying_head(256*6*6, num_labels)
-
+        model.classifier = nn.Linear(256*6*6, num_labels, bias=True)
     elif model_arg == "densenet121":
         img_size = int(224) 
         model = densenet121(weights="IMAGENET1K_V1")
         
-        model.classifier = classifying_head(1024, num_labels)
+        model.classifier = nn.Linear(1024, num_labels, bias=True)
     
     elif model_arg == "efficientnet":
         img_size = int(260)
         model = efficientnet_b1(weights="IMAGENET1K_V2")
 
-        model.classifier = classifying_head(1280, num_labels)
+        model.classifier = nn.Linear(1280, num_labels, bias=True)
 
     else:
         raise ValueError(f'Invalid model argument: {model_arg}')
