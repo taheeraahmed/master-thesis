@@ -38,6 +38,7 @@ python $CODE_PATH/src/train.py \
   --add_transforms $ADD_TRANSFORMS \
   --optimizer $OPTIMIZER \
   --scheduler $SCHEDULER \
-  --num_cores $NUM_CORES
-
+  --num_cores $NUM_CORES \
+  --test_time_augmentation $TEST_TIME_AUGMENTATION \
+  --fast_dev_run $FAST_DEV_RUN_ENABLED
 echo ">> done"

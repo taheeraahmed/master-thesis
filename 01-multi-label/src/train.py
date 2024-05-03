@@ -10,6 +10,9 @@ def train(args):
     file_manager = set_up(args)
 
     file_manager.logger.info('Set-up is completed')
+    
+    if args.fast_dev_run:
+        file_manager.logger.warning('Fast dev run is enabled')
 
     model_config = ModelConfig(
         model_arg=args.model,
@@ -23,6 +26,8 @@ def train(args):
         optimizer_arg=args.optimizer,
         scheduler_arg=args.scheduler,
         num_cores=args.num_cores,
+        test_time_augmentation=args.test_time_augmentation,
+        fast_dev_run=args.fast_dev_run
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
@@ -92,8 +97,11 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--scheduler", help="Type of scheduler to use", 
                         default="cosineannealinglr", choices=scheduler_choice)
     parser.add_argument("-c", "--num_cores", help="Number of cores to use", default=4, type=int)
+    parser.add_argument("-tta", "--test_time_augmentation", help="Test time augmentation", default=False, required=False)
+    parser.add_argument("-fdr", "--fast_dev_run", help="Fast dev run", default=False, required=False)
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)
     args.add_transforms = str_to_bool(args.add_transforms)
+    args.fast_dev_run = str_to_bool(args.fast_dev_run)
     train(args)
