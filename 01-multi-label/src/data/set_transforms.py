@@ -5,6 +5,7 @@ from utils import FileManager
 from models import ModelConfig
 
 from torchvision import transforms
+import torch
     
 def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     img_size = model_config.img_size
@@ -12,15 +13,14 @@ def set_transforms(model_config: ModelConfig, file_manager: FileManager):
 
     if model_config.add_transforms:
         train_transforms = transforms.Compose([
-            transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
-            transforms.CenterCrop(img_size),
+            transforms.RandomResizedCrop(img_size),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomRotation(degrees=7),
             transforms.ToTensor(),
             normalize,
         ])
         val_transforms = transforms.Compose([
-            transforms.Resize((256, 256), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
+            transforms.Resize((img_size, img_size), interpolation=transforms.InterpolationMode.BILINEAR, antialias=True),
             transforms.CenterCrop(img_size),
             transforms.ToTensor(),
             normalize,
