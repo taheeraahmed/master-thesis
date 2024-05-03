@@ -27,7 +27,7 @@ which python
 echo ">> python train.py"
 echo ""
 python $CODE_PATH/src/train.py \
-  --test_mode $TEST_MODE \
+  --eval_mode $EVAL_MODE \
   --experiment_name $EXPERIMENT_NAME\
   --idun_time $IDUN_TIME \
   --model $MODEL \
@@ -38,6 +38,7 @@ python $CODE_PATH/src/train.py \
   --add_transforms $ADD_TRANSFORMS \
   --optimizer $OPTIMIZER \
   --scheduler $SCHEDULER \
-  --num_cores $NUM_CORES
-
+  --num_cores $NUM_CORES \
+  --test_time_augmentation $TEST_TIME_AUGMENTATION \
+  --fast_dev_run $FAST_DEV_RUN_ENABLED
 echo ">> done"

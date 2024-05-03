@@ -22,22 +22,23 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     num_workers = model_config.num_cores
     pin_memory = False
 
-    if model_config.test_mode:
+    if model_config.fast_dev_run:
         file_manager.logger.info('Using smaller dataset')
         train_subset_size = 100
         val_subset_size = 50
 
         train_df = train_df.head(train_subset_size)
         val_df = val_df.head(val_subset_size)
+        test_df = test_df.head(val_subset_size)
 
-    train_transforms, val_transforms = set_transforms(model_config, file_manager)
+    train_transforms, val_transforms, test_transforms = set_transforms(model_config, file_manager)
 
     train_dataset = ChestXray14HFDataset(
         dataframe=train_df, transform=train_transforms)
     val_dataset = ChestXray14HFDataset(
         dataframe=val_df, transform=val_transforms)
     test_dataset = ChestXray14HFDataset(
-        dataframe=test_df, transform=val_transforms)
+        dataframe=test_df, transform=test_transforms)
 
     train_loader = DataLoader(
         train_dataset, 
@@ -90,26 +91,30 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         file_manager.logger.info(f"🚀 Loaded the model from {checkpoint_path}")
     else:
         file_manager.logger.info('🚀 Training the model from scratch')
-        # Initialize the training module if not loading from checkpoint
         training_module = MultiLabelLightningModule(
             model_config=model_config,
             file_manager=file_manager,
         )
-
+        
     pl_trainer = Trainer(
         max_epochs=model_config.num_epochs,
         logger=logger,
+        fast_dev_run=model_config.fast_dev_run,
         callbacks=[checkpoint_callback, early_stop_callback],
     )
 
-    pl_trainer.fit(
-        training_module,
-        train_dataloaders=train_loader,
-        val_dataloaders=val_loader,
-    )
+    if not model_config.eval_mode:
+        pl_trainer.fit(
+            training_module,
+            train_dataloaders=train_loader,
+            val_dataloaders=val_loader,
+        )
 
     file_manager.logger.info('✅ Training is done')
+
     pl_trainer.test(
         model=training_module,
         dataloaders=test_loader,
     )
+
+    file_manager.logger.info('✅ Testing is done')

@@ -1,24 +1,26 @@
 #!/bin/bash
 
-TEST_MODE=falsev 
+FAST_DEV_RUN_ENABLED=false 
+EVAL_MODE=false  # TODO: rename this to evaluation mode
+TEST_TIME_AUGMENTATION=true
 
 MODELS=("resnet50")
 LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adam
-TASK=14-multi-label
-
-ADD_TRANSFORMS=true
-DESCRIPTION=new-baseline-god-damn-with-aug
-
-BATCH_SIZE=128
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
+ADD_TRANSFORMS=true
+DESCRIPTION=new-new-baseline-aug-tta
+
+TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
 IDUN_TIME=10:00:00
+PARTITION="GPUQ"
 
 echo "Starting training :)"
 
@@ -30,20 +32,23 @@ CURRENT_PATH=$(pwd)
 ROOT_OUTPUT_FOLDER="/cluster/home/$USER/code/master-thesis/01-multi-label/output"
 
 for MODEL in "${MODELS[@]}"; do
-    for LOSS in "${LOSSES[@]}"; do
-        PARTITION="GPUQ"
-        echo "Partition"
-        
+    for LOSS in "${LOSSES[@]}"; do        
         EXPERIMENT_NAME=${DATE}-${MODEL}-$LOSS-$TASK
         echo "Current EXPERIMENT_NAME is: $EXPERIMENT_NAME"
 
-        if [ "$TEST_MODE" = true ]; then
-            EXPERIMENT_NAME="TEST-${EXPERIMENT_NAME}"
-            IDUN_TIME=00:10:00
+        if [ "$FAST_DEV_RUN_ENABLED" = true ]; then
+            EXPERIMENT_NAME="FAST_DEV_RUN-${EXPERIMENT_NAME}"
+            IDUN_TIME=00:05:00
             PARTITION="short"
+            NUM_CORES=4
+            NUM_EPOCHS=1
         fi
-        if [ "$TEST_MODE" = false ]; then
+        if [ "$EVAL_MODE" = false ]; then
             EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-$DESCRIPTION"
+        fi
+        if [ "$EVAL_MODE" = true ]; then
+            IDUN_TIME=00:15:00
+            EXPERIMENT_NAME="${EXPERIMENT_NAME}-e$NUM_EPOCHS-bs$BATCH_SIZE-lr$LEARNING_RATE-$DESCRIPTION-evaluation"
         fi
 
         mkdir -p $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/model_checkpoints # Stores logs and checkpoints
@@ -51,7 +56,6 @@ for MODEL in "${MODELS[@]}"; do
 
         echo "Made directory: $ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME"
         OUTPUT_FILE="$ROOT_OUTPUT_FOLDER/$EXPERIMENT_NAME/idun_out.out"
-
 
         CODE_PATH="/cluster/home/$USER/runs/code/${EXPERIMENT_NAME}"
 
@@ -68,6 +72,7 @@ for MODEL in "${MODELS[@]}"; do
             --exclude='__pycache__' \
             --exclude='utils/__pycache__' \
             --exclude='trainers/__pycache__' \
+            --exclude='notebook'\
             --exclude='mlruns/' \
             --exclude='checkpoints/'\
             /cluster/home/$USER/code/master-thesis/01-multi-label/ $CODE_PATH
@@ -87,7 +92,7 @@ for MODEL in "${MODELS[@]}"; do
             --gres=gpu:1 \
             --job-name=$EXPERIMENT_NAME \
             --output=$OUTPUT_FILE \
-            --export=TEST_MODE=$TEST_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS,OPTIMIZER=$OPTIMIZER,SCHEDULER=$SCHEDULER,NUM_CORES=$NUM_CORES \
+            --export=EVAL_MODE=$EVAL_MODE,EXPERIMENT_NAME=$EXPERIMENT_NAME,CODE_PATH=$CODE_PATH,IDUN_TIME=$IDUN_TIME,MODEL=$MODEL,BATCH_SIZE=$BATCH_SIZE,LEARNING_RATE=$LEARNING_RATE,NUM_EPOCHS=$NUM_EPOCHS,LOSS=$LOSS,ADD_TRANSFORMS=$ADD_TRANSFORMS,OPTIMIZER=$OPTIMIZER,SCHEDULER=$SCHEDULER,NUM_CORES=$NUM_CORES,TEST_TIME_AUGMENTATION=$TEST_TIME_AUGMENTATION,FAST_DEV_RUN_ENABLED=$FAST_DEV_RUN_ENABLED \
             $CODE_PATH/train.slurm
     done
 done

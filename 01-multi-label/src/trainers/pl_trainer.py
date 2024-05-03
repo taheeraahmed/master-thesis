@@ -47,21 +47,29 @@ class MultiLabelLightningModule(LightningModule):
     def forward(self, pixel_values):
         return self.model(pixel_values)
 
-    def step(self, batch):
+    def step(self, batch, mode='train_val'):
         pixel_values = batch['pixel_values']
         labels = batch['labels']
+
+        # Check if we are in test mode and if the input is for TTA
+        if mode == 'test' and pixel_values.dim() == 5:  # Assuming shape [batch, crops, channels, height, width]
+            bs, n_crops, c, h, w = pixel_values.size()
+            pixel_values = pixel_values.view(-1, c, h, w)  # Flatten the crops into the batch dimension
+        else:
+            n_crops = 1
+
         logits = self.forward(pixel_values)
-        
-        # if self.model_arg == 'swin':
-        #     logits = self.forward(pixel_values.logit)
-        # else:
-        #     logits = self.forward(pixel_values)
+
+        # Average predictions across crops only if TTA is applied
+        if mode == 'test' and n_crops > 1:
+            logits = logits.view(bs, n_crops, -1).mean(1)
 
         loss = self.criterion(logits, labels)
         return loss, logits, labels
 
     def training_step(self, batch, batch_idx):
-        loss, logits, labels = self.step(batch)
+        mode = 'train'
+        loss, logits, labels = self.step(batch, mode=mode)
         self.log('train_loss', loss, on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
         # Update metrics
@@ -72,7 +80,7 @@ class MultiLabelLightningModule(LightningModule):
 
         # Log metrics
         if batch_idx % self.log_step_interval == 0:
-            self.calc_classwise_auroc(auroc_classwise, 'train')
+            self.calc_classwise_auroc(auroc_classwise, mode=mode)
             self.log('train_f1', f1, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('train_f1_micro', f1_micro, on_step=True,
@@ -85,14 +93,16 @@ class MultiLabelLightningModule(LightningModule):
         return loss
         
     def validation_step(self, batch, batch_idx):
-        loss, logits, labels = self.step(batch)
+        mode='val'
+
+        loss, logits, labels = self.step(batch, mode=mode)
         f1 = self.f1_with_sigmoid(logits, labels)
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
         auroc_classwise = self.auroc_classwise_with_sigmoid(logits, labels.type(torch.int32))
 
         if batch_idx % self.log_step_interval == 0:
-            self.calc_classwise_auroc(auroc_classwise, 'val')
+            self.calc_classwise_auroc(auroc_classwise, mode)
             self.log('val_f1', f1, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('val_f1_micro', f1_micro, on_step=True,
@@ -103,13 +113,14 @@ class MultiLabelLightningModule(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
         
     def test_step(self, batch, batch_idx):
-        loss, logits, labels = self.step(batch)
+        mode = 'test'
+        loss, logits, labels = self.step(batch, mode=mode)
         f1 = self.f1_with_sigmoid(logits, labels)
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
         auroc_classwise = self.auroc_classwise_with_sigmoid(logits, labels.type(torch.int32))
         
-        self.calc_classwise_auroc(auroc_classwise, 'test')
+        self.calc_classwise_auroc(auroc_classwise, mode=mode)
         self.log('test_loss', loss)
         self.log('test_f1', f1)
         self.log('test_f1_micro', f1_micro)
@@ -125,8 +136,9 @@ class MultiLabelLightningModule(LightningModule):
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
     
     def on_test_end(self):
-        self.save_model()
-        self.save_metrics_to_csv()
+        if not self.model_config.fast_dev_run:
+            self.save_model()
+            self.save_metrics_to_csv()
 
     def configure_optimizers(self):
         optimizer = set_optimizer(self.model_config)
@@ -137,6 +149,7 @@ class MultiLabelLightningModule(LightningModule):
         csv_file_path = os.path.join(self.file_manager.root, 'test_metrics.csv')
 
         model_info = {
+            'experiment_name': self.model_config.experiment_name,
             'model_name': self.model_arg,
             'loss_arg': self.model_config.loss_arg,
             'batch_size': self.model_config.batch_size,
@@ -145,26 +158,24 @@ class MultiLabelLightningModule(LightningModule):
             'learning_rate': self.model_config.learning_rate
         }
 
-        # aggregate test results
         if self.test_results:
             aggregated_results = {key: sum([batch[key] for batch in self.test_results]) / len(self.test_results) 
                                 for key in self.test_results[0].keys()}
         else:
             aggregated_results = {}
 
-        # combine the model info and aggregated results for CSV output
         final_results = {**model_info, **aggregated_results}
+        file_exists_and_not_empty = os.path.isfile(csv_file_path) and os.path.getsize(csv_file_path) > 0
+        
         try:
-            # write to CSV
             with open(csv_file_path, 'a', newline='') as file:
                 writer = csv.DictWriter(file, fieldnames=final_results.keys())
-                writer.writeheader()
+                if not file_exists_and_not_empty:
+                    writer.writeheader()
                 writer.writerow(final_results)
-
             self.file_manager.logger.info(f"Test metrics saved to {csv_file_path}")
         except Exception as e:
             self.file_manager.logger.error(f"Error saving test metrics to {csv_file_path}: {e}")
-
 
     def save_model(self):
         img_size = self.model_config.img_size
