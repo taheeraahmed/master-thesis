@@ -156,7 +156,7 @@ class MultiLabelLightningModule(LightningModule):
         final_results = {**model_info, **aggregated_results}
         try:
             # write to CSV
-            with open(csv_file_path, 'w', newline='') as file:
+            with open(csv_file_path, 'a', newline='') as file:
                 writer = csv.DictWriter(file, fieldnames=final_results.keys())
                 writer.writeheader()
                 writer.writerow(final_results)
