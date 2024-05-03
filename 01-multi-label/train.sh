@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEST_MODE=true
+TEST_MODE=falsev 
 
 MODELS=("resnet50")
 LOSSES=("bce")
@@ -10,14 +10,14 @@ OPTIMIZER=adam
 TASK=14-multi-label
 
 ADD_TRANSFORMS=true
-DESCRIPTION=new-baseline-god-damn
+DESCRIPTION=new-baseline-god-damn-with-aug
 
 BATCH_SIZE=128
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
 ACCOUNT=share-ie-idi
-NUM_CORES=4
+NUM_CORES=8
 IDUN_TIME=10:00:00
 
 echo "Starting training :)"
