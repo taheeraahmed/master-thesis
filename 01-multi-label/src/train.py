@@ -22,6 +22,7 @@ def train(args):
         add_transforms=args.add_transforms,
         optimizer_arg=args.optimizer,
         scheduler_arg=args.scheduler,
+        num_cores=args.num_cores,
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
@@ -90,6 +91,7 @@ if __name__ == "__main__":
                         help="Type of optimizer to use", default="adamw")
     parser.add_argument("-s", "--scheduler", help="Type of scheduler to use", 
                         default="cosineannealinglr", choices=scheduler_choice)
+    parser.add_argument("-c", "--num_cores", help="Number of cores to use", default=4, type=int)
 
     args = parser.parse_args()
     args.test_mode = str_to_bool(args.test_mode)

@@ -6,6 +6,7 @@ echo "The job was run on these nodes: $SLURM_JOB_NODELIST"
 echo "Number of nodes: $SLURM_JOB_NUM_NODES"
 echo "We are using $SLURM_CPUS_ON_NODE cores"
 echo "We are using $SLURM_CPUS_ON_NODE cores per node"
+echo "Using $NUM_CORES"
 echo "Total of $SLURM_NTASKS cores"
 echo "Total time at IDUN $IDUN_TIME"
 
@@ -37,5 +38,6 @@ python $CODE_PATH/src/train.py \
   --add_transforms $ADD_TRANSFORMS \
   --optimizer $OPTIMIZER \
   --scheduler $SCHEDULER \
+  --num_cores $NUM_CORES
 
 echo ">> done"

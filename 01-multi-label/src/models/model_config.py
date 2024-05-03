@@ -1,5 +1,5 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg):
+    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, test_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores):
         self.model_arg = model_arg # The argumenet from train.py 
         self.loss_arg = loss_arg # The loss function argument
         self.model = None # The actual pytorch base model
@@ -16,6 +16,7 @@ class ModelConfig():
         self.add_transforms = add_transforms
         self.optimizer_arg = optimizer_arg
         self.scheduler_arg = scheduler_arg
+        self.num_cores = num_cores
 
     def __str__(self):
         criterion_name = self.criterion.__class__.__name__ if self.criterion else 'None'

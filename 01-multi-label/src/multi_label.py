@@ -1,3 +1,4 @@
+import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
@@ -18,7 +19,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     :param val_df: DataFrame containing the validation data
     """
     
-    num_workers = 4
+    num_workers = model_config.num_cores
     pin_memory = False
 
     if model_config.test_mode:
@@ -73,31 +74,31 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     early_stop_callback = EarlyStopping(
         monitor='val_loss',  
         min_delta=0.00,
-        patience=3,
+        patience=5,
         verbose=True,
         mode='min'
     )
 
     checkpoint_path = None
+    #checkpoint_path = "/cluster/home/taheeraa/code/master-thesis/01-multi-label/output/v0-experiments/013-train-in-two-steps/2024-04-19-16:24:29-resnet50-bce-14-multi-label-e35-bs128-lr0.0005-step-two-train-backbone/model_checkpoints/lightning_logs/version_0/checkpoints/epoch=7-step=4712.ckpt"
     if checkpoint_path:
-        model_config.model = MultiLabelLightningModule.load_from_checkpoint(
-            checkpoint_path,
-            model_config=model_config,
-            file_manager=file_manager
-        )
-        file_manager.logger.info(f"🚀 Loaded the model {checkpoint_path}")
+        checkpoint = torch.load(checkpoint_path)
+        adjusted_state_dict = {key.replace('model.model.', 'model.'): value 
+                            for key, value in checkpoint['state_dict'].items()}
+        training_module = MultiLabelLightningModule(model_config=model_config, file_manager=file_manager)
+        training_module.load_state_dict(adjusted_state_dict, strict=False)
+        file_manager.logger.info(f"🚀 Loaded the model from {checkpoint_path}")
     else:
         file_manager.logger.info('🚀 Training the model from scratch')
-
-    training_module = MultiLabelLightningModule(
-        model_config=model_config,
-        file_manager=file_manager,
-    )
+        # Initialize the training module if not loading from checkpoint
+        training_module = MultiLabelLightningModule(
+            model_config=model_config,
+            file_manager=file_manager,
+        )
 
     pl_trainer = Trainer(
         max_epochs=model_config.num_epochs,
         logger=logger,
-        fast_dev_run=model_config.test_mode,
         callbacks=[checkpoint_callback, early_stop_callback],
     )
 
@@ -108,9 +109,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     )
 
     file_manager.logger.info('✅ Training is done')
-
-    if not model_config.test_mode:
-        pl_trainer.test(
-            model=training_module,
-            dataloaders=test_loader,
-        )
+    pl_trainer.test(
+        model=training_module,
+        dataloaders=test_loader,
+    )
