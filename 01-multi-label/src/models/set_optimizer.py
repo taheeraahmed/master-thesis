@@ -1,6 +1,7 @@
 from models import ModelConfig
 import torch
 
+
 def set_optimizer(model_config: ModelConfig) -> torch.optim.Optimizer:
     model = model_config.model
     optimizer_arg = model_config.optimizer_arg

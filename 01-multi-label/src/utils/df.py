@@ -3,6 +3,7 @@ import torch
 from utils import FileManager
 import os
 
+
 def get_df(file_manager: FileManager):
     """
     This function will create the DataFrame with the image paths and labels, and split the data into train and validation sets.
@@ -23,14 +24,14 @@ def get_df(file_manager: FileManager):
     data_path = file_manager.data_path
 
     labels = [
-        "Atelectasis", 
+        "Atelectasis",
         "Cardiomegaly",
-        "Effusion", 
-        "Infiltration", 
+        "Effusion",
+        "Infiltration",
         "Mass",
         "Nodule",
         "Pneumonia",
-        "Pneumothorax",  
+        "Pneumothorax",
         "Consolidation",
         "Edema",
         "Emphysema",
@@ -49,7 +50,8 @@ def get_df(file_manager: FileManager):
     df_test = pd.read_csv(file_path_test, sep='\s+', names=columns)
 
     # Finding all image paths, and mapping them to the DataFrame
-    subfolders = [f"images_{i:03}/images" for i in range(1, 13)]  # Generates 'images_001' to 'images_012'
+    # Generates 'images_001' to 'images_012'
+    subfolders = [f"images_{i:03}/images" for i in range(1, 13)]
     path_mapping = {}
     for subfolder in subfolders:
         full_folder_path = os.path.join(data_path, subfolder)
@@ -62,9 +64,12 @@ def get_df(file_manager: FileManager):
     df_test['Full Image Path'] = df_test['Image Filename'].map(path_mapping)
 
     # Move 'Full Image Path' to the front of the DataFrame
-    cols_train = ['Full Image Path'] + [col for col in df_train.columns if col != 'Full Image Path']
-    cols_val = ['Full Image Path'] + [col for col in df_val.columns if col != 'Full Image Path']
-    cols_test = ['Full Image Path'] + [col for col in df_test.columns if col != 'Full Image Path']
+    cols_train = ['Full Image Path'] + \
+        [col for col in df_train.columns if col != 'Full Image Path']
+    cols_val = ['Full Image Path'] + \
+        [col for col in df_val.columns if col != 'Full Image Path']
+    cols_test = ['Full Image Path'] + \
+        [col for col in df_test.columns if col != 'Full Image Path']
     df_train = df_train[cols_train]
     df_val = df_val[cols_val]
     df_test = df_test[cols_test]
@@ -76,17 +81,21 @@ def get_df(file_manager: FileManager):
 
     # Create class weights
     from .handle_class_imbalance import generate_class_weights
-    df_train_calculate_weights = df_train.drop(columns=['Full Image Path']).to_numpy()
-    class_weights_dict = generate_class_weights(df_train_calculate_weights, multi_class=False, one_hot_encoded=True)
+    df_train_calculate_weights = df_train.drop(
+        columns=['Full Image Path']).to_numpy()
+    class_weights_dict = generate_class_weights(
+        df_train_calculate_weights, multi_class=False, one_hot_encoded=True)
     class_weights_list = [class_weights_dict[i] for i in class_weights_dict]
-    class_weights_tensor = torch.tensor(class_weights_list, dtype=torch.float32)
+    class_weights_tensor = torch.tensor(
+        class_weights_list, dtype=torch.float32)
     # Normalize weights to be in the range of 0 to 1
     max_weight = torch.max(class_weights_tensor)
     normalized_class_weights_tensor = class_weights_tensor / max_weight
-    
+
     logger.info(f"Class weights: {normalized_class_weights_tensor}")
 
-    logger.info(f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
+    logger.info(
+        f"Train dataframe shape: {df_train.shape} (1 size larger than expected due to 'Full Image Path')")
     logger.info(f"Train columns: {df_train.columns}")
     logger.info(f"Labels: {labels}")
     logger.info(f"Number of labels: {len(labels)}")

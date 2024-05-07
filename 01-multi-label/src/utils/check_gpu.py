@@ -1,5 +1,6 @@
 from pynvml import *
 
+
 def check_gpu(logger):
     try:
         nvmlInit()

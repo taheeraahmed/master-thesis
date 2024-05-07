@@ -1,5 +1,3 @@
-
-
 from torchvision import transforms
 from utils import FileManager
 from models import ModelConfig

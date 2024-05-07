@@ -5,12 +5,11 @@ import argparse
 import sys
 
 
-
 def train(args):
     file_manager = set_up(args)
 
     file_manager.logger.info('Set-up is completed')
-    
+
     if args.fast_dev_run:
         file_manager.logger.warning('Fast dev run is enabled')
 
@@ -32,19 +31,19 @@ def train(args):
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
-        file_manager=file_manager, 
+        file_manager=file_manager,
     )
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
 
     model_config.model, model_config.img_size = set_model(
-        model_config.model_arg, 
-        model_config.num_labels, 
+        model_config.model_arg,
+        model_config.num_labels,
         model_config.labels
     )
 
-    model_file =f"{file_manager.output_folder}/model-architecture.txt"
+    model_file = f"{file_manager.output_folder}/model-architecture.txt"
     with open(model_file, 'w') as f:
         f.write(str(model_config.model.__repr__()))
 
@@ -54,11 +53,11 @@ def train(args):
     file_manager.logger.info(f'{file_manager.__str__()}')
 
     train_and_evaluate_model(
-            model_config=model_config,
-            file_manager=file_manager,
-            train_df=train_df,
-            val_df=val_df,
-            test_df=test_df,
+        model_config=model_config,
+        file_manager=file_manager,
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
     )
 
     done_file = f"{file_manager.output_folder}/✅.txt"
@@ -66,12 +65,13 @@ def train(args):
         f.write("done!!")
 
 
-
 if __name__ == "__main__":
-    model_choices = ['swin', 'vit', 'resnet50', 'alexnet', 'densenet121', 'efficientnet', 'chexnet']
-    loss_choices = ['mlsm','wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
+    model_choices = ['swin', 'vit', 'resnet50', 'alexnet',
+                     'densenet121', 'efficientnet', 'chexnet']
+    loss_choices = ['mlsm', 'wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
     optimizer_choice = ['adam', 'sgd', 'adamw']
-    scheduler_choice = ['cosineannealinglr', 'cycliclr', 'step', 'reduceonplateu']
+    scheduler_choice = ['cosineannealinglr',
+                        'cycliclr', 'step', 'reduceonplateu']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -95,11 +95,14 @@ if __name__ == "__main__":
                         help="Add transforms", default=False, required=False)
     parser.add_argument("-o", "--optimizer", choices=optimizer_choice,
                         help="Type of optimizer to use", default="adamw")
-    parser.add_argument("-s", "--scheduler", help="Type of scheduler to use", 
+    parser.add_argument("-s", "--scheduler", help="Type of scheduler to use",
                         default="cosineannealinglr", choices=scheduler_choice)
-    parser.add_argument("-c", "--num_cores", help="Number of cores to use", default=4, type=int)
-    parser.add_argument("-tta", "--test_time_augmentation", help="Test time augmentation", default=False, required=False)
-    parser.add_argument("-fdr", "--fast_dev_run", help="Fast dev run", default=False, required=False)
+    parser.add_argument("-c", "--num_cores",
+                        help="Number of cores to use", default=4, type=int)
+    parser.add_argument("-tta", "--test_time_augmentation",
+                        help="Test time augmentation", default=False, required=False)
+    parser.add_argument("-fdr", "--fast_dev_run",
+                        help="Fast dev run", default=False, required=False)
     parser.add_argument("-ckpt", "--checkpoint_path",
                         help="Checkpoint path file of model you want to load", default=None, required=False)
 

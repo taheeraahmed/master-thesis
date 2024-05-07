@@ -23,6 +23,7 @@ plot_settings = {
 # Use the dictionary variable to update the settings using matplotlib
 plt.rcParams.update(plot_settings)
 
+
 def show_batch_images(file_manager: FileManager, dataloader: DataLoader):
     """Function to show images from a DataLoader that returns a dictionary, with labels"""
     try:
@@ -36,11 +37,10 @@ def show_batch_images(file_manager: FileManager, dataloader: DataLoader):
         # Convert from (C, H, W) to (H, W, C)
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         plt.axis('off')
-        plt.savefig(f"{file_manager.image_folder}/train_dataloader_batch_images.png")
+        plt.savefig(
+            f"{file_manager.image_folder}/train_dataloader_batch_images.png")
     except Exception as e:
         file_manager.logger.error(f'Error saving batch images: {e}')
-
-
 
 
 def plot_metrics(train_arr, val_arr, output_folder, logger, type='None'):
@@ -120,7 +120,7 @@ def plot_percentage_train_val(file_manager: FileManager, train_df: pd.DataFrame,
         sns.barplot(data=percentage_df, x='Percentage',
                     y='Disease', hue='Set', alpha=1)
         plt.title('Comparison of Disease Percentages in Train and Validation Sets')
-        plt.savefig(file_manager.image_folder+ "/percentage_train_val.png")
+        plt.savefig(file_manager.image_folder + "/percentage_train_val.png")
     except Exception as e:
         file_manager.logger.error(
             f'Error plotting percentage_train_val: {e}')
