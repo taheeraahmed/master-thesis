@@ -2,8 +2,6 @@ from pytorch_lightning import LightningModule
 from torchmetrics.classification import MultilabelF1Score
 from torchmetrics import AUROC
 import torch
-from utils import FileManager
-from mode
 import onnx
 import csv
 import os
@@ -13,7 +11,7 @@ torch.backends.cudnn.benchmark = True
 
 
 class MultiLabelLightningModule(LightningModule):
-    def __init__(self, model, criterion, learning_rate, num_labels, labels, optimizer_func, scheduler_func, model_ckpts_folder, logger=None, root_path=None, model_name="model", experiment_name="experiment"):
+    def __init__(self, model, criterion, learning_rate, num_labels, labels, optimizer_func, scheduler_func, model_ckpts_folder, file_logger=None, root_path=None, model_name="model", experiment_name="experiment", img_size=None):
         super().__init__()
         self.model = model
         self.criterion = criterion
@@ -25,9 +23,10 @@ class MultiLabelLightningModule(LightningModule):
         self.optimizer_func = optimizer_func
         self.scheduler_func = scheduler_func
         self.log_step_interval = 100
-        self.logger = logger
+        self.file_logger = file_logger
         self.model_name = model_name
         self.experiment_name = experiment_name
+        self.img_size = img_size
 
         self.test_results = []
 
@@ -146,9 +145,9 @@ class MultiLabelLightningModule(LightningModule):
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
 
     def on_test_end(self):
-        if not self.model_config.fast_dev_run:
+        if self.img_size is not None:
             self.save_model()
-            self.save_metrics_to_csv()
+        self.save_metrics_to_csv()
 
     def configure_optimizers(self):
         return [self.optimizer_func], [self.scheduler_func]
@@ -177,19 +176,19 @@ class MultiLabelLightningModule(LightningModule):
                 if not file_exists_and_not_empty:
                     writer.writeheader()
                 writer.writerow(final_results)
-            if self.logger:
-                self.logger.info(f"Test metrics saved to {csv_file_path}")
+            if self.file_logger:
+                self.file_logger.info(f"Test metrics saved to {csv_file_path}")
             else:
                 print(f"Test metrics saved to {csv_file_path}")
         except Exception as e:
-            if self.logger:
-                self.logger.error(
+            if self.file_logger:
+                self.file_logger.error(
                     f"Error saving test metrics to {csv_file_path}: {e}")
             else:
                 print(f"Error saving test metrics to {csv_file_path}: {e}")
 
     def save_model(self):
-        img_size = self.model_config.img_size
+        img_size = self.img_size
         self.to_onnx(f"{self.model_ckpts_folder}/test-model.onnx",
                      input_sample=torch.randn(1, 3, img_size, img_size))
 

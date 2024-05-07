@@ -76,7 +76,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     )
 
     show_batch_images(file_manager=file_manager, dataloader=train_loader)
-    logger = TensorBoardLogger(save_dir=f'{file_manager.model_ckpts_folder}')
+    tb_logger = TensorBoardLogger(save_dir=f'{file_manager.model_ckpts_folder}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -102,10 +102,11 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         optimizer_func=optimizer_func,
         scheduler_func=scheduler_func,
         model_ckpts_folder=model_ckpts_folder,
-        logger=logger,
+        file_logger=logger,
         root_path=root_path,
         model_name=model_name,
         experiment_name=experiment_name,
+        img_size=model_config.img_size,
     )
 
     checkpoint_path = None
@@ -121,7 +122,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
 
     pl_trainer = Trainer(
         max_epochs=model_config.num_epochs,
-        logger=logger,
+        logger=tb_logger, 
         fast_dev_run=model_config.fast_dev_run,
         callbacks=[checkpoint_callback, early_stop_callback],
     )
