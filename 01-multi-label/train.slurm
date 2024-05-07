@@ -40,5 +40,7 @@ python $CODE_PATH/src/train.py \
   --scheduler $SCHEDULER \
   --num_cores $NUM_CORES \
   --test_time_augmentation $TEST_TIME_AUGMENTATION \
-  --fast_dev_run $FAST_DEV_RUN_ENABLED
+  --fast_dev_run $FAST_DEV_RUN_ENABLED \
+  #--ckpt_path $CKPT_PATH
+
 echo ">> done"
