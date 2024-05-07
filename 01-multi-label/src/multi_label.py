@@ -30,6 +30,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     model_ckpts_folder = file_manager.model_ckpts_folder
     logger = file_manager.logger
     root_path = file_manager.root
+    checkpoint_path = model_config.checkpoint_path
 
     num_workers = model_config.num_cores
     pin_memory = False
@@ -109,8 +110,6 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         img_size=model_config.img_size,
     )
 
-    checkpoint_path = None
-    # checkpoint_path = "/cluster/home/taheeraa/code/master-thesis/01-multi-label/output/v0-experiments/013-train-in-two-steps/2024-04-19-16:24:29-resnet50-bce-14-multi-label-e35-bs128-lr0.0005-step-two-train-backbone/model_checkpoints/lightning_logs/version_0/checkpoints/epoch=7-step=4712.ckpt"
     if checkpoint_path:
         checkpoint = torch.load(checkpoint_path)
         adjusted_state_dict = {key.replace('model.model.', 'model.'): value

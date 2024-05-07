@@ -27,7 +27,8 @@ def train(args):
         scheduler_arg=args.scheduler,
         num_cores=args.num_cores,
         test_time_augmentation=args.test_time_augmentation,
-        fast_dev_run=args.fast_dev_run
+        fast_dev_run=args.fast_dev_run,
+        checkpoint_path=args.checkpoint_path
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
@@ -99,6 +100,8 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--num_cores", help="Number of cores to use", default=4, type=int)
     parser.add_argument("-tta", "--test_time_augmentation", help="Test time augmentation", default=False, required=False)
     parser.add_argument("-fdr", "--fast_dev_run", help="Fast dev run", default=False, required=False)
+    parser.add_argument("-ckpt", "--checkpoint_path",
+                        help="Checkpoint path file of model you want to load", default=None, required=False)
 
     args = parser.parse_args()
     args.eval_mode = str_to_bool(args.eval_mode)

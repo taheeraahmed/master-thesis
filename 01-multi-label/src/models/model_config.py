@@ -1,8 +1,8 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run):
-        self.model_arg = model_arg # The argumenet from train.py 
-        self.loss_arg = loss_arg # The loss function argument
-        self.model = None # The actual pytorch base model
+    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run, checkpoint_path):
+        self.model_arg = model_arg  # The argumenet from train.py
+        self.loss_arg = loss_arg  # The loss function argument
+        self.model = None  # The actual pytorch base model
         self.criterion = None
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -19,16 +19,17 @@ class ModelConfig():
         self.num_cores = num_cores
         self.test_time_augmentation = test_time_augmentation
         self.fast_dev_run = fast_dev_run
+        self.checkpoint_path = checkpoint_path
 
     def __str__(self):
         criterion_name = self.criterion.__class__.__name__ if self.criterion else 'None'
-    
+
         table_str = (
             f"🚀 Model Configuration 🚀\n"
             f"-------------------------------------------------\n"
             f"| Attribute         | Value                     |\n"
             f"-------------------------------------------------\n"
-            f"| 🧪 Experiment Name| {self.experiment_name:<25} |\n" 
+            f"| 🧪 Experiment Name| {self.experiment_name:<25} |\n"
             f"| 🤓 Transforms?    | {self.add_transforms:<25} |\n"
             f"| 📦 Model          | {self.model_arg:<25} |\n"
             f"| 🌟 Max Steps      | {self.max_steps:<25} |\n"
