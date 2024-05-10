@@ -1,4 +1,5 @@
 import torch
+import yacs
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
@@ -112,10 +113,9 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     )
 
     if checkpoint_path:
-        checkpoint = torch.load(checkpoint_path)
-        adjusted_state_dict = {key.replace('model.model.', 'model.'): value
-                               for key, value in checkpoint['state_dict'].items()}
-        training_module.load_state_dict(adjusted_state_dict, strict=False)
+        state_dict = torch.load(checkpoint_path)
+        ckpt_state_dict = state_dict['model']
+        training_module.load_state_dict(ckpt_state_dict, strict=False)
         file_manager.logger.info(f"🚀 Loaded the model from {checkpoint_path}")
     else:
         file_manager.logger.info('🚀 Training the model from scratch')
