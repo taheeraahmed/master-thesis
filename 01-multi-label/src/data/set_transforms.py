@@ -22,8 +22,11 @@ def set_test_transforms(logger, img_size, normalize):
 
 def set_transforms(model_config: ModelConfig, file_manager: FileManager):
     img_size = model_config.img_size
+    # imagenet
+    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    # cxr
     normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        [0.5056, 0.5056, 0.5056], [0.252, 0.252, 0.252])
     if model_config.add_transforms:
         train_transforms = transforms.Compose([
             transforms.RandomResizedCrop(img_size),
