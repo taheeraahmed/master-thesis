@@ -14,6 +14,22 @@ def classifying_head(in_features: int, num_labels: int):
         nn.Linear(128, num_labels),
     )
 
+def freeze_backbone(model):
+    for param in model.parameters():
+            param.requires_grad = False
+
+    if hasattr(model, 'head'):
+        for param in model.head.parameters():
+            param.requires_grad = True
+    elif hasattr(model, 'classifier'):
+        for param in model.classifier.parameters():
+            param.requires_grad = True
+    elif hasattr(model, 'fc'):
+        for param in model.classifier.parameters():
+            param.requires_grad = True
+
+    return model
+
 
 def set_model(model_arg: str, num_labels: int, labels: list):
 
@@ -36,6 +52,8 @@ def set_model(model_arg: str, num_labels: int, labels: list):
         img_size = int(224)
         model = timm.create_model(
             'swin_base_patch4_window7_224', num_classes=num_labels)
+        
+        #model = freeze_backbone(model)
 
     elif model_arg == "vit":
         # img_size = int(224)
