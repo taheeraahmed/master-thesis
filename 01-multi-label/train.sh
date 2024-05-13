@@ -1,20 +1,20 @@
 #!/bin/bash
 
-FAST_DEV_RUN_ENABLED=true 
-TEST_TIME_AUGMENTATION=true
-
-MODELS=("resnet50")
+FAST_DEV_RUN_ENABLED=false 
+TEST_TIME_AUGMENTATION=false
+# Resnet FL, DenseNet MLSM, AlexNet MLSM
+MODELS=("swin")
 LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
 OPTIMIZER=adam
-BATCH_SIZE=128
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
 ADD_TRANSFORMS=true
-DESCRIPTION=baseline-same-just-new-code
-#CKPT_PATH=
+DESCRIPTION=new-dataset-fine-tuning-benchmarking-transformers-cxr-normalization-tta
+CKPT_PATH=/cluster/home/taheeraa/code/master-thesis/01-multi-label/checkpoints/simmim_swinb_ImageNet_Xray926k.pth
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
