@@ -3,7 +3,11 @@ from models import set_model, ModelConfig, set_criterion
 from multi_label import train_and_evaluate_model
 import argparse
 import sys
+import random
+import numpy as np
 
+np.random.seed(0)
+random.seed(0)
 
 def train(args):
     file_manager = set_up(args)
@@ -27,7 +31,8 @@ def train(args):
         num_cores=args.num_cores,
         test_time_augmentation=args.test_time_augmentation,
         fast_dev_run=args.fast_dev_run,
-        checkpoint_path=args.checkpoint_path
+        checkpoint_path=args.checkpoint_path,
+        accumulate_grad_batches=args.accumulate_grad_batches
     )
 
     train_df, val_df, test_df, labels, class_weights = get_df(
@@ -68,7 +73,8 @@ def train(args):
 if __name__ == "__main__":
     model_choices = ['swin', 'vit', 'resnet50', 'alexnet',
                      'densenet121', 'efficientnet', 'chexnet']
-    loss_choices = ['mlsm', 'wmlsm', 'bce', 'wbce', 'focal', 'wfocal']
+    loss_choices = ['mlsm', 'wmlsm', 'bce',
+                    'wbce', 'focal', 'wfocal', 'asl', 'twoway']
     optimizer_choice = ['adam', 'sgd', 'adamw']
     scheduler_choice = ['cosineannealinglr',
                         'cycliclr', 'step', 'reduceonplateu']
@@ -105,6 +111,8 @@ if __name__ == "__main__":
                         help="Fast dev run", default=False, required=False)
     parser.add_argument("-ckpt", "--checkpoint_path",
                         help="Checkpoint path file of model you want to load", default=None, required=False)
+    parser.add_argument("-agb", "--accumulate_grad_batches",
+                        help="Accumulate gradient batches", default=1, required=False, type=int)
 
     args = parser.parse_args()
     args.eval_mode = str_to_bool(args.eval_mode)

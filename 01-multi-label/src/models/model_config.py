@@ -1,5 +1,5 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run, checkpoint_path):
+    def __init__(self, model_arg, loss_arg, num_epochs, accumulate_grad_batches, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run, checkpoint_path):
         self.model_arg = model_arg  # The argumenet from train.py
         self.loss_arg = loss_arg  # The loss function argument
         self.model = None  # The actual pytorch base model
@@ -14,6 +14,7 @@ class ModelConfig():
         self.num_labels = None
         self.labels = None
         self.add_transforms = add_transforms
+        self.accumulate_grad_batches = accumulate_grad_batches
         self.optimizer_arg = optimizer_arg
         self.scheduler_arg = scheduler_arg
         self.num_cores = num_cores
@@ -38,6 +39,7 @@ class ModelConfig():
             f"| 🃏 Optimizer      | {self.optimizer_arg:<25} |\n"
             f"| 🐳 Scheduler      | {self.scheduler_arg:<25} |\n"
             f"| 🍓 Batch Size     | {self.batch_size:<25} |\n"
+            f"| 🧠 Accumulate Grad| {self.accumulate_grad_batches:<25} |\n"
             f"| 🔍 Learning Rate  | {self.learning_rate:<25.4f} |\n"
             f"| 🔬 Fast dev run   | {'Enabled' if self.fast_dev_run else 'Disabled':<25} |\n"
             f"| 🦦 Test Mode      | {'Enabled' if self.eval_mode else 'Disabled':<25} |\n"

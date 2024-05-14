@@ -163,9 +163,19 @@ class MultiLabelLightningModule(LightningModule):
         if self.img_size is not None:
             self.save_model()
         self.save_metrics_to_csv()
+        print('\n')
 
     def configure_optimizers(self):
-        return [self.optimizer_func], [self.scheduler_func]
+        optimizer = self.optimizer_func
+        scheduler = self.scheduler_func
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+                "frequency": 100,
+            },
+        }
 
     def save_metrics_to_csv(self):
         csv_file_path = os.path.join(self.root_path, 'test_metrics.csv')
