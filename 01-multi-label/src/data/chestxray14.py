@@ -104,7 +104,7 @@ class ChestXray14Dataset(Dataset):
 
     if self.augment != None: imageData = self.augment(imageData)
 
-    return imageData, imageLabel
+    return {'pixel_values': imageData, 'labels': imageLabel}
 
   def __len__(self):
 

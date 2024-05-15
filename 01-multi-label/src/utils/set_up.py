@@ -22,6 +22,7 @@ class FileManager():
         self.logger = self._set_up_logger()
         create_directory_if_not_exists(self.model_ckpts_folder)
         self.data_path = '/cluster/home/taheeraa/datasets/chestxray-14'
+        self.images_path = self.data_path + '/images'
         self.project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), ".."))
 
