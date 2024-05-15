@@ -41,11 +41,7 @@ python $CODE_PATH/src/train.py \
   --num_cores $NUM_CORES \
   --test_time_augmentation $TEST_TIME_AUGMENTATION \
   --fast_dev_run $FAST_DEV_RUN_ENABLED \
-<<<<<<< Updated upstream
+  --accumulate_grad_batches $ACCUMULATE_GRAD_BATCHES \
   --checkpoint_path $CKPT_PATH
-=======
-  --accumulate_grad_batches $ACCUMULATE_GRAD_BATCHES
-  --ckpt_path $CKPT_PATH
->>>>>>> Stashed changes
 
 echo ">> done"

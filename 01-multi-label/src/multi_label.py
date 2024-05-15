@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from utils import FileManager, show_batch_images
 from models import ModelConfig, set_optimizer, set_scheduler
 from trainers import MultiLabelLightningModule
-from data import ChestXray14HFDataset, set_transforms, ChestXray14Dataset, build_transform_classification
+from data import ChestXray14Dataset, build_transform_classification
 
 
 def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
@@ -45,17 +45,15 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         val_df = val_df.head(val_subset_size)
         test_df = test_df.head(val_subset_size)
 
-    # train_transforms, val_transforms, test_transforms = set_transforms(
-    #     model_config, file_manager)
     train_transforms = build_transform_classification(normalize="chestx-ray", mode="train")
     val_transforms = build_transform_classification(normalize="chestx-ray", mode="valid")
     test_transforms = build_transform_classification(normalize="chestx-ray", mode="test")
 
     
-    data_path = file_manager.data_path
-    file_path_train = data_path + '/train_official.txt'
-    file_path_val = data_path + '/val_official.txt'
-    file_path_test = data_path + '/test_official.txt'
+    data_path = '/cluster/home/taheeraa/code/BenchmarkTransformers/dataset'
+    file_path_train = data_path + '/Xray14_train_official.txt'
+    file_path_val = data_path + '/Xray14_val_official.txt'
+    file_path_test = data_path + '/Xray14_test_official.txt'
 
     train_dataset = ChestXray14Dataset(data_path=data_path, file_path=file_path_train,
                                    augment=train_transforms, num_class=num_labels)
@@ -63,12 +61,6 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
                                     augment=val_transforms, num_class=num_labels)
     test_dataset = ChestXray14Dataset(data_path=data_path, file_path=file_path_test,
                                      augment=test_transforms, num_class=num_labels)
-    # train_dataset = ChestXray14Dataset(
-    #     dataframe=train_df, transform=train_transforms)
-    # val_dataset = ChestXray14Dataset(
-    #     dataframe=val_df, transform=val_transforms)
-    # test_dataset = ChestXray14Dataset(
-    #     dataframe=test_df, transform=test_transforms)
 
     train_loader = DataLoader(
         train_dataset,

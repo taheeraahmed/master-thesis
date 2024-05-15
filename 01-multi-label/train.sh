@@ -2,44 +2,27 @@
 
 FAST_DEV_RUN_ENABLED=false 
 TEST_TIME_AUGMENTATION=false
-<<<<<<< Updated upstream
-# Resnet FL, DenseNet MLSM, AlexNet MLSM
-=======
 EVAL_MODE=true
 
->>>>>>> Stashed changes
 MODELS=("swin")
 LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
-<<<<<<< Updated upstream
-OPTIMIZER=adam
-=======
 OPTIMIZER=sgd
 LEARNING_RATE=0.01
 
->>>>>>> Stashed changes
 BATCH_SIZE=64
 LEARNING_RATE=0.0005
 NUM_EPOCHS=35
 
 ADD_TRANSFORMS=true
-<<<<<<< Updated upstream
-DESCRIPTION=new-dataset-fine-tuning-benchmarking-transformers-cxr-normalization-tta
-CKPT_PATH=/cluster/home/taheeraa/code/master-thesis/01-multi-label/checkpoints/simmim_swinb_ImageNet_Xray926k.pth
-=======
 DESCRIPTION=used-benchmarking-transformers
 CKPT_PATH=/cluster/home/taheeraa/code/BenchmarkTransformers/Models/Classification/ChestXray14/swin_base_simmim/swin_base_simmim_run_0.pth.tar
->>>>>>> Stashed changes
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-<<<<<<< Updated upstream
-IDUN_TIME=10:00:00
-=======
 IDUN_TIME=00:10:00
->>>>>>> Stashed changes
 PARTITION="GPUQ"
 
 echo "Starting training :)"

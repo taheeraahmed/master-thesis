@@ -1,7 +1,5 @@
-from torchvision.models import resnet50, alexnet, vit_b_16, densenet121, efficientnet_b1, swin_b
+from torchvision.models import resnet50, alexnet, densenet121, efficientnet_b1
 import timm
-from transformers import Swinv2ForImageClassification
-import torch
 from torch import nn
 
 

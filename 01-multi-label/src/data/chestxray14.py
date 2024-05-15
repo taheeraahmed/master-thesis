@@ -1,74 +1,111 @@
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
-import pandas as pd
 import os
 import numpy as np
 
 
-class ChestXray14HFDataset(Dataset):
-    def __init__(self, dataframe, transform=None):
-        """
-        Args:
-            dataframe (pd.DataFrame): DataFrame containing image paths and labels.
-            model_name (str): The name of the Swin Transformer model you're using.
-        """
-        self.dataframe = dataframe
-        self.transform = transform
+import os
+import torch
+import random
+import copy
+from PIL import Image
 
-    def __len__(self):
-        return len(self.dataframe)
+from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+from torch.utils.data.dataset import Dataset
 
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
+def build_transform_classification(normalize, crop_size=224, resize=256, mode="train", test_augment=True):
+    transformations_list = []
 
-        img_path = self.dataframe.iloc[idx, 0]
-        image = Image.open(img_path).convert('RGB')
+    if normalize.lower() == "imagenet":
+      normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    elif normalize.lower() == "chestx-ray":
+      normalize = transforms.Normalize([0.5056, 0.5056, 0.5056], [0.252, 0.252, 0.252])
+    elif normalize.lower() == "none":
+      normalize = None
+    else:
+      print("mean and std for [{}] dataset do not exist!".format(normalize))
+      exit(-1)
+    if mode == "train":
+      transformations_list.append(transforms.RandomResizedCrop(crop_size))
+      transformations_list.append(transforms.RandomHorizontalFlip())
+      transformations_list.append(transforms.RandomRotation(7))
+      transformations_list.append(transforms.ToTensor())
+      if normalize is not None:
+        transformations_list.append(normalize)
+    elif mode == "valid":
+      transformations_list.append(transforms.Resize((resize, resize)))
+      transformations_list.append(transforms.CenterCrop(crop_size))
+      transformations_list.append(transforms.ToTensor())
+      if normalize is not None:
+        transformations_list.append(normalize)
+    elif mode == "test":
+      if test_augment:
+        transformations_list.append(transforms.Resize((resize, resize)))
+        transformations_list.append(transforms.TenCrop(crop_size))
+        transformations_list.append(
+          transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])))
+        if normalize is not None:
+          transformations_list.append(transforms.Lambda(lambda crops: torch.stack([normalize(crop) for crop in crops])))
+      else:
+        transformations_list.append(transforms.Resize((resize, resize)))
+        transformations_list.append(transforms.CenterCrop(crop_size))
+        transformations_list.append(transforms.ToTensor())
+        if normalize is not None:
+          transformations_list.append(normalize)
+    transformSequence = transforms.Compose(transformations_list)
 
-        labels = self.dataframe.iloc[idx, 1:].to_numpy(dtype='float32')
-        labels = torch.tensor(labels)
-
-        if self.transform:
-            image = self.transform(image)
-
-        return {"pixel_values": image, "labels": labels}
-
+    return transformSequence
 
 class ChestXray14Dataset(Dataset):
-    def __init__(self, data_path, file_path, augment, num_class=14):
-        self.augment = augment
-        columns = ['Image Filename'] + [f'label{i}' for i in range(num_class)]
-        
-        # Read the data file into a DataFrame
-        df = pd.read_csv(file_path, sep='\s+', names=columns)
-        
-        # Mapping image filenames to full paths
-        subfolders = [f"images_{i:03}/images" for i in range(1, 13)]
-        path_mapping = {}
-        for subfolder in subfolders:
-            full_folder_path = os.path.join(data_path, subfolder)
-            if os.path.isdir(full_folder_path):  # Ensure directory exists
-                for img_file in os.listdir(full_folder_path):
-                    path_mapping[img_file] = os.path.join(full_folder_path, img_file)
-        
-        df['Full Image Path'] = df['Image Filename'].map(path_mapping)
-        df = df.dropna(subset=['Full Image Path'])  # Drop entries without a valid path
+  def __init__(self, images_path, file_path, augment, num_class=14, annotation_percent=100):
 
+    self.img_list = []
+    self.img_label = []
+    self.augment = augment
 
-        # Extract labels
-        self.img_list = df['Full Image Path'].tolist()
-        self.img_label = df[[f'label{i}' for i in range(num_class)]].astype(np.float32).values  # Correct slicing for labels
+    with open(file_path, "r") as fileDescriptor:
+      line = True
 
-    def __getitem__(self, index):
-        imagePath = self.img_list[index]
-        imageData = Image.open(imagePath).convert('RGB')
-        imageLabel = torch.from_numpy(self.img_label[index])
-        
-        if self.augment:
-            imageData = self.augment(imageData)
+      while line:
+        line = fileDescriptor.readline()
 
-        return {"pixel_values": imageData, "labels": imageLabel}
+        if line:
+          lineItems = line.split()
 
-    def __len__(self):
-        return len(self.img_list)
+          imagePath = os.path.join(images_path, lineItems[0])
+          imageLabel = lineItems[1:num_class + 1]
+          imageLabel = [int(i) for i in imageLabel]
+
+          self.img_list.append(imagePath)
+          self.img_label.append(imageLabel)
+
+    indexes = np.arange(len(self.img_list))
+    if annotation_percent < 100:
+      random.Random(99).shuffle(indexes)
+      num_data = int(indexes.shape[0] * annotation_percent / 100.0)
+      indexes = indexes[:num_data]
+
+      _img_list, _img_label = copy.deepcopy(self.img_list), copy.deepcopy(self.img_label)
+      self.img_list = []
+      self.img_label = []
+
+      for i in indexes:
+        self.img_list.append(_img_list[i])
+        self.img_label.append(_img_label[i])
+
+  def __getitem__(self, index):
+
+    imagePath = self.img_list[index]
+
+    imageData = Image.open(imagePath).convert('RGB')
+    imageLabel = torch.FloatTensor(self.img_label[index])
+
+    if self.augment != None: imageData = self.augment(imageData)
+
+    return imageData, imageLabel
+
+  def __len__(self):
+
+    return len(self.img_list)
