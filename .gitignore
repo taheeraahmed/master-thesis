@@ -8,3 +8,4 @@ mlruns/
 output/
 *.out
 .vscode
+lightning_logs/
