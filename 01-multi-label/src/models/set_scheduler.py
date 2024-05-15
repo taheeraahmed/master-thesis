@@ -20,4 +20,4 @@ def set_scheduler(model_config: ModelConfig, optimizer: torch.optim.Optimizer) -
     else:
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=10)
-    return {'scheduler': scheduler, 'monitor': 'val_loss'}
+    return scheduler

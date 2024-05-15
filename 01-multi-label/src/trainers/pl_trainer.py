@@ -42,6 +42,12 @@ class MultiLabelLightningModule(LightningModule):
             average="macro",
         )
 
+        self.auroc_micro = AUROC(
+            task="multilabel",
+            num_labels=self.num_labels,
+            average="micro",
+        )
+
         self.auroc_classwise = AUROC(
             task="multilabel",
             num_labels=self.num_labels,
@@ -80,6 +86,7 @@ class MultiLabelLightningModule(LightningModule):
                  on_epoch=True, prog_bar=True, logger=True)
         # Update metrics
         f1 = self.f1_with_sigmoid(logits, labels)
+        auroc_micro = self.auroc_micro_with_sigmoid(logits, labels)
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
         auroc_classwise = self.auroc_classwise_with_sigmoid(
@@ -96,6 +103,8 @@ class MultiLabelLightningModule(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('train_loss', loss, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
+            self.log('train_auroc_micro', auroc_micro, on_step=True,
+                     on_epoch=True, prog_bar=True, logger=True)
 
         return loss
 
@@ -105,6 +114,7 @@ class MultiLabelLightningModule(LightningModule):
         loss, logits, labels = self.step(batch, mode=mode)
         f1 = self.f1_with_sigmoid(logits, labels)
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
+        auroc_micro = self.auroc_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
         auroc_classwise = self.auroc_classwise_with_sigmoid(
             logits, labels.type(torch.int32))
@@ -119,13 +129,17 @@ class MultiLabelLightningModule(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
             self.log('val_loss', loss, on_step=True,
                      on_epoch=True, prog_bar=True, logger=True)
+            self.log('val_auroc_micro', auroc_micro, on_step=True,
+                        on_epoch=True, prog_bar=True, logger=True)
 
     def test_step(self, batch, batch_idx):
         mode = 'test'
         loss, logits, labels = self.step(batch, mode=mode)
         f1 = self.f1_with_sigmoid(logits, labels)
         f1_micro = self.f1_micro_with_sigmoid(logits, labels)
+        auroc_micro = self.auroc_micro_with_sigmoid(logits, labels)
         auroc = self.auroc_with_sigmoid(logits, labels)
+
         auroc_classwise = self.auroc_classwise_with_sigmoid(
             logits, labels.type(torch.int32))
 
@@ -134,6 +148,7 @@ class MultiLabelLightningModule(LightningModule):
         self.log('test_f1', f1)
         self.log('test_f1_micro', f1_micro)
         self.log('test_auroc', auroc)
+        self.log('test_auroc_micro', auroc_micro)
 
         self.test_results.append({
             'loss': loss.item(),
@@ -148,9 +163,19 @@ class MultiLabelLightningModule(LightningModule):
         if self.img_size is not None:
             self.save_model()
         self.save_metrics_to_csv()
+        print('\n')
 
     def configure_optimizers(self):
-        return [self.optimizer_func], [self.scheduler_func]
+        optimizer = self.optimizer_func
+        scheduler = self.scheduler_func
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+                "frequency": 100,
+            },
+        }
 
     def save_metrics_to_csv(self):
         csv_file_path = os.path.join(self.root_path, 'test_metrics.csv')
@@ -203,6 +228,10 @@ class MultiLabelLightningModule(LightningModule):
     def auroc_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
         return self.auroc(preds, labels.type(torch.int32))
+    
+    def auroc_micro_with_sigmoid(self, logits, labels):
+        preds = torch.sigmoid(logits)
+        return self.auroc_micro(preds, labels.type(torch.int32))
 
     def auroc_classwise_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)

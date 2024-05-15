@@ -10,6 +10,8 @@ from models import ModelConfig, set_optimizer, set_scheduler
 from trainers import MultiLabelLightningModule
 from data import ChestXray14Dataset, build_transform_classification
 
+torch.manual_seed(0)
+
 
 def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
     """
@@ -98,7 +100,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     early_stop_callback = EarlyStopping(
         monitor='val_loss',
         min_delta=0.00,
-        patience=5,
+        patience=10,
         verbose=True,
         mode='min'
     )
@@ -132,6 +134,7 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
         logger=tb_logger,
         fast_dev_run=model_config.fast_dev_run,
         callbacks=[checkpoint_callback, early_stop_callback],
+        accumulate_grad_batches=model_config.accumulate_grad_batches,
     )
 
     if not model_config.eval_mode:
