@@ -161,9 +161,14 @@ class MultiLabelLightningModule(LightningModule):
 
     def on_test_end(self):
         if self.img_size is not None:
-            self.save_model()
-        self.save_metrics_to_csv()
-        print('\n')
+            try:
+                self.save_model()
+            except Exception as e:
+                if self.file_logger:
+                    self.file_logger.error(
+                        f"Error saving model to {self.model_ckpts_folder}: {e}")
+                else:
+                    print(f"Error saving model to {self.model_ckpts_folder}: {e}")
 
     def configure_optimizers(self):
         optimizer = self.optimizer_func
@@ -214,8 +219,11 @@ class MultiLabelLightningModule(LightningModule):
 
     def save_model(self):
         img_size = self.img_size
+        if not (os.path.exists(f"{self.model_ckpts_folder}")):
+            os.mkdir(f"{self.model_ckpts_folder}")
+        
         self.to_onnx(f"{self.model_ckpts_folder}/test-model.onnx",
-                     input_sample=torch.randn(1, 3, img_size, img_size))
+                        input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
