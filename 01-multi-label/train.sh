@@ -2,30 +2,27 @@
 
 FAST_DEV_RUN_ENABLED=false 
 TEST_TIME_AUGMENTATION=false
-EVAL_MODE=true
+EVAL_MODE=false
 
-MODELS=("swin")
+MODELS=("alexnet" "resnet50" "densenet121")
 LOSSES=("bce")
+ADD_TRANSFORMS=false
 
 SCHEDULER=cosineannealinglr
-OPTIMIZER=sgd
-LEARNING_RATE=0.01
+OPTIMIZER=adamw
 
 BATCH_SIZE=64
 LEARNING_RATE=0.0005
-
-BATCH_SIZE=64
 ACCUMULATE_GRAD_BATCHES=1
 
 NUM_EPOCHS=35
-ADD_TRANSFORMS=true
-DESCRIPTION=used-benchmarking-transformers
-CKPT_PATH=/cluster/home/taheeraa/code/BenchmarkTransformers/Models/Classification/ChestXray14/swin_base_simmim/swin_base_simmim_run_0.pth.tar
+DESCRIPTION=removed-sigmoid-hehe
+#CKPT_PATH=/cluster/home/taheeraa/code/BenchmarkTransformers/Models/Classification/ChestXray14/swin_base_simmim/swin_base_simmim_run_0.pth.tar
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=00:10:00
+IDUN_TIME=08:00:00
 PARTITION="GPUQ"
 
 echo "Starting training :)"

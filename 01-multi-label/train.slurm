@@ -42,6 +42,6 @@ python $CODE_PATH/src/train.py \
   --test_time_augmentation $TEST_TIME_AUGMENTATION \
   --fast_dev_run $FAST_DEV_RUN_ENABLED \
   --accumulate_grad_batches $ACCUMULATE_GRAD_BATCHES \
-  --checkpoint_path $CKPT_PATH
+  #--checkpoint_path $CKPT_PATH
 
 echo ">> done"
