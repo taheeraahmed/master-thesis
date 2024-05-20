@@ -160,6 +160,8 @@ class MultiLabelLightningModule(LightningModule):
         return {'test_loss': loss, 'test_f1': f1, 'test_f1_micro': f1_micro}
 
     def on_test_end(self):
+        self.print_metrics()
+
         if self.img_size is not None:
             try:
                 self.save_model()
@@ -182,40 +184,17 @@ class MultiLabelLightningModule(LightningModule):
             },
         }
 
-    def save_metrics_to_csv(self):
-        csv_file_path = os.path.join(self.root_path, 'test_metrics.csv')
-
-        model_info = {
-            'experiment_name': self.experiment_name,
-            'model_name': self.model_name,
-        }
-
+    def print_metrics(self):
         if self.test_results:
-            aggregated_results = {key: sum([batch[key] for batch in self.test_results]) / len(self.test_results)
+            final_results = {key: sum([batch[key] for batch in self.test_results]) / len(self.test_results)
                                   for key in self.test_results[0].keys()}
         else:
-            aggregated_results = {}
-
-        final_results = {**model_info, **aggregated_results}
-        file_exists_and_not_empty = os.path.isfile(
-            csv_file_path) and os.path.getsize(csv_file_path) > 0
-
-        try:
-            with open(csv_file_path, 'a', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=final_results.keys())
-                if not file_exists_and_not_empty:
-                    writer.writeheader()
-                writer.writerow(final_results)
-            if self.file_logger:
-                self.file_logger.info(f"Test metrics saved to {csv_file_path}")
-            else:
-                print(f"Test metrics saved to {csv_file_path}")
-        except Exception as e:
-            if self.file_logger:
-                self.file_logger.error(
-                    f"Error saving test metrics to {csv_file_path}: {e}")
-            else:
-                print(f"Error saving test metrics to {csv_file_path}: {e}")
+            final_results = {}
+            
+        if self.file_logger:
+            self.file_logger.info(f"Test results: {final_results}")
+        else: 
+            print(final_results)
 
     def save_model(self):
         img_size = self.img_size
