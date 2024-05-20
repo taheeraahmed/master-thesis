@@ -11,7 +11,7 @@ torch.backends.cudnn.benchmark = True
 
 
 class MultiLabelLightningModule(LightningModule):
-    def __init__(self, model, criterion, learning_rate, num_labels, labels, optimizer_func, scheduler_func, model_ckpts_folder, file_logger=None, root_path=None, model_name="model", experiment_name="experiment", img_size=None):
+    def __init__(self, model, criterion, learning_rate, num_labels, labels, optimizer_func, scheduler_func, model_ckpts_folder, file_logger=None, root_path="./", model_name="model", experiment_name="experiment", img_size=None):
         super().__init__()
         self.model = model
         self.criterion = criterion
@@ -190,7 +190,7 @@ class MultiLabelLightningModule(LightningModule):
                                   for key in self.test_results[0].keys()}
         else:
             final_results = {}
-            
+
         if self.file_logger:
             self.file_logger.info(f"Test results: {final_results}")
         else: 
@@ -206,23 +206,23 @@ class MultiLabelLightningModule(LightningModule):
 
     def f1_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
-        return self.f1_score(preds, labels)
+        return self.f1_score(logits, labels)
 
     def f1_micro_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
-        return self.f1_score_micro(preds, labels)
+        return self.f1_score_micro(logits, labels)
 
     def auroc_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
-        return self.auroc(preds, labels.type(torch.int32))
+        return self.auroc(logits, labels.type(torch.int32))
     
     def auroc_micro_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
-        return self.auroc_micro(preds, labels.type(torch.int32))
+        return self.auroc_micro(logits, labels.type(torch.int32))
 
     def auroc_classwise_with_sigmoid(self, logits, labels):
         preds = torch.sigmoid(logits)
-        return self.auroc_classwise(preds, labels.type(torch.int32))
+        return self.auroc_classwise(logits, labels.type(torch.int32))
 
     def calc_classwise_auroc(self, auroc_classwise, mode):
         for label_name, score in zip(self.labels, auroc_classwise):

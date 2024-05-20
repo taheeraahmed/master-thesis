@@ -120,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--num_cores",
                         help="Number of cores to use", default=4, type=int)
     parser.add_argument("-tta", "--test_time_augmentation",
-                        help="Test time augmentation", default=False, required=False)
+                        help="Test time augmentation", default=False, required=True)
     parser.add_argument("-fdr", "--fast_dev_run",
                         help="Fast dev run", default=False, required=False)
     parser.add_argument("-ckpt", "--checkpoint_path",
