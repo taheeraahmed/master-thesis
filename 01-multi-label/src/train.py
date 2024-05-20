@@ -35,9 +35,26 @@ def train(args):
         accumulate_grad_batches=args.accumulate_grad_batches
     )
 
-    train_df, val_df, test_df, labels, class_weights = get_df(
-        file_manager=file_manager,
-    )
+    labels = [
+        "Atelectasis",
+        "Cardiomegaly",
+        "Effusion",
+        "Infiltration",
+        "Mass",
+        "Nodule",
+        "Pneumonia",
+        "Pneumothorax",
+        "Consolidation",
+        "Edema",
+        "Emphysema",
+        "Fibrosis",
+        "Pleural_Thickening",
+        "Hernia"
+    ]
+
+    # train_df, val_df, test_df, labels, class_weights = get_df(
+    #     file_manager=file_manager,
+    # )
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
@@ -52,7 +69,7 @@ def train(args):
     with open(model_file, 'w') as f:
         f.write(str(model_config.model.__repr__()))
 
-    model_config.criterion = set_criterion(model_config, class_weights)
+    model_config.criterion = set_criterion(model_config)
 
     file_manager.logger.info(f'{model_config.__str__()}')
     file_manager.logger.info(f'{file_manager.__str__()}')
@@ -60,9 +77,6 @@ def train(args):
     train_and_evaluate_model(
         model_config=model_config,
         file_manager=file_manager,
-        train_df=train_df,
-        val_df=val_df,
-        test_df=test_df,
     )
 
     done_file = f"{file_manager.output_folder}/✅.txt"

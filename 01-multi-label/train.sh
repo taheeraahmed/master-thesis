@@ -2,12 +2,16 @@
 
 FAST_DEV_RUN_ENABLED=false 
 TEST_TIME_AUGMENTATION=false
+EVAL_MODE=true
 
-MODELS=("resnet")
-LOSSES=("asl")
+MODELS=("swin")
+LOSSES=("bce")
 
 SCHEDULER=cosineannealinglr
-OPTIMIZER=adamw
+OPTIMIZER=sgd
+LEARNING_RATE=0.01
+
+BATCH_SIZE=64
 LEARNING_RATE=0.0005
 
 BATCH_SIZE=64
@@ -15,15 +19,14 @@ ACCUMULATE_GRAD_BATCHES=1
 
 NUM_EPOCHS=35
 ADD_TRANSFORMS=true
-DESCRIPTION=gradient-accumuluation
-#CKPT_PATH=
+DESCRIPTION=used-benchmarking-transformers
+CKPT_PATH=/cluster/home/taheeraa/code/BenchmarkTransformers/Models/Classification/ChestXray14/swin_base_simmim/swin_base_simmim_run_0.pth.tar
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=07:00:00
+IDUN_TIME=00:10:00
 PARTITION="GPUQ"
-EVAL_MODE=false
 
 echo "Starting training :)"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-target_directory="output"
+target_directory="/cluster/home/taheeraa/code/master-thesis/01-multi-label/output/show-to-supervisors"
 cd "$(dirname "$0")"
 
 # Initialize

@@ -8,18 +8,16 @@ from torch.utils.data import DataLoader
 from utils import FileManager, show_batch_images
 from models import ModelConfig, set_optimizer, set_scheduler
 from trainers import MultiLabelLightningModule
-from data import ChestXray14HFDataset, set_transforms
+from data import ChestXray14Dataset, build_transform_classification
 
 torch.manual_seed(0)
 
 
-def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager, train_df, val_df, test_df) -> None:
+def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManager) -> None:
     """
     Start the training and validation of the model
     :param model_config: ModelConfig object
     :param file_manager: FileManager object
-    :param train_df: DataFrame containing the training data
-    :param val_df: DataFrame containing the validation data
     """
     model = model_config.model
     model_name = model_config.model_arg
@@ -38,24 +36,24 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     num_workers = model_config.num_cores
     pin_memory = False
 
-    if model_config.fast_dev_run:
-        file_manager.logger.info('Using smaller dataset')
-        train_subset_size = 100
-        val_subset_size = 50
+    train_transforms = build_transform_classification(
+        normalize="chestx-ray", mode="train")
+    val_transforms = build_transform_classification(
+        normalize="chestx-ray", mode="valid")
+    test_transforms = build_transform_classification(
+        normalize="chestx-ray", mode="test")
 
-        train_df = train_df.head(train_subset_size)
-        val_df = val_df.head(val_subset_size)
-        test_df = test_df.head(val_subset_size)
+    path_to_labels = '/cluster/home/taheeraa/code/BenchmarkTransformers/dataset'
+    file_path_train = path_to_labels + '/Xray14_train_official.txt'
+    file_path_val = path_to_labels + '/Xray14_val_official.txt'
+    file_path_test = path_to_labels + '/Xray14_test_official.txt'
 
-    train_transforms, val_transforms, test_transforms = set_transforms(
-        model_config, file_manager)
-
-    train_dataset = ChestXray14HFDataset(
-        dataframe=train_df, transform=train_transforms)
-    val_dataset = ChestXray14HFDataset(
-        dataframe=val_df, transform=val_transforms)
-    test_dataset = ChestXray14HFDataset(
-        dataframe=test_df, transform=test_transforms)
+    train_dataset = ChestXray14Dataset(images_path=file_manager.images_path, file_path=file_path_train,
+                                       augment=train_transforms, num_class=num_labels)
+    val_dataset = ChestXray14Dataset(images_path=file_manager.images_path, file_path=file_path_val,
+                                     augment=val_transforms, num_class=num_labels)
+    test_dataset = ChestXray14Dataset(images_path=file_manager.images_path, file_path=file_path_test,
+                                      augment=test_transforms, num_class=num_labels)
 
     train_loader = DataLoader(
         train_dataset,
@@ -115,10 +113,10 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     )
 
     if checkpoint_path:
-        state_dict = torch.load(checkpoint_path)
-        ckpt_state_dict = state_dict['model']
+        checkpoint = torch.load(checkpoint_path)
+        ckpt_state_dict = checkpoint['state_dict']
         training_module.load_state_dict(ckpt_state_dict, strict=False)
-        file_manager.logger.info(f"🚀 Loaded the model from {checkpoint_path}")
+        file_manager.logger.info(f"🎀 Loaded the model from {checkpoint_path}")
     else:
         file_manager.logger.info('🚀 Training the model from scratch')
 
@@ -137,8 +135,9 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
             val_dataloaders=val_loader,
         )
 
-    file_manager.logger.info('✅ Training is done')
-
+        file_manager.logger.info('✅ Training is done')
+    else:
+        file_manager.logger.info('🫐 Model is in evaluation mode')
     pl_trainer.test(
         model=training_module,
         dataloaders=test_loader,
