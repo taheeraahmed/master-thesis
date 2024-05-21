@@ -32,7 +32,8 @@ def train(args):
         test_time_augmentation=args.test_time_augmentation,
         fast_dev_run=args.fast_dev_run,
         checkpoint_path=args.checkpoint_path,
-        accumulate_grad_batches=args.accumulate_grad_batches
+        accumulate_grad_batches=args.accumulate_grad_batches,
+        normalization=args.normalization
     )
 
     labels = [
@@ -51,10 +52,6 @@ def train(args):
         "Pleural_Thickening",
         "Hernia"
     ]
-
-    # train_df, val_df, test_df, labels, class_weights = get_df(
-    #     file_manager=file_manager,
-    # )
 
     model_config.num_labels = len(labels)
     model_config.labels = labels
@@ -91,7 +88,8 @@ if __name__ == "__main__":
                     'wbce', 'focal', 'wfocal', 'asl', 'twoway']
     optimizer_choice = ['adam', 'sgd', 'adamw']
     scheduler_choice = ['cosineannealinglr',
-                        'cycliclr', 'step', 'reduceonplateu']
+                        'cycliclr', 'step', 'reduceonplateu', 'custom']
+    normalization_choices = ['imagenet', 'none', 'chestx-ray']
 
     parser = argparse.ArgumentParser(
         description="Arguments for training with pytorch")
@@ -127,10 +125,14 @@ if __name__ == "__main__":
                         help="Checkpoint path file of model you want to load", default=None, required=False)
     parser.add_argument("-agb", "--accumulate_grad_batches",
                         help="Accumulate gradient batches", default=1, required=False, type=int)
+    parser.add_argument("-norm", "--normalization", choices=normalization_choices,
+                        help="Type of normalization to be used", default="imagenet")
+
 
     args = parser.parse_args()
     args.eval_mode = str_to_bool(args.eval_mode)
     args.add_transforms = str_to_bool(args.add_transforms)
     args.fast_dev_run = str_to_bool(args.fast_dev_run)
     args.test_time_augmentation = str_to_bool(args.test_time_augmentation)
+
     train(args)

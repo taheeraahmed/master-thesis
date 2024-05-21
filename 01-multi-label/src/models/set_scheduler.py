@@ -17,6 +17,20 @@ def set_scheduler(model_config: ModelConfig, optimizer: torch.optim.Optimizer) -
     elif scheduler_arg == "reduceonplateu":
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode='min', factor=0.1, patience=10, verbose=True)
+    elif scheduler_arg == 'custom':
+        def lr_foo(epoch):
+            if epoch < model_config.warm_up_step:
+                # warm up lr
+                lr_scale = 0.1 ** (model_config.warm_up_step - epoch)
+            else:
+                lr_scale = 0.95 ** epoch
+
+            return lr_scale
+
+        scheduler = torch.optim.LambdaLR(
+            optimizer,
+            lr_lambda=lr_foo
+        )
     else:
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=10)
