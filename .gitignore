@@ -9,3 +9,4 @@ output/
 *.out
 .vscode
 lightning_logs/
+*.onnx

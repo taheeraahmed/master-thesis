@@ -1,5 +1,5 @@
 class ModelConfig():
-    def __init__(self, model_arg, loss_arg, num_epochs, accumulate_grad_batches, batch_size, learning_rate, eval_mode, experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run, checkpoint_path):
+    def __init__(self, model_arg, loss_arg, num_epochs, accumulate_grad_batches, batch_size, learning_rate, eval_mode, normalization,experiment_name, add_transforms, optimizer_arg, scheduler_arg, num_cores, test_time_augmentation, fast_dev_run, checkpoint_path):
         self.model_arg = model_arg  # The argumenet from train.py
         self.loss_arg = loss_arg  # The loss function argument
         self.model = None  # The actual pytorch base model
@@ -21,6 +21,7 @@ class ModelConfig():
         self.test_time_augmentation = test_time_augmentation
         self.fast_dev_run = fast_dev_run
         self.checkpoint_path = checkpoint_path
+        self.normalize = normalization
 
     def __str__(self):
         criterion_name = self.criterion.__class__.__name__ if self.criterion else 'None'
@@ -31,7 +32,8 @@ class ModelConfig():
             f"| Attribute         | Value                     |\n"
             f"-------------------------------------------------\n"
             f"| 🧪 Experiment Name| {self.experiment_name:<25} |\n"
-            f"| 🤓 Transforms?    | {self.add_transforms:<25} |\n"
+            f"| 🤓 Transforms?    | {'Enabled' if self.add_transforms else 'Disabled':<25} |\n"
+            f"| 🎁 Normalization? | {self.normalize:<25} |\n"
             f"| 📦 Model          | {self.model_arg:<25} |\n"
             f"| 🌟 Max Steps      | {self.max_steps:<25} |\n"
             f"| 📈 Loss Function  | {criterion_name:<25} |\n"

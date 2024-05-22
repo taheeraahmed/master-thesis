@@ -1,2 +1,2 @@
 from .chestxray14 import ChestXray14Dataset
-from .set_transforms import set_transforms, build_transform_classification
+from .set_transforms import build_transform_classification

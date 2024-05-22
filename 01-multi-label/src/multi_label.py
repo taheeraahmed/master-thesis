@@ -32,16 +32,20 @@ def train_and_evaluate_model(model_config: ModelConfig, file_manager: FileManage
     logger = file_manager.logger
     root_path = file_manager.root
     checkpoint_path = model_config.checkpoint_path
+    normalize = model_config.normalize
 
     num_workers = model_config.num_cores
     pin_memory = False
 
-    train_transforms = build_transform_classification(
-        normalize="chestx-ray", mode="train")
-    val_transforms = build_transform_classification(
-        normalize="chestx-ray", mode="valid")
-    test_transforms = build_transform_classification(
-        normalize="chestx-ray", mode="test")
+    train_transforms, val_transforms, test_transforms = build_transform_classification(
+        normalize=normalize,
+        test_augment=model_config.test_time_augmentation,
+        add_transforms=model_config.add_transforms
+    )
+
+    file_manager.logger.info(f"Train Transforms: {train_transforms}")
+    file_manager.logger.info(f"Val Transforms: {val_transforms}")
+    file_manager.logger.info(f"Test Transforms: {test_transforms}")
 
     path_to_labels = '/cluster/home/taheeraa/code/BenchmarkTransformers/dataset'
     file_path_train = path_to_labels + '/Xray14_train_official.txt'
