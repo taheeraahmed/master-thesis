@@ -107,6 +107,12 @@ class MultiLabelLightningModule(LightningModule):
                      on_epoch=True, prog_bar=True, logger=True)
 
         return loss
+    
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        lr = self.trainer.optimizers[0].param_groups[0]['lr']
+        self.log('learning_rate', lr, on_step=True,
+                on_epoch=True, prog_bar=True, logger=True)
+
 
     def validation_step(self, batch, batch_idx):
         mode = 'val'
@@ -180,7 +186,8 @@ class MultiLabelLightningModule(LightningModule):
             "lr_scheduler": {
                 "scheduler": scheduler,
                 "monitor": "val_loss",
-                "frequency": 100,
+                "frequency": 1,
+                "interval": "step",
             },
         }
 
@@ -205,24 +212,24 @@ class MultiLabelLightningModule(LightningModule):
                         input_sample=torch.randn(1, 3, img_size, img_size))
 
     def f1_with_sigmoid(self, logits, labels):
-        preds = torch.sigmoid(logits)
-        return self.f1_score(logits, labels)
+        probs = torch.sigmoid(logits)
+        return self.f1_score(probs, labels)
 
     def f1_micro_with_sigmoid(self, logits, labels):
-        preds = torch.sigmoid(logits)
-        return self.f1_score_micro(logits, labels)
+        probs = torch.sigmoid(logits)
+        return self.f1_score_micro(probs, labels)
 
     def auroc_with_sigmoid(self, logits, labels):
-        preds = torch.sigmoid(logits)
-        return self.auroc(logits, labels.type(torch.int32))
+        probs = torch.sigmoid(logits)
+        return self.auroc(probs, labels.type(torch.int32))
     
     def auroc_micro_with_sigmoid(self, logits, labels):
-        preds = torch.sigmoid(logits)
-        return self.auroc_micro(logits, labels.type(torch.int32))
+        probs = torch.sigmoid(logits)
+        return self.auroc_micro(probs, labels.type(torch.int32))
 
     def auroc_classwise_with_sigmoid(self, logits, labels):
-        preds = torch.sigmoid(logits)
-        return self.auroc_classwise(logits, labels.type(torch.int32))
+        probs = torch.sigmoid(logits)
+        return self.auroc_classwise(probs, labels.type(torch.int32))
 
     def calc_classwise_auroc(self, auroc_classwise, mode):
         for label_name, score in zip(self.labels, auroc_classwise):
