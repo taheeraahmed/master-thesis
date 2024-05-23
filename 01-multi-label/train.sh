@@ -1,16 +1,16 @@
 #!/bin/bash
 
 FAST_DEV_RUN_ENABLED=false 
-TEST_TIME_AUGMENTATION=true
+TEST_TIME_AUGMENTATION=false
 EVAL_MODE=false
 
-MODELS=("alexnet" "resnet50" "densenet121")
-LOSSES=("bce")
+MODELS=("resnet50")
+LOSSES=("mlsm")
 
 ADD_TRANSFORMS=true
 NORMALIZATION=imagenet
 
-SCHEDULER=custom
+SCHEDULER=reduceonplateu
 OPTIMIZER=adamw
 
 BATCH_SIZE=64
@@ -18,13 +18,13 @@ LEARNING_RATE=0.0005
 ACCUMULATE_GRAD_BATCHES=1
 
 NUM_EPOCHS=35
-DESCRIPTION=removed-sigmoid-hehe
+DESCRIPTION=new-training-with-resnet50
 #CKPT_PATH=/cluster/home/taheeraa/code/BenchmarkTransformers/Models/Classification/ChestXray14/swin_base_simmim/swin_base_simmim_run_0.pth.tar
 
 TASK=14-multi-label
 ACCOUNT=share-ie-idi
 NUM_CORES=8
-IDUN_TIME=08:00:00
+IDUN_TIME=10:00:00
 PARTITION="GPUQ"
 
 echo "Starting training :)"

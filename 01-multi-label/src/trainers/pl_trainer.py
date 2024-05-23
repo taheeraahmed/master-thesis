@@ -185,7 +185,7 @@ class MultiLabelLightningModule(LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "val_loss",
+                "monitor": "train_auroc",
                 "frequency": 1,
                 "interval": "step",
             },
