@@ -6,7 +6,7 @@ checkpoints/
 images/
 mlruns/
 output/
-*.out
+01-multi-label/notebook/gt_cam
 .vscode
 lightning_logs/
 *.onnx
