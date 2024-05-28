@@ -12,8 +12,12 @@ def set_optimizer(model_config: ModelConfig) -> torch.optim.Optimizer:
         )
     elif optimizer_arg == 'sgd':
         optimizer = torch.optim.SGD(
-            model.parameters(),
+            params=model.parameters(),
             lr=model_config.learning_rate,
+            momentum=0.9,
+            dampening=0,
+            weight_decay=0,
+            nesterov=True
         )
     elif optimizer_arg == 'adamw':
         optimizer = torch.optim.AdamW(

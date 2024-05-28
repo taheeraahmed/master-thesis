@@ -10,13 +10,13 @@ def set_scheduler(model_config: ModelConfig, optimizer: torch.optim.Optimizer) -
             optimizer, T_max=10)
     elif scheduler_arg == 'cycliclr':
         scheduler = torch.optim.lr_scheduler.CyclicLR(
-            optimizer, base_lr=0.001, max_lr=0.1)
+            optimizer, base_lr=model_config.learning_rate, max_lr=0.1)
     elif scheduler_arg == 'step':
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=30, gamma=0.1)
     elif scheduler_arg == "reduceonplateu":
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='max', factor=0.1, patience=10, verbose=True)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=10// 2, mode='min',
+            threshold=0.0001, min_lr=0, verbose=True)
     elif scheduler_arg == 'custom':
         def lr_foo(epoch):
             if epoch < model_config.warm_up_step:
