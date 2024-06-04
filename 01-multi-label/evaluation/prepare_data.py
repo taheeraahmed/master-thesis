@@ -44,7 +44,6 @@ def get_bboxes(root_folder):
     merged_df['filepath'] = f'{images_path}/' + \
         merged_df['Image Index']
     df = merged_df
-    print(df.head(20))
     return df
 
 

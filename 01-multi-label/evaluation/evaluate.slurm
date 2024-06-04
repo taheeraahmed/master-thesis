@@ -1,12 +1,12 @@
 #!/bin/sh
-#SBATCH --partition=GPUQ
+#SBATCH --partition=CPUQ
 #SBATCH --account=share-ie-idi
-#SBATCH --time=00:15:00
+#SBATCH --time=00:30:00
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=8
 #SBATCH --mem=128G
 #SBATCH --job-name="running-eval-inference"
-#SBATCH --gres=gpu:1
+#SBATCH --output="idun_out/output_cpu.out"
 
 echo "We are running from this directory: $SLURM_SUBMIT_DIR"
 echo "The name of the job is: $SLURM_JOB_NAME"
@@ -24,17 +24,21 @@ echo "----------------------------------------------"
 echo ">> nvidia-smi"
 nvidia-smi
 
-echo ">> module load Python/3.10.8-GCCcore-12.2.0"
-module load Python/3.10.8-GCCcore-12.2.0
-
-echo ">> source /cluster/home/taheeraa/code/master-thesis/01-multi-label/.venv/bin/activate"
-source /cluster/home/taheeraa/code/master-thesis/01-multi-label/.venv/bin/activate
+echo ">> module load Anaconda3/2022.10"
+module load Anaconda3/2022.10    
 
 echo ">> which python"
 which python
 
+echo ">> installing requirements"
+pip install -q -r /cluster/home/taheeraa/code/master-thesis/01-multi-label/requirements.txt
+
 echo ">> python run_inference.py"
 echo ""
 python /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/main.py \
+    --num_workers $NUM_CORES \
+    --batch_size 32 \
+    --test_augment False \
+    --xai False \
 
 echo ">> done"
