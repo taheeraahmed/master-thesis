@@ -35,15 +35,15 @@ def test_inference(model, data_loader_test, device):
     return y_test, p_test
 
 
-def predict(model, batch, threshold=0.2):
+def predict(model, batch, labels, threshold=0.5):
     model.eval()  # Ensure the model is in evaluation mode
     with torch.no_grad():  # Turn off gradients to speed up this part
         logits = model(batch)  # Forward pass
         print(logits.shape)
         probabilities = torch.sigmoid(logits)
-        labels = (probabilities >= threshold).int().numpy()[0]
+        probabilities_numpy = (probabilities >= threshold).int().numpy()[0]
 
-    pred_idx = [idx for idx, _ in enumerate(labels) if labels[idx] == 1]
-    print(pred_idx)
-    for i in range(len(pred_idx)):
-        print(labels[i])
+    print("Predictions:")
+    for i, label in enumerate(probabilities_numpy):
+        if label:
+            print(f"\t{labels[i]}")

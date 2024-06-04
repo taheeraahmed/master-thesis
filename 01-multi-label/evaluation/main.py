@@ -1,7 +1,7 @@
 from evaluation.load_model import load_model
 from evaluation.prepare_data import create_dataloader, get_bboxes, load_and_preprocess_images
 from evaluation.run_inference import test_inference, predict
-from evaluation.xai import xai
+from evaluation.xai import xai, get_ground_truth_labels
 import torch
 import os
 
@@ -24,13 +24,12 @@ model_dict = {
     }
 }
 
-def main():
+def evaluate_models():
     batch_size = 32
     test_augment = False
     num_labels = 14
-    test_diseases = None
     num_workers = 4
-
+    
     data_path = "/cluster/home/taheeraa/datasets/chestxray-14"
     model_base_path = "/cluster/home/taheeraa/code/BenchmarkTransformers/models/classification/ChestXray14/"
 
@@ -49,6 +48,9 @@ def main():
 
     for model_str in model_dict.keys():
         print(model_str)
+        output_folder = "results/" + model_str
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
         pretrained_weights = model_base_path + \
             model_dict[model_str]["experiment_name"] + "/" + \
             model_dict[model_str]["pretrained_weights"]
@@ -61,18 +63,17 @@ def main():
 
         _, _ = test_inference(model, dataloader_test, device)
 
-        # # TODO: If needed :) 
-        # img_id = "00010828_039"
-        # img_index = f"{img_id}.png"
-        # img_path = os.path.join(data_path, "images", img_index)
-        # df_filtered = df[df['Image Index'] == img_index]
+        img_id = "00010828_039"
+        img_index = f"{img_id}.png"
+        img_path = os.path.join(data_path, "images", img_index)
 
-        # input_tensor = load_and_preprocess_images(img_path)
+        get_ground_truth_labels(df, img_path, img_index, img_id, output_folder)
 
-        # predict(model, input_tensor, threshold=0.5)
+        input_tensor = load_and_preprocess_images(img_path)
 
-        # xai(model, model_str, input_tensor, img_path, img_id)
+        predict(model, input_tensor, labels, threshold=0.5)
+        xai(model, model_str, input_tensor, img_path, img_id, output_folder)
 
 
 if __name__ == "__main__":
-    main()
+    evaluate_models()
