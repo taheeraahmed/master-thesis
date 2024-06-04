@@ -1,3 +1,5 @@
+*.txt
+*.jpg
 conf_matrix/
 attention_rollout/
 testing/
@@ -15,3 +17,4 @@ output/
 .vscode
 lightning_logs/
 *.onnx
+*.png
