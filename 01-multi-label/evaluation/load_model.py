@@ -35,10 +35,8 @@ def load_model(pretrained_weights, num_labels, model_str):
     else: normalization = "imagenet"
 
     checkpoint = torch.load(pretrained_weights, map_location="cpu")
-    print(checkpoint.keys())
 
     state_dict = checkpoint['state_dict']
     msg = model.load_state_dict(state_dict, strict=False)
     print('Loaded with msg: {}'.format(msg))
-    print(model)
     return model, normalization

@@ -10,8 +10,9 @@ from evaluation.load_model import load_model
 from evaluation.prepare_data import create_dataloader, get_bboxes, load_and_preprocess_images
 from evaluation.run_inference import test_inference, predict
 from evaluation.xai import xai, get_ground_truth_labels
+from evaluation.utils_eval import generate_latex_table
 
-LOG_FILE = "evaluation.log"
+LOG_FILE = "logs/evaluation.log"
 
 MODEL_DICT = {
     "densenet121": {
@@ -32,6 +33,11 @@ MODEL_DICT = {
     },
 }
 
+
+def get_file_size(file_path):
+    file_size = os.path.getsize(file_path)
+    return file_size
+
 def evaluate_models(args):
 
     logging.basicConfig(level=logging.INFO,
@@ -43,7 +49,8 @@ def evaluate_models(args):
     logger = logging.getLogger()
 
     batch_size = args.batch_size
-    test_augment = args.test_augment
+    if args.test_augument is not None:
+        test_augment = True
     num_labels = 14
     num_workers = args.num_workers
     
@@ -55,7 +62,7 @@ def evaluate_models(args):
               'Emphysema', 'Fibrosis', 'Pleural_Thickening', 'Hernia']
 
     df = get_bboxes(data_path)
-
+    inference_performances = []
     if torch.cuda.is_available():
         device = torch.device("cuda")  # Use GPU
         logger.info(f"Using GPU: {torch.cuda.get_device_name(0)}")
@@ -65,9 +72,7 @@ def evaluate_models(args):
 
     for model_str in MODEL_DICT.keys():
         logger.info(model_str.upper())
-        output_folder = "results/" + model_str
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+
         pretrained_weights = model_base_path + \
             MODEL_DICT[model_str]["experiment_name"] + "/" + \
             MODEL_DICT[model_str]["pretrained_weights"]
@@ -75,12 +80,25 @@ def evaluate_models(args):
         model, normalization = load_model(
             pretrained_weights, num_labels, model_str)
 
+
         dataloader_test = create_dataloader(
             data_path, normalization, test_augment, batch_size, num_workers=num_workers)
 
-        _, _ = test_inference(model, dataloader_test, device, logger)
+        inference_performance = test_inference(args, model, model_str, dataloader_test, device, logger)
 
+        file_size = get_file_size(pretrained_weights)
+        file_size_mb = file_size / (1024 ** 2)  # Convert bytes to megabytes
+        logger.info(f"File size: {file_size_mb:.2f} MB")
+
+        inference_performance.file_size = file_size_mb
+
+        
+        inference_performances.append(inference_performance)
         if args.xai:
+            output_folder = "results/" + model_str
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+                
             img_id = "00010828_039"
             logger.info(f"Processing image: {img_id}")
             img_index = f"{img_id}.png"
@@ -88,20 +106,31 @@ def evaluate_models(args):
 
             get_ground_truth_labels(df, img_path, img_index, img_id, output_folder)
 
-            input_tensor = load_and_preprocess_images(img_path)
+            input_tensor = load_and_preprocess_images(img_path, normalization)
 
             predict(model, input_tensor, labels, threshold=0.5)
             xai(model, model_str, input_tensor, img_path, img_id, output_folder)
 
+    latex_str = generate_latex_table(inference_performances)
 
+    if not os.path.exists("results"):
+        os.makedirs("results")
+
+    with open("results/latex_table.txt", 'w') as file:
+        file.write(latex_str)
+
+    logger.info("Evaluation completed")
+
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Arguments for running evaluation script")
     
-    parser.add_argument('--num_workers', type=int, help="Number of workers for dataloader", required=False, default=4)
+    parser.add_argument('--num_workers', type=int, help="Number of workers for dataloader", required=False, default=8)
     parser.add_argument('--batch_size', type=int, help="Batch size for training", required=False, default=32)
-    parser.add_argument('--test_augment', type=bool, help="Augment test data", required=False, default=False)
-    parser.add_argument('--xai', type=bool, help="Generate XAI", required=False, default=False)
+    parser.add_argument('--test_augument', action='store_true', help="Augment test data", required=False)
+    parser.add_argument('--xai', action='store_true', help="Generate XAI", required=False, default=False)
 
     args = parser.parse_args()
+    print(args)
     evaluate_models(args)

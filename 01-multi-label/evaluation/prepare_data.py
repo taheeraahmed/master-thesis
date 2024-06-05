@@ -53,7 +53,6 @@ def create_dataloader(data_path, normalization, test_augment, batch_size, num_wo
     if src_dir not in sys.path:
         sys.path.append(src_dir)
 
-    from utils import metric_AUROC
     from dataloader import ChestXray14Dataset, build_transform_classification
 
     images_path = data_path + "/images"
@@ -69,7 +68,7 @@ def create_dataloader(data_path, normalization, test_augment, batch_size, num_wo
 
     dataset_test = ChestXray14Dataset(images_path=images_path,
                                       file_path=file_path_test,
-                                      augment=test_transforms
+                                      augment=test_transforms,
                                       )
 
     dataloader_test = DataLoader(dataset=dataset_test, batch_size=batch_size, shuffle=False,
