@@ -8,11 +8,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from evaluation.load_model import load_model
 from evaluation.prepare_data import create_dataloader, get_bboxes, load_and_preprocess_images
-from evaluation.run_inference import test_inference, predict
+from evaluation.run_inference import test_inference_gpu,test_inference_cpu, predict
 from evaluation.xai import xai, get_ground_truth_labels
-from evaluation.utils_eval import generate_latex_table
-
-LOG_FILE = "logs/evaluation.log"
+from evaluation.utils_eval import generate_latex_table, get_file_size
 
 MODEL_DICT = {
     "densenet121": {
@@ -34,19 +32,22 @@ MODEL_DICT = {
 }
 
 
-def get_file_size(file_path):
-    file_size = os.path.getsize(file_path)
-    return file_size
+
 
 def evaluate_models(args):
+    if args.partition == "GPUQ":
+        log_file = "logs/evaluation_gpu.log"
+    elif args.partition == "CPUQ":
+        log_file = "logs/evaluation_cpu.log"
 
     logging.basicConfig(level=logging.INFO,
                         format='[%(levelname)s] %(asctime)s - %(message)s',
                         handlers=[
-                            logging.FileHandler(LOG_FILE),
+                            logging.FileHandler(log_file),
                             logging.StreamHandler()
                         ])
     logger = logging.getLogger()
+    logger.info(args)
 
     batch_size = args.batch_size
     if args.test_augument is not None:
@@ -84,7 +85,10 @@ def evaluate_models(args):
         dataloader_test = create_dataloader(
             data_path, normalization, test_augment, batch_size, num_workers=num_workers)
 
-        inference_performance = test_inference(args, model, model_str, dataloader_test, device, logger)
+        if args.partition == "GPUQ":
+            inference_performance = test_inference_gpu(args, model, model_str, dataloader_test, device, logger)
+        elif args.parition == "CPUQ":
+            inference_performance = test_inference_cpu(args, model, model_str, dataloader_test, device, logger)
 
         file_size = get_file_size(pretrained_weights)
         file_size_mb = file_size / (1024 ** 2)  # Convert bytes to megabytes
@@ -128,6 +132,7 @@ if __name__ == "__main__":
     
     parser.add_argument('--num_workers', type=int, help="Number of workers for dataloader", required=False, default=8)
     parser.add_argument('--batch_size', type=int, help="Batch size for training", required=False, default=32)
+    parser.add_argument('--partition', type=str, help="CPU or GPU?", required=True)
     parser.add_argument('--test_augument', action='store_true', help="Augment test data", required=False)
     parser.add_argument('--xai', action='store_true', help="Generate XAI", required=False, default=False)
 

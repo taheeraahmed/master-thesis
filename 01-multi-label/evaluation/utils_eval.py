@@ -1,9 +1,15 @@
+import os
+
 MODEL_STR_TO_TABLE = {
     "vit_in1k": "ViT-IN1K",
     "swin_in22k": "Swin-IN22K",
     "densenet121": "DenseNet121-IN1K",
     "swin_simim": "Swin-SimMIM"
 }
+
+def get_file_size(file_path):
+    file_size = os.path.getsize(file_path)
+    return file_size
 
 def three_decimal_places(num):
     return round(num,3)
@@ -46,7 +52,7 @@ def generate_latex_table(inference_performances):
     # Adding average memory usage row
     latex_str += r'Peak memory allocated (Allocated, Reserved)'
     for ip in inference_performances:
-        avg_mem_usage = f"({three_decimal_places(ip.avg_mem_usage[2])}, {three_decimal_places(ip.avg_mem_usage[3])}"
+        avg_mem_usage = f"({three_decimal_places(ip.avg_mem_usage["peak_memory"])}, {three_decimal_places(ip.avg_mem_usage["peak_memory_reserved"])}"
         latex_str += f' & {avg_mem_usage}'
     latex_str += r' \\ \hline'
 

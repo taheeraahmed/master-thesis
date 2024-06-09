@@ -1,8 +1,8 @@
-import time
 import torch
-import tracemalloc
-import logging
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+import time
+import numpy as np
 from torchinfo import summary
 import numpy as np
 import math
@@ -17,7 +17,71 @@ class InferencePerformance:
         self.num_params = num_params
         self.file_size = file_size
 
-def test_inference(args, model, model_str, dataloader_test, device, logger):
+def test_inference_cpu(args, model, model_str, dataloader_test, device, logger):
+    model.to(device)
+    model.eval()
+
+    y_test = torch.FloatTensor().to(device)
+    p_test = torch.FloatTensor().to(device)
+
+    dummy_input = torch.randn(1, 3,224,224, dtype=torch.float).to(device)
+
+    for _ in range(10):
+        _ = model(dummy_input)
+    
+    latencies = []
+
+    with torch.no_grad():
+        for i, (samples, targets) in enumerate(tqdm(dataloader_test)):
+            targets = targets.to(device)
+            y_test = torch.cat((y_test, targets), 0)
+
+            start_time = time.time()  # Start timing
+
+            if len(samples.size()) == 4:
+                bs, c, h, w = samples.size()
+                n_crops = 1
+            elif len(samples.size()) == 5:
+                bs, n_crops, c, h, w = samples.size()
+
+            varInput = samples.view(-1, c, h, w).to(device)
+            out = model(varInput)
+            out = torch.sigmoid(out)
+            outMean = out.view(bs, n_crops, -1).mean(1)
+            p_test = torch.cat((p_test, outMean.data), 0)
+
+            end_time = time.time()  # End timing
+            latencies.append(end_time - start_time)  # Calculate latency for each batch
+
+    mean_latency = np.mean(latencies)
+    std_latency = np.std(latencies)
+    total_time = sum(latencies)
+    total_samples = len(dataloader_test.dataset)
+    throughput = total_samples / total_time
+
+    peak_memory = torch.cuda.max_memory_allocated(device) / (1024 ** 2)  # Convert bytes to GB
+    peak_memory_reserved = torch.cuda.max_memory_reserved(device) / (1024 ** 2)  # Convert bytes to GB
+    torch.cuda.reset_peak_memory_stats(device)  # Reset after capturing to handle the next loop properly
+
+    
+    num_params = sum(p.numel() for p in model.parameters())
+    logger.info(f"Number of parameters: {num_params}")
+
+    # TODO: Fill in code for avg_mem_usage: peak memory usage and peak memory reserved
+    # TODO: Fill in code for latency: mean_syn*1000, std_syn
+    # TODO: Fill code for throughput
+
+    return InferencePerformance(
+        model_str=model_str,
+        avg_mem_usage={'peak_memory': peak_memory, 'peak_memory_reserved': peak_memory_reserved},
+        latency=mean_latency*1000, 
+        latency_std=std_latency,
+        throughput=throughput,
+        num_params=num_params
+    )
+
+
+def test_inference_gpu(args, model, model_str, dataloader_test, device, logger):
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
     model.to(device)
@@ -84,11 +148,6 @@ def test_inference(args, model, model_str, dataloader_test, device, logger):
         average_memory_reserved = sum(m[1] for m in memory_usage) / len(memory_usage) / (1024 * 1024)
         average_peak_memory_allocated = sum(m[2] for m in memory_usage) / len(memory_usage) / (1024 * 1024)
         average_peak_memory_reserved = sum(m[3] for m in memory_usage) / len(memory_usage) / (1024 * 1024)
-
-        avg_mem_usage = (average_memory_allocated, 
-                         average_memory_reserved, 
-                         average_peak_memory_allocated, 
-                         average_peak_memory_reserved)
         
         logger.info(f"Average Allocated Memory: {average_memory_allocated:.2f} MB")
         logger.info(f"Average Reserved Memory: {average_memory_reserved:.2f} MB")
@@ -100,7 +159,7 @@ def test_inference(args, model, model_str, dataloader_test, device, logger):
 
     return InferencePerformance(
         model_str=model_str,
-        avg_mem_usage=avg_mem_usage,
+        avg_mem_usage={'peak_memory': average_peak_memory_allocated, 'peak_memory_reserved': average_peak_memory_reserved},
         latency=mean_syn*1000,
         latency_std=std_syn,
         throughput=mean_syn,
