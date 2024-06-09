@@ -1,14 +1,4 @@
 #!/bin/sh
-#SBATCH --partition=GPUQ
-#SBATCH --account=share-ie-idi
-#SBATCH --time=01:20:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=128G
-#SBATCH --gres=gpu:1
-#SBATCH --job-name="running-eval-inference"
-#SBATCH --output="logs/output.out"
 
 echo "We are running from this directory: $SLURM_SUBMIT_DIR"
 echo "The name of the job is: $SLURM_JOB_NAME"
@@ -37,6 +27,10 @@ pip install -q -r /cluster/home/taheeraa/code/master-thesis/01-multi-label/requi
 
 echo ">> python run_inference.py"
 echo ""
-python /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/main.py 
+python /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/main.py \
+    --partition $PARTITION \
+    --num_cores $NUM_CORES \
+    --inference False \
+    --xai True \
 
 echo ">> done"

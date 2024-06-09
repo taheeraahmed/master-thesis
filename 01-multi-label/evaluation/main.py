@@ -81,23 +81,23 @@ def evaluate_models(args):
         model, normalization = load_model(
             pretrained_weights, num_labels, model_str)
 
+        if args.inference:
+            dataloader_test = create_dataloader(
+                data_path, normalization, test_augment, batch_size, num_workers=num_workers)
 
-        dataloader_test = create_dataloader(
-            data_path, normalization, test_augment, batch_size, num_workers=num_workers)
+            if args.partition == "GPUQ":
+                inference_performance = test_inference_gpu(args, model, model_str, dataloader_test, device, logger)
+            elif args.parition == "CPUQ":
+                inference_performance = test_inference_cpu(args, model, model_str, dataloader_test, device, logger)
 
-        if args.partition == "GPUQ":
-            inference_performance = test_inference_gpu(args, model, model_str, dataloader_test, device, logger)
-        elif args.parition == "CPUQ":
-            inference_performance = test_inference_cpu(args, model, model_str, dataloader_test, device, logger)
+            file_size = get_file_size(pretrained_weights)
+            file_size_mb = file_size / (1024 ** 2)  # Convert bytes to megabytes
+            logger.info(f"File size: {file_size_mb:.2f} MB")
 
-        file_size = get_file_size(pretrained_weights)
-        file_size_mb = file_size / (1024 ** 2)  # Convert bytes to megabytes
-        logger.info(f"File size: {file_size_mb:.2f} MB")
+            inference_performance.file_size = file_size_mb
 
-        inference_performance.file_size = file_size_mb
+            inference_performances.append(inference_performance)
 
-        
-        inference_performances.append(inference_performance)
         if args.xai:
             output_folder = "results/" + model_str
             if not os.path.exists(output_folder):
@@ -135,6 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--partition', type=str, help="CPU or GPU?", required=True)
     parser.add_argument('--test_augument', action='store_true', help="Augment test data", required=False)
     parser.add_argument('--xai', action='store_true', help="Generate XAI", required=False, default=False)
+    parser.add_argument('--inference', action='store_true', help="Run inference speed tests", required=False, default=False)
 
     args = parser.parse_args()
     print(args)
