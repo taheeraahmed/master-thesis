@@ -89,7 +89,8 @@ class WebUI:
         raise NotImplementedError("Saliency maps are not yet supported")
 
     def run(self):
-        img_filenames = ['00000003_000.png', '00000013_004.png', '00000013_018.png', '00000013_019.png', '00000013_021.png', '00000013_035.png', '00000032_015.png']
+        img_filenames = ['00010575_002.png', '00010828_039.png', '00011925_072.png',
+                         '00018253_059.png', '00020482_032.png', '00026221_001.png']
         examples = [
             f"{self.image_path}/{filename}" for filename in img_filenames]
         
