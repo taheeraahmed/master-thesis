@@ -45,7 +45,7 @@ def grad_cam(model, model_str, input_tensor, pil_image, batch_size=32):
                                               height, width, tensor.size(2))
             result = result.transpose(2, 3).transpose(1, 2)
             return result
-        
+
     # convert pil image to rgb if not
     if pil_image.mode != 'RGB':
         pil_image = pil_image.convert('RGB')
@@ -74,6 +74,6 @@ def grad_cam(model, model_str, input_tensor, pil_image, batch_size=32):
 
     grayscale_cam = grayscale_cam[0, :]
 
-    cam_image = show_cam_on_image(rgb_img, grayscale_cam)
+    cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
 
     return cam_image
