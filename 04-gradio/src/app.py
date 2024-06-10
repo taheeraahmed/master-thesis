@@ -17,11 +17,12 @@ class WebUI:
         self.num_labels = len(LABELS)
         self.image_path = "/cluster/home/taheeraa/code/master-thesis/04-gradio/example_images"
 
-        self.model = None
+
+        self.model_str = "densenet121"
         self.normalization = None
         self.img_size = None
         self.model_name = None
-        self.model_str = None
+        self.set_model(self.model_str)
 
         self.possible_models = MODELS.keys()
         self.device = self.set_device()
@@ -51,19 +52,17 @@ class WebUI:
         return {self.labels[top10[1][0][i]]: float(top10[0][0][i]) for i in range(self.num_labels)}
 
     def run_inference(self, image: Image) -> List[float]:
-        self.set_model("densenet121")
         input_tensor = self.preprocess_image(image)
         outputs = run_inference(self.model, self.model_str,
-                              input_tensor, self.device, tta=True)
+                                input_tensor, self.device, tta=True)
         outputs = topk(outputs, k=self.num_labels)
         return outputs
 
-
     def explain_pred(self, image):
-        self.set_model("densenet121")
+        print(type(image))
         input_tensor = self.preprocess_image(image)
-        cam_image = grad_cam(self.model, self.model_str, input_tensor, self.device)
-        raise NotImplementedError("Saliency maps are not yet supported")
+        cam_image = grad_cam(self.model, self.model_str, input_tensor, image)
+        return cam_image
 
     def run(self):
         img_filenames = ['00010575_002', '00010828_039', '00011925_072',
@@ -73,7 +72,7 @@ class WebUI:
 
         bbox_examples = [
             f"{self.image_path}/{filename}_bbox.png" for filename in img_filenames]
-        
+
         print(self.labels)
 
         with gr.Blocks() as demo:
@@ -83,15 +82,16 @@ class WebUI:
             with gr.Row():
                 with gr.Column():
                     labels = gr.Label(num_top_classes=self.num_labels)
-
-                with gr.Column():
+                    
                     image = gr.Image(type="pil", height=512)
                     gr.Examples(
                         examples=examples,
                         inputs=image,
-                        outputs=labels,
                     )
 
+                with gr.Column():
+                    saliency = gr.Image(
+                        height=512, label="saliency map", show_label=True)
 
                 with gr.Column(scale=0.2, min_width=150):
                     run_btn.click(
@@ -104,15 +104,17 @@ class WebUI:
                         inputs=image,
                         outputs=labels,
                     )
-
+                    run_btn.click(
+                        fn=lambda x: self.explain_pred(x),
+                        inputs=image,
+                        outputs=saliency,
+                    )
             with gr.Row():
                 # TODO: Add support for model selection
                 model_select = gr.Dropdown(
                     choices=self.possible_models, label="Model")
                 # TODO: Add bbox image
                 bbox_image = gr.Image(type="pil", height=512)
-                
-
 
         demo.queue().launch(server_name="0.0.0.0", server_port=7860, share=False)
 
