@@ -40,6 +40,11 @@ def load_model(ckpt_path, num_labels, model_str):
 
     state_dict = checkpoint['state_dict']
     msg = model.load_state_dict(state_dict, strict=False)
-    print('Loaded with msg: {}'.format(msg))
+    print(f'Loaded {model_str} with msg: {msg}')
+
     img_size = 224
+    
+    if model is None or normalization is None or img_size is None:
+        raise ValueError("Model, normalization, or image size not found")
+    
     return model, normalization, img_size
