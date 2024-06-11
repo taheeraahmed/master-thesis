@@ -4,35 +4,35 @@ import pandas as pd
 import os
 from evaluation.xai import xai
 from evaluation.prepare_data import load_and_preprocess_images
+from tqdm import tqdm
 
-
-def compare_bbox_gradcam(model, model_str, dataset_path, df, normalization):
+def compare_bbox_gradcam(model, model_str, dataset_path, normalization):
     gt_bboxes_df = get_dataframe_bboxes(dataset_path)
+    all_ious = []
+    
+    unique_img_indices = gt_bboxes_df["Image Index"].unique()
+    # Explicitly initializing tqdm with manual control over the update
+    with tqdm(total=len(unique_img_indices), desc="Processing images") as pbar:
+        for img_index in unique_img_indices:
+            df_rows = gt_bboxes_df.loc[gt_bboxes_df['Image Index'] == img_index]
+            gt_bboxes = get_ground_truth_bbox(df_rows)
 
-    all_ious = []  
-    for img_id in gt_bboxes_df["Image Index"]:
-        img_index = f"{img_id}.png"
+            img_path = df_rows['Image File Path'].values[0]
+            input_tensor = load_and_preprocess_images(img_path, normalization, one_img=True)
+            gradcam_bboxes = get_gradcam_bbox(model, model_str, input_tensor, img_path, img_index)
 
-        # ensure that the dataframe row is retrieved after img_index is defined
-        df_rows = gt_bboxes_df[gt_bboxes_df['Image Index'] == img_index]
-        if df_rows.empty:
-            continue  # skip if no ground truth data is found for the image
+            ious_img = calculate_ious(gradcam_bboxes, gt_bboxes)
+            avg_iou_img = sum(ious_img) / len(ious_img) if ious_img else 0
+            all_ious.append(avg_iou_img)
 
-        img_path = df_rows['File Path'].values[0]
-        gt_bboxes = get_ground_truth_bbox(df_rows) 
-
-        # load image and process it using the model to get Grad-CAM bounding boxes
-        input_tensor = load_and_preprocess_images(img_path, normalization)
-        gradcam_bboxes = get_gradcam_bbox(model, model_str, input_tensor, img_path, img_id)
-
-        # calculate IoUs for the current image
-        ious = calculate_ious(gradcam_bboxes, gt_bboxes)
-        all_ious.extend(ious)  # Append individual IoU scores
+            # Update progress bar and set postfix after each image is processed
+            pbar.set_postfix({'avg_iou': f'{avg_iou_img:.3f}', 'img_index': img_index})
+            pbar.update(1)
 
     # Calculate the average IOU safely
+    assert len(all_ious) == len(unique_img_indices)
     avg_iou = sum(all_ious) / len(all_ious) if all_ious else 0
     return avg_iou, all_ious
-
 
 def scale_bboxes(bboxes, orig_size=(1024, 1024), cam_size=(224, 224)):
     """
@@ -81,10 +81,11 @@ def get_gradcam_bbox(model, model_str, input_tensor, img_path, img_id):
     # filter contours and calculate bounding boxes
     contours = [c for c in contours if cv2.contourArea(c) > 100]  # higher area threshold
     gradcam_bboxes = [cv2.boundingRect(c) for c in contours]
-    gradcam_bboxes.sort(key=lambda x: x[2] * x[3], reverse=True)
 
     # scale bboxes to match original image size
-    return scale_bboxes(gradcam_bboxes)
+    scaled_gradcam_bboxes = scale_bboxes(gradcam_bboxes)
+    print(scaled_gradcam_bboxes)
+    return scaled_gradcam_bboxes
 
 def get_dataframe_bboxes(dataset_path):
     df_bbox = pd.read_csv(os.path.join(dataset_path, "BBox_List_2017.csv"))
