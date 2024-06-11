@@ -79,6 +79,7 @@ def xai(model, model_str, input_tensor, img_path, img_id, output_folder=None, ge
         filename = f"{output_folder}/{img_id}_grad_cam.png"
         cv2.imwrite(
             filename, cam_image)
+        return None
 
 
 def get_ground_truth_labels(df, img_path, img_index, img_id, output_folder):

@@ -102,8 +102,7 @@ def evaluate_models(args):
 
         if args.compare_xai_bbox:
             logger.info("Comparing XAI and BBOX")
-            img_path = os.path.join(data_path, "images")
-            avg_iou, ious = compare_bbox_gradcam(model, model_str, img_path, df, normalization)
+            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, df, normalization)
 
             logger.info(f"Average IOU: {avg_iou:.2f}")
 
