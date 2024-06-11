@@ -11,6 +11,7 @@ from evaluation.prepare_data import create_dataloader, get_bboxes, load_and_prep
 from evaluation.run_inference import test_inference_gpu,test_inference_cpu, predict
 from evaluation.xai import xai, get_ground_truth_labels
 from evaluation.utils_eval import generate_latex_table, get_file_size
+from evaluation.compare_bbox_gradcam import compare_bbox_gradcam
 
 MODEL_DICT = {
     "densenet121": {
@@ -99,6 +100,13 @@ def evaluate_models(args):
 
             inference_performances.append(inference_performance)
 
+        if args.compare_xai_bbox:
+            logger.info("Comparing XAI and BBOX")
+            img_path = os.path.join(data_path, "images")
+            avg_iou, ious = compare_bbox_gradcam(model, model_str, img_path, df, normalization)
+
+            logger.info(f"Average IOU: {avg_iou:.2f}")
+
         if args.xai:
             logger.info("XAI")
             output_folder = "results/" + model_str
@@ -143,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_augument', action='store_true', help="Augment test data", required=False)
     parser.add_argument('--xai', action='store_true', help="Generate XAI", required=False, default=False)
     parser.add_argument('--inference', action='store_true', help="Run inference speed tests", required=False, default=False)
+    parser.add_argument('--compare_xai_bbox', action='store_true', help="Run comparison between xai and bbox'es", required=False, default=False)
 
     args = parser.parse_args()
     print(args)
