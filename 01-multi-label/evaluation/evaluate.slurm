@@ -30,7 +30,8 @@ echo ""
 python /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/main.py \
     --partition $PARTITION \
     --num_cores $NUM_CORES \
-    --inference True \
+    --inference False \
     --xai False \
+    --compare_xai_bbox True \
 
 echo ">> done"

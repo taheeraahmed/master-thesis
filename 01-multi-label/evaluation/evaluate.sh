@@ -1,5 +1,5 @@
 #!/bin/bash
-PARTITION="CPUQ"
+PARTITION="GPUQ"
 ACCOUNT=ie-idi
 NUM_CORES=8
 
@@ -14,7 +14,7 @@ if [ "$PARTITION" = "GPUQ" ]; then
     --cpus-per-task=$NUM_CORES \
     --mem=128G \
     --gres=gpu:1 \
-    --job-name="evaluate-inference-gpu" \
+    --job-name="calculating-iou-gpu" \
     --output=logs/gpu_idun.out \
     --export=ALL,PARTITION=$PARTITION,NUM_CORES=$NUM_CORES \
     evaluate.slurm
