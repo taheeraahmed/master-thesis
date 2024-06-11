@@ -24,7 +24,7 @@ methods = {
 }
 
 
-def grad_cam(model, model_str, input_tensor, original_img_path, batch_size=32):
+def grad_cam(model, model_str, input_tensor, pil_image, batch_size=32):
     if model_str == "densenet121":
         target_layers = [model.features.norm5]
 
@@ -46,8 +46,16 @@ def grad_cam(model, model_str, input_tensor, original_img_path, batch_size=32):
             result = result.transpose(2, 3).transpose(1, 2)
             return result
 
-    rgb_img = cv2.imread(original_img_path, 1)[:, :, ::-1]
-    rgb_img = cv2.resize(rgb_img, (224, 224))
+    # convert pil image to rgb if not
+    if pil_image.mode != 'RGB':
+        pil_image = pil_image.convert('RGB')
+
+    # convert image to cv2 format
+    cv_image = np.array(pil_image)
+    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+
+    # read image and resize
+    rgb_img = cv2.resize(cv_image, (224, 224))
     rgb_img = np.float32(rgb_img) / 255
 
     if model_str in set(["swin_simim", "swin_in22k", "vit_in1k"]):
@@ -66,6 +74,6 @@ def grad_cam(model, model_str, input_tensor, original_img_path, batch_size=32):
 
     grayscale_cam = grayscale_cam[0, :]
 
-    cam_image = show_cam_on_image(rgb_img, grayscale_cam)
+    cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
 
     return cam_image
