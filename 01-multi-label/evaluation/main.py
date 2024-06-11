@@ -13,6 +13,7 @@ from evaluation.xai import xai, get_ground_truth_labels
 from evaluation.utils_eval import generate_latex_table, get_file_size
 from evaluation.compare_bbox_gradcam import compare_bbox_gradcam
 
+
 MODEL_DICT = {
     "densenet121": {
         "experiment_name": "05-change-classifier-head",
@@ -31,8 +32,6 @@ MODEL_DICT = {
         "pretrained_weights": "swin_base_simmim/model.pth.tar"
     },
 }
-
-
 
 
 def evaluate_models(args):
@@ -82,6 +81,12 @@ def evaluate_models(args):
         model, normalization = load_model(
             pretrained_weights, num_labels, model_str)
 
+        if args.compare_xai_bbox:
+            logger.info("Comparing XAI and BBOX")
+            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, df, normalization)
+
+            logger.info(f"Average IOU for {model_str}: {avg_iou:.2f}")
+
         if args.inference:
             logger.info("Inference")
             dataloader_test = create_dataloader(
@@ -100,11 +105,6 @@ def evaluate_models(args):
 
             inference_performances.append(inference_performance)
 
-        if args.compare_xai_bbox:
-            logger.info("Comparing XAI and BBOX")
-            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, df, normalization)
-
-            logger.info(f"Average IOU: {avg_iou:.2f}")
 
         if args.xai:
             logger.info("XAI")
