@@ -6,6 +6,12 @@ import numpy as np
 from torchinfo import summary
 import numpy as np
 import math
+import torch
+import numpy as np
+from memory_profiler import memory_usage
+import math
+from tqdm import tqdm
+import timeit
 
 class InferencePerformance:
     def __init__(self, model_str, avg_mem_usage, latency, latency_std, throughput, num_params, file_size=None):
@@ -17,26 +23,26 @@ class InferencePerformance:
         self.num_params = num_params
         self.file_size = file_size
 
+
+
 def test_inference_cpu(args, model, model_str, dataloader_test, device, logger):
     model.to(device)
     model.eval()
 
-    y_test = torch.FloatTensor().to(device)
-    p_test = torch.FloatTensor().to(device)
+    y_test = torch.FloatTensor()
+    p_test = torch.FloatTensor()
 
-    dummy_input = torch.randn(1, 3,224,224, dtype=torch.float).to(device)
+    dummy_input = torch.randn(1, 3, 224, 224, dtype=torch.float)
 
-    for _ in range(10):
-        _ = model(dummy_input)
-    
-    latencies = []
+    num_batches = math.ceil(len(dataloader_test.dataset) / args.batch_size)
+    timings = np.zeros((num_batches, 1))
+
+    mem_usage = []
 
     with torch.no_grad():
         for i, (samples, targets) in enumerate(tqdm(dataloader_test)):
-            targets = targets.to(device)
+            targets = targets
             y_test = torch.cat((y_test, targets), 0)
-
-            start_time = time.time()  # Start timing
 
             if len(samples.size()) == 4:
                 bs, c, h, w = samples.size()
@@ -44,39 +50,32 @@ def test_inference_cpu(args, model, model_str, dataloader_test, device, logger):
             elif len(samples.size()) == 5:
                 bs, n_crops, c, h, w = samples.size()
 
-            varInput = samples.view(-1, c, h, w).to(device)
-            out = model(varInput)
-            out = torch.sigmoid(out)
-            outMean = out.view(bs, n_crops, -1).mean(1)
-            p_test = torch.cat((p_test, outMean.data), 0)
+            varInput = samples.view(-1, c, h, w)
+            start_mem = memory_usage()[0]
+            
+            # Measure time using timeit
+            timer = timeit.Timer(lambda: model(varInput))
+            execution_time = timer.timeit(number=1)
+            timings[i] = execution_time * 1000  # Convert to milliseconds
 
-            end_time = time.time()  # End timing
-            latencies.append(end_time - start_time)  # Calculate latency for each batch
+            end_mem = memory_usage()[0]
+            mem_usage.append(end_mem - start_mem)
 
-    mean_latency = np.mean(latencies)
-    std_latency = np.std(latencies)
-    total_time = sum(latencies)
-    total_samples = len(dataloader_test.dataset)
-    throughput = total_samples / total_time
+    logger.info(f"Throughput: {np.sum(timings)} samples/second")
+    logger.info(f"Latency: {np.mean(timings)}+-{np.std(timings)} ms")
 
-    peak_memory = torch.cuda.max_memory_allocated(device) / (1024 ** 2)  # Convert bytes to GB
-    peak_memory_reserved = torch.cuda.max_memory_reserved(device) / (1024 ** 2)  # Convert bytes to GB
-    torch.cuda.reset_peak_memory_stats(device)  # Reset after capturing to handle the next loop properly
+    # Report memory usage
+    logger.info(f"Average Peak Memory Usage: {np.mean(mem_usage):.2f} MB")
 
-    
     num_params = sum(p.numel() for p in model.parameters())
     logger.info(f"Number of parameters: {num_params}")
 
-    # TODO: Fill in code for avg_mem_usage: peak memory usage and peak memory reserved
-    # TODO: Fill in code for latency: mean_syn*1000, std_syn
-    # TODO: Fill code for throughput
-
     return InferencePerformance(
         model_str=model_str,
-        avg_mem_usage={'peak_memory': peak_memory, 'peak_memory_reserved': peak_memory_reserved},
-        latency=mean_latency*1000, 
-        latency_std=std_latency,
-        throughput=throughput,
+        avg_mem_usage={'peak_memory': np.mean(mem_usage)},
+        latency=np.mean(timings),
+        latency_std=np.std(timings),
+        throughput=np.sum(timings),
         num_params=num_params
     )
 

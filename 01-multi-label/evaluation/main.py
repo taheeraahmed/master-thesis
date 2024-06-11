@@ -82,6 +82,7 @@ def evaluate_models(args):
             pretrained_weights, num_labels, model_str)
 
         if args.inference:
+            logger.info("Inference")
             dataloader_test = create_dataloader(
                 data_path, normalization, test_augment, batch_size, num_workers=num_workers)
 
@@ -99,6 +100,7 @@ def evaluate_models(args):
             inference_performances.append(inference_performance)
 
         if args.xai:
+            logger.info("XAI")
             output_folder = "results/" + model_str
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
@@ -120,7 +122,12 @@ def evaluate_models(args):
     if not os.path.exists("results"):
         os.makedirs("results")
 
-    with open("results/latex_table.txt", 'w') as file:
+    if args.partition == "GPUQ":
+        file_name = "results/inference_gpu.txt"
+    elif args.partition == "CPUQ":
+        file_name = "results/inference_cpu.txt"
+        
+    with open(file_name, 'w') as file:
         file.write(latex_str)
 
     logger.info("Evaluation completed")
