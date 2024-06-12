@@ -15,23 +15,29 @@ echo ""
 echo "----------------------------------------------"
 echo ">> nvidia-smi"
 nvidia-smi
+echo ""
 
-echo ">> module load Anaconda3/2022.10"
-module load Anaconda3/2022.10    
+echo ">> module load Python/3.10.8-GCCcore-12.2.0"
+module load Python/3.10.8-GCCcore-12.2.0
+echo ""
+
+echo ">> source /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/.venv/bin/activate"
+source /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/.venv/bin/activate
+echo ""
+
+echo ">> pip freeze"
+pip freeze
+echo ""
 
 echo ">> which python"
 which python
-
-echo ">> installing requirements"
-pip install -q -r /cluster/home/taheeraa/code/master-thesis/01-multi-label/requirements.txt
+echo ""
 
 echo ">> python run_inference.py"
 echo ""
 python /cluster/home/taheeraa/code/master-thesis/01-multi-label/evaluation/main.py \
     --partition $PARTITION \
-    --num_cores $NUM_CORES \
-    --inference False \
-    --xai False \
-    --compare_xai_bbox True \
+    --num_workers $NUM_CORES \
+    --compare_xai_bbox \
 
 echo ">> done"
