@@ -84,7 +84,6 @@ def get_gradcam_bbox(model, model_str, input_tensor, img_path, img_id):
 
     # scale bboxes to match original image size
     scaled_gradcam_bboxes = scale_bboxes(gradcam_bboxes)
-    print(scaled_gradcam_bboxes)
     return scaled_gradcam_bboxes
 
 def get_dataframe_bboxes(dataset_path):

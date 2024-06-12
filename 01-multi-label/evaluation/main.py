@@ -39,6 +39,8 @@ def evaluate_models(args):
         log_file = "logs/evaluation_gpu.log"
     elif args.partition == "CPUQ":
         log_file = "logs/evaluation_cpu.log"
+    elif args.partition == "short":
+        log_file = "logs/evaluation_short.log"
     if args.xai:
         log_file = "logs/xai.log"
     if args.inference:
@@ -77,8 +79,7 @@ def evaluate_models(args):
         device = torch.device("cpu")  # Use CPU
         logger.warning("Using CPU")
 
-    # TODO for debugging purposes
-    for model_str in list(MODEL_DICT.keys())[2:3]:
+    for model_str in MODEL_DICT.keys():
         logger.info(model_str.upper())
 
         pretrained_weights = model_base_path + \
