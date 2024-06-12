@@ -39,6 +39,12 @@ def evaluate_models(args):
         log_file = "logs/evaluation_gpu.log"
     elif args.partition == "CPUQ":
         log_file = "logs/evaluation_cpu.log"
+    if args.xai:
+        log_file = "logs/xai.log"
+    if args.inference:
+        log_file = "logs/inference.log"
+    if args.compare_xai_bbox:
+        log_file = "logs/compare_xai_bbox.log"
 
     logging.basicConfig(level=logging.INFO,
                         format='[%(levelname)s] %(asctime)s - %(message)s',
@@ -71,7 +77,8 @@ def evaluate_models(args):
         device = torch.device("cpu")  # Use CPU
         logger.warning("Using CPU")
 
-    for model_str in MODEL_DICT.keys():
+    # TODO for debugging purposes
+    for model_str in list(MODEL_DICT.keys())[2:3]:
         logger.info(model_str.upper())
 
         pretrained_weights = model_base_path + \
@@ -83,9 +90,12 @@ def evaluate_models(args):
 
         if args.compare_xai_bbox:
             logger.info("Comparing XAI and BBOX")
-            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, df, normalization)
+            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, normalization)
 
             logger.info(f"Average IOU for {model_str}: {avg_iou:.2f}")
+            logger.info(f"Max IOU for {model_str}: {max(ious):.2f}")
+            logger.info(f"Min IOU for {model_str}: {min(ious):.2f}")
+            logger.info(f"Median IOU for {model_str}: {sorted(ious)[len(ious) // 2]:.2f}")
 
         if args.inference:
             logger.info("Inference")
@@ -124,18 +134,19 @@ def evaluate_models(args):
             predict(model, input_tensor, labels, threshold=0.5)
             xai(model, model_str, input_tensor, img_path, img_id, output_folder)
 
-    latex_str = generate_latex_table(inference_performances)
+    if inference_performances not in [None, []]:
+        latex_str = generate_latex_table(inference_performances)
 
-    if not os.path.exists("results"):
-        os.makedirs("results")
+        if not os.path.exists("results"):
+            os.makedirs("results")
 
-    if args.partition == "GPUQ":
-        file_name = "results/inference_gpu.txt"
-    elif args.partition == "CPUQ":
-        file_name = "results/inference_cpu.txt"
-        
-    with open(file_name, 'w') as file:
-        file.write(latex_str)
+        if args.partition == "GPUQ":
+            file_name = "results/inference_gpu.txt"
+        elif args.partition == "CPUQ":
+            file_name = "results/inference_cpu.txt"
+            
+        with open(file_name, 'w') as file:
+            file.write(latex_str)
 
     logger.info("Evaluation completed")
 
