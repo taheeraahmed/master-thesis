@@ -7,7 +7,7 @@ import torch
 import torchvision.transforms as transforms
 import PIL.Image as Image
 
-def load_and_preprocess_images(image_paths, normalize):
+def load_and_preprocess_images(image_paths, normalize, one_img=False):
     if normalize.lower() == "imagenet":
         normalize = transforms.Normalize(
             [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -22,10 +22,14 @@ def load_and_preprocess_images(image_paths, normalize):
         transforms.ToTensor(),  # Convert the image to a tensor
         normalize
     ])
-    images = [transform(Image.open(path).convert('RGB'))
-              for path in image_paths]
-    batch = torch.stack(images)  # Stack images into a single batch
-    
+    if one_img:
+        images = transform(Image.open(image_paths).convert('RGB'))
+        batch = images.unsqueeze(0)
+    else:
+        images = [transform(Image.open(path).convert('RGB'))
+                for path in image_paths]
+        batch = torch.stack(images)  # Stack images into a single batch
+        
     return batch
 
 
