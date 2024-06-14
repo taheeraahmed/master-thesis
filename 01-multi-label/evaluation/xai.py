@@ -70,8 +70,10 @@ def xai(model, model_str, input_tensor, img_path, img_id, output_folder=None, ge
                         aug_smooth=False)
 
     grayscale_cam = grayscale_cam[0, :]
-
-    cam_image = show_cam_on_image(rgb_img, grayscale_cam)
+    if model_str in set(["swin_simim", "swin_in22k", "vit_in1k"]):
+        cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+    else:
+        cam_image = show_cam_on_image(rgb_img, grayscale_cam)
 
     if get_bbox:
         return cam_image

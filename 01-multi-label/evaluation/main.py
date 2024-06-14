@@ -79,7 +79,7 @@ def evaluate_models(args):
         device = torch.device("cpu")  # Use CPU
         logger.warning("Using CPU")
 
-    for model_str in MODEL_DICT.keys():
+    for model_str in list(MODEL_DICT.keys())[3:4]:
         logger.info(model_str.upper())
 
         pretrained_weights = model_base_path + \
