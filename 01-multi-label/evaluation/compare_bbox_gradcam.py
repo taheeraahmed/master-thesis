@@ -8,31 +8,57 @@ from tqdm import tqdm
 
 def compare_bbox_gradcam(model, model_str, dataset_path, normalization):
     gt_bboxes_df = get_dataframe_bboxes(dataset_path)
-    all_ious = []
+    all_ious = [] 
     
     unique_img_indices = gt_bboxes_df["Image Index"].unique()
     # Explicitly initializing tqdm with manual control over the update
-    with tqdm(total=len(unique_img_indices), desc="Processing images") as pbar:
+    with tqdm(total=len(unique_img_indices), desc=f"Processing images") as pbar:
         for img_index in unique_img_indices:
             df_rows = gt_bboxes_df.loc[gt_bboxes_df['Image Index'] == img_index]
+            label = df_rows['Finding Label'].values[0]
             gt_bboxes = get_ground_truth_bbox(df_rows)
-
+            
             img_path = df_rows['Image File Path'].values[0]
             input_tensor = load_and_preprocess_images(img_path, normalization, one_img=True)
             gradcam_bboxes = get_gradcam_bbox(model, model_str, input_tensor, img_path, img_index)
 
+            # size of grad_cam bbox
+            gc_sizes= []
+            for gradcam_bbox in gradcam_bboxes:
+                x, y, w, h = gradcam_bbox
+                gc_width = w
+                gc_height = h
+                size = gc_width * gc_height
+                gc_sizes.append(size)
+            avg_gc_size = sum(gc_sizes) / len(gc_sizes) if gc_sizes else 0
+
+            # avg size of grount truth bounding box
+            gt_sizes = []
+            for gt_bbox in gt_bboxes:
+                x, y, w, h = gt_bbox
+                gt_width = w
+                gt_height = h
+                size = gt_width * gt_height
+                gt_sizes.append(size)
+            avg_gt_size = sum(gt_sizes) / len(gt_sizes) if gt_sizes else 0
+                
+
             ious_img = calculate_ious(gradcam_bboxes, gt_bboxes)
             avg_iou_img = sum(ious_img) / len(ious_img) if ious_img else 0
-            all_ious.append(avg_iou_img)
-
+            all_ious.append({"avg_iou_img": avg_iou_img, "img_index": img_index, "label": label, "avg_gc_size": avg_gc_size, "avg_gt_size": avg_gt_size, "num_gc_bbox": len(gradcam_bboxes), "num_gt_bbox": len(gt_bboxes)})
+            
             # Update progress bar and set postfix after each image is processed
-            pbar.set_postfix({'avg_iou': f'{avg_iou_img:.3f}', 'img_index': img_index})
+            pbar.set_postfix({'avg_iou': f'{avg_iou_img:.3f}', 'img_index': img_index, 'label': label})
             pbar.update(1)
+        
+        # Create a DataFrame from the results
+    results_df = pd.DataFrame(all_ious)
+    
+    # Save the DataFrame to a CSV file
+    results_df.to_csv(f"results/{model_str}_iou.csv", index=False)
 
     # Calculate the average IOU safely
-    assert len(all_ious) == len(unique_img_indices)
-    avg_iou = sum(all_ious) / len(all_ious) if all_ious else 0
-    return avg_iou, all_ious
+    return results_df
 
 def scale_bboxes(bboxes, orig_size=(1024, 1024), cam_size=(224, 224)):
     """
@@ -63,6 +89,17 @@ def scale_bboxes(bboxes, orig_size=(1024, 1024), cam_size=(224, 224)):
 
 
 def get_gradcam_bbox(model, model_str, input_tensor, img_path, img_id):
+    """
+    Generates Grad-CAM from a model and extracts bounding boxes from it.
+    
+    :param model: Model to generate Grad-CAM from.
+    :param model_str: String representation of the model.
+    :param input_tensor: Preprocessed input tensor.
+    :param img_path: Path to the original image.
+    :param img_id: Image ID.
+    :return: List of bounding boxes from Grad-CAM.    
+    """
+
     gradcam_bboxes = []
     cam_image = xai(model, model_str, input_tensor, img_path, img_id, get_bbox=True)
 
@@ -97,7 +134,7 @@ def get_dataframe_bboxes(dataset_path):
     }, inplace=True)
 
     merged_df['Image File Path'] = '/cluster/home/taheeraa/datasets/chestxray-14/images/' + merged_df['Image Index']
-    df = merged_df[['Image Index', 'Finding Labels', 'x', 'y', 'w', 'h', 'Image File Path']]
+    df = merged_df[['Image Index', 'Finding Label', 'x', 'y', 'w', 'h', 'Image File Path']]
     return df
 
 def get_ground_truth_bbox(df_rows):

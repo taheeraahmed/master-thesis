@@ -1,5 +1,4 @@
 #!/bin/sh
-
 echo "We are running from this directory: $SLURM_SUBMIT_DIR"
 echo "The name of the job is: $SLURM_JOB_NAME"
 echo "The job ID is $SLURM_JOB_ID"

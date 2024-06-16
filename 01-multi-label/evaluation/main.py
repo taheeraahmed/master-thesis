@@ -79,7 +79,7 @@ def evaluate_models(args):
         device = torch.device("cpu")  # Use CPU
         logger.warning("Using CPU")
 
-    for model_str in list(MODEL_DICT.keys())[3:4]:
+    for model_str in list(MODEL_DICT.keys()):
         logger.info(model_str.upper())
 
         pretrained_weights = model_base_path + \
@@ -91,7 +91,10 @@ def evaluate_models(args):
 
         if args.compare_xai_bbox:
             logger.info("Comparing XAI and BBOX")
-            avg_iou, ious = compare_bbox_gradcam(model, model_str, data_path, normalization)
+            results_df = compare_bbox_gradcam(model, model_str, data_path, normalization)
+            
+            avg_iou = results_df["avg_iou_img"].mean()
+            ious = results_df["avg_iou_img"].values
 
             logger.info(f"Average IOU for {model_str}: {avg_iou:.2f}")
             logger.info(f"Max IOU for {model_str}: {max(ious):.2f}")
