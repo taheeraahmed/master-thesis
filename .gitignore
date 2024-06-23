@@ -5,9 +5,9 @@
 conf_matrix/
 attention_rollout/
 testing/
-data-analysis/
 train-val-loss/
 .venv/
+.venv_gradio/
 .ipynb_checkpoints/
 runs/
 __pycache__/
