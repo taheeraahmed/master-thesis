@@ -1,6 +1,6 @@
 #!/bin/bash
-PARTITION="CPUQ"
-ACCOUNT=ie-idi
+PARTITION="GPUQ"
+ACCOUNT=share-ie-idi
 NUM_CORES=8
 
 if [ "$PARTITION" = "GPUQ" ]; then
@@ -8,14 +8,14 @@ if [ "$PARTITION" = "GPUQ" ]; then
     echo ""
     sbatch --partition=$PARTITION \
     --account=$ACCOUNT \
-    --time=01:00:00 \
+    --time=00:60:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
     --cpus-per-task=$NUM_CORES \
     --mem=128G \
     --gres=gpu:1 \
-    --job-name="evaluate-inference-gpu" \
-    --output=logs/gpu_idun.out \
+    --job-name="calculating-iou-all-with-label" \
+    --output=logs/calculating-iou-all.out \
     --export=ALL,PARTITION=$PARTITION,NUM_CORES=$NUM_CORES \
     evaluate.slurm
 fi

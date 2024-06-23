@@ -52,7 +52,7 @@ def generate_latex_table(inference_performances):
     # Adding average memory usage row
     latex_str += r'Peak memory allocated (Allocated, Reserved)'
     for ip in inference_performances:
-        avg_mem_usage = f"({three_decimal_places(ip.avg_mem_usage["peak_memory"])}, {three_decimal_places(ip.avg_mem_usage["peak_memory_reserved"])}"
+        avg_mem_usage = f"({three_decimal_places(ip.avg_mem_usage['peak_memory'])}, {three_decimal_places(ip.avg_mem_usage['peak_memory_reserved'])}"
         latex_str += f' & {avg_mem_usage}'
     latex_str += r' \\ \hline'
 

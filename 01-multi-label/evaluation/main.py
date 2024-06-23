@@ -11,6 +11,8 @@ from evaluation.prepare_data import create_dataloader, get_bboxes, load_and_prep
 from evaluation.run_inference import test_inference_gpu,test_inference_cpu, predict
 from evaluation.xai import xai, get_ground_truth_labels
 from evaluation.utils_eval import generate_latex_table, get_file_size
+from evaluation.compare_bbox_gradcam import compare_bbox_gradcam
+
 
 MODEL_DICT = {
     "densenet121": {
@@ -32,13 +34,19 @@ MODEL_DICT = {
 }
 
 
-
-
 def evaluate_models(args):
     if args.partition == "GPUQ":
         log_file = "logs/evaluation_gpu.log"
     elif args.partition == "CPUQ":
         log_file = "logs/evaluation_cpu.log"
+    elif args.partition == "short":
+        log_file = "logs/evaluation_short.log"
+    if args.xai:
+        log_file = "logs/xai.log"
+    if args.inference:
+        log_file = "logs/inference.log"
+    if args.compare_xai_bbox:
+        log_file = "logs/compare_xai_bbox.log"
 
     logging.basicConfig(level=logging.INFO,
                         format='[%(levelname)s] %(asctime)s - %(message)s',
@@ -71,7 +79,7 @@ def evaluate_models(args):
         device = torch.device("cpu")  # Use CPU
         logger.warning("Using CPU")
 
-    for model_str in MODEL_DICT.keys():
+    for model_str in list(MODEL_DICT.keys()):
         logger.info(model_str.upper())
 
         pretrained_weights = model_base_path + \
@@ -80,6 +88,18 @@ def evaluate_models(args):
 
         model, normalization = load_model(
             pretrained_weights, num_labels, model_str)
+
+        if args.compare_xai_bbox:
+            logger.info("Comparing XAI and BBOX")
+            results_df = compare_bbox_gradcam(model, model_str, data_path, normalization)
+            
+            avg_iou = results_df["avg_iou_img"].mean()
+            ious = results_df["avg_iou_img"].values
+
+            logger.info(f"Average IOU for {model_str}: {avg_iou:.2f}")
+            logger.info(f"Max IOU for {model_str}: {max(ious):.2f}")
+            logger.info(f"Min IOU for {model_str}: {min(ious):.2f}")
+            logger.info(f"Median IOU for {model_str}: {sorted(ious)[len(ious) // 2]:.2f}")
 
         if args.inference:
             logger.info("Inference")
@@ -99,6 +119,7 @@ def evaluate_models(args):
 
             inference_performances.append(inference_performance)
 
+
         if args.xai:
             logger.info("XAI")
             output_folder = "results/" + model_str
@@ -117,18 +138,19 @@ def evaluate_models(args):
             predict(model, input_tensor, labels, threshold=0.5)
             xai(model, model_str, input_tensor, img_path, img_id, output_folder)
 
-    latex_str = generate_latex_table(inference_performances)
+    if inference_performances not in [None, []]:
+        latex_str = generate_latex_table(inference_performances)
 
-    if not os.path.exists("results"):
-        os.makedirs("results")
+        if not os.path.exists("results"):
+            os.makedirs("results")
 
-    if args.partition == "GPUQ":
-        file_name = "results/inference_gpu.txt"
-    elif args.partition == "CPUQ":
-        file_name = "results/inference_cpu.txt"
-        
-    with open(file_name, 'w') as file:
-        file.write(latex_str)
+        if args.partition == "GPUQ":
+            file_name = "results/inference_gpu.txt"
+        elif args.partition == "CPUQ":
+            file_name = "results/inference_cpu.txt"
+            
+        with open(file_name, 'w') as file:
+            file.write(latex_str)
 
     logger.info("Evaluation completed")
 
@@ -143,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_augument', action='store_true', help="Augment test data", required=False)
     parser.add_argument('--xai', action='store_true', help="Generate XAI", required=False, default=False)
     parser.add_argument('--inference', action='store_true', help="Run inference speed tests", required=False, default=False)
+    parser.add_argument('--compare_xai_bbox', action='store_true', help="Run comparison between xai and bbox'es", required=False, default=False)
 
     args = parser.parse_args()
     print(args)
